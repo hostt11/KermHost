@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestion des Utilisateurs - KermHost Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #8a2be2;
+            --secondary-color: #4a00e0;
+            --accent-color: #00d4ff;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --dark-color: #0f0f23;
+            --light-color: #1a1a2e;
+            --text-color: #ffffff;
+            --text-muted: #a0a0c0;
+            --success-color: #00ff9d;
+            --warning-color: #ffcc00;
+            --danger-color: #ff4757;
+            --sidebar-width: 280px;
+            --border-radius: 15px;
+            --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --glow-shadow: 0 0 20px var(--accent-glow);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--dark-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(74, 0, 224, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.1) 0%, transparent 20%);
+            min-height: 100vh;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 4px;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 1000;
+            box-shadow: var(--box-shadow);
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid var(--glass-border);
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+        }
+
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .sidebar-header img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-header span {
+            font-weight: 700;
+            font-size: 22px;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-menu ul {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+            border-radius: var(--border-radius);
+        }
+
+        .sidebar-menu a.active {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+            color: var(--text-color);
+            border-left: 4px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-menu a:hover {
+            color: var(--text-color);
+            background: var(--glass-bg);
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu i {
+            width: 24px;
+            text-align: center;
+            font-size: 18px;
+            color: var(--accent-color);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(26, 26, 46, 0.9);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            box-shadow: var(--glow-shadow);
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            background: transparent;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            background: var(--glass-bg);
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #00b894);
+            color: white;
+            border: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color), #ff6b6b);
+            color: white;
+            border: none;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--accent-color);
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Search and Filters */
+        .search-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-color);
+            font-size: 16px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-label {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .filter-select {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        /* Users Table */
+        .table-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr;
+            padding: 20px;
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+            border-bottom: 1px solid var(--glass-border);
+            font-weight: 600;
+            color: white;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr;
+            padding: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+
+        .table-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .user-info-small {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-email {
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+        }
+
+        .user-username {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .role-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .role-admin {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .role-user {
+            background: var(--glass-bg);
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-verified {
+            background: linear-gradient(135deg, var(--success-color), #00b894);
+            color: white;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, var(--warning-color), #ff9f43);
+            color: white;
+        }
+
+        .coins-cell {
+            font-weight: 600;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-buttons .btn {
+            padding: 8px 12px;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+        }
+
+        .page-btn {
+            padding: 10px 15px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .page-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+        }
+
+        .page-info {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 15, 35, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--light-color);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            width: 95%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--glow-shadow), 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 20px 30px;
+            border-radius: var(--border-radius);
+            background: var(--light-color);
+            color: white;
+            box-shadow: var(--box-shadow), var(--glow-shadow);
+            transform: translateX(150%);
+            transition: transform 0.4s;
+            z-index: 2100;
+            max-width: 400px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading i {
+            font-size: 40px;
+            color: var(--accent-color);
+            animation: spin 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .empty-state i {
+            font-size: 60px;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .empty-state p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .table-header,
+            .table-row {
+                grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .table-header {
+                display: none;
+            }
+
+            .table-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .table-row::before {
+                content: '';
+                grid-column: 1;
+                height: 1px;
+                background: var(--glass-border);
+                margin: 10px 0;
+            }
+
+            .table-row:first-child::before {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .search-box {
+                flex-direction: column;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                justify-content: space-between;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="https://files.catbox.moe/uqw1b5.jpeg" alt="KermHost Logo">
+                    <span>KermHost</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <ul>
+                    <li>
+                        <a href="/admin">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/users" class="active">
+                            <i class="fas fa-users"></i>
+                            <span>Utilisateurs</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/bot-request">
+                            <i class="fas fa-robot"></i>
+                            <span>Demandes Bots</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/add-heroku">
+                            <i class="fas fa-server"></i>
+                            <span>Comptes Heroku</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/database">
+                            <i class="fas fa-database"></i>
+                            <span>Base de Données</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/maintenance">
+                            <i class="fas fa-tools"></i>
+                            <span>Maintenance</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Retour Dashboard</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Admin</div>
+                        <div class="user-email" id="userEmail">admin@kermhost.com</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div>
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>
+                        <i class="fas fa-users-cog"></i>
+                        Gestion des Utilisateurs
+                    </h1>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="exportUsers()">
+                        <i class="fas fa-download"></i> Exporter CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" 
+                           placeholder="Rechercher par email ou nom d'utilisateur...">
+                    <button class="btn btn-primary" onclick="searchUsers()">
+                        <i class="fas fa-search"></i> Rechercher
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearSearch()">
+                        <i class="fas fa-times"></i> Effacer
+                    </button>
+                </div>
+                <div class="filters">
+                    <div class="filter-group">
+                        <span class="filter-label">Rôle:</span>
+                        <select class="filter-select" id="roleFilter">
+                            <option value="">Tous</option>
+                            <option value="admin">Admin</option>
+                            <option value="user">Utilisateur</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Statut:</span>
+                        <select class="filter-select" id="statusFilter">
+                            <option value="">Tous</option>
+                            <option value="verified">Vérifié</option>
+                            <option value="pending">En attente</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Tri par:</span>
+                        <select class="filter-select" id="sortBy">
+                            <option value="created_at">Date d'inscription</option>
+                            <option value="coins">Coins</option>
+                            <option value="email">Email</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Ordre:</span>
+                        <select class="filter-select" id="sortOrder">
+                            <option value="desc">Décroissant</option>
+                            <option value="asc">Croissant</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <div>Utilisateur</div>
+                    <div>Rôle</div>
+                    <div>Statut</div>
+                    <div>Coins</div>
+                    <div>Inscrit le</div>
+                    <div>Actions</div>
+                </div>
+                <div id="usersTable">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p style="margin-top: 20px; color: var(--text-muted);">Chargement des utilisateurs...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination">
+                <button class="page-btn" onclick="changePage(currentPage - 1)" disabled>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="page-info">Page <span id="currentPage">1</span> sur <span id="totalPages">1</span></span>
+                <button class="page-btn" onclick="changePage(currentPage + 1)" disabled>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal" id="editUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-edit"></i> Modifier l'Utilisateur</h3>
+                <button class="modal-close" id="closeEditModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editUserEmail" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Nom d'utilisateur</label>
+                            <input type="text" class="form-control" id="editUsername">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Coins</label>
+                            <input type="number" class="form-control" id="editUserCoins" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Rôle</label>
+                            <select class="form-control" id="editUserRole">
+                                <option value="user">Utilisateur</option>
+                                <option value="admin">Administrateur</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Statut Vérification</label>
+                            <select class="form-control" id="editUserVerified">
+                                <option value="true">Vérifié</option>
+                                <option value="false">Non vérifié</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Ajouter/Retirer des Coins</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="number" class="form-control" id="coinsToAdd" placeholder="Montant" style="flex: 1;">
+                            <button type="button" class="btn btn-success" onclick="addCoinsToUser()">
+                                <i class="fas fa-plus"></i> Ajouter
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="removeCoinsFromUser()">
+                                <i class="fas fa-minus"></i> Retirer
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 30px;">
+                        <div style="display: flex; gap: 15px;">
+                            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                                <i class="fas fa-save"></i> Enregistrer
+                            </button>
+                            <button type="button" class="btn btn-danger" id="deleteUserBtn" style="flex: 1;">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Coins Modal -->
+    <div class="modal" id="addCoinsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-coins"></i> Ajouter des Coins</h3>
+                <button class="modal-close" id="closeCoinsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addCoinsForm">
+                    <input type="hidden" id="coinsUserId">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Montant</label>
+                        <input type="number" class="form-control" id="coinsAmount" min="1" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description (optionnel)</label>
+                        <textarea class="form-control" id="coinsDescription" rows="3" 
+                                  placeholder="Raison de l'ajout de coins..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            <i class="fas fa-check"></i> Confirmer l'ajout
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <script>
+        // Variables globales
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentFilters = {
+            search: '',
+            role: '',
+            status: '',
+            sortBy: 'created_at',
+            sortOrder: 'desc',
+            limit: 20
+        };
+
+        // Gestion du menu mobile
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Gestion des modals
+        const editUserModal = document.getElementById('editUserModal');
+        const closeEditModal = document.getElementById('closeEditModal');
+        const addCoinsModal = document.getElementById('addCoinsModal');
+        const closeCoinsModal = document.getElementById('closeCoinsModal');
+
+        closeEditModal.addEventListener('click', () => {
+            editUserModal.style.display = 'none';
+        });
+
+        closeCoinsModal.addEventListener('click', () => {
+            addCoinsModal.style.display = 'none';
+        });
+
+        // Fermer les modals en cliquant à l'extérieur
+        window.addEventListener('click', (e) => {
+            if (e.target === editUserModal) {
+                editUserModal.style.display = 'none';
+            }
+            if (e.target === addCoinsModal) {
+                addCoinsModal.style.display = 'none';
+            }
+        });
+
+        // Fonction de notification
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? '✓' : '✗';
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 24px; font-weight: bold;">${icon}</div>
+                    <div>${message}</div>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    container.removeChild(notification);
+                }, 400);
+            }, 4000);
+        }
+
+        // Charger les utilisateurs
+        async function loadUsers(page = 1) {
+            try {
+                currentPage = page;
+                
+                const token = localStorage.getItem('token');
+                const params = new URLSearchParams({
+                    page: page,
+                    limit: currentFilters.limit,
+                    search: currentFilters.search,
+                    role: currentFilters.role,
+                    status: currentFilters.status,
+                    sortBy: currentFilters.sortBy,
+                    sortOrder: currentFilters.sortOrder
+                });
+
+                const response = await fetch(`/api/admin/users?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (response.status === 403) {
+                    showNotification('Accès administrateur requis', 'error');
+                    setTimeout(() => window.location.href = '/dashboard', 2000);
+                    return;
+                }
+
+                const data = await response.json();
+                const usersTable = document.getElementById('usersTable');
+                
+                if (!data.users || data.users.length === 0) {
+                    usersTable.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-users-slash"></i>
+                            <h3>Aucun utilisateur trouvé</h3>
+                            <p>Aucun utilisateur ne correspond à vos critères de recherche.</p>
+                        </div>
+                    `;
+                    
+                    // Cacher la pagination
+                    document.getElementById('pagination').style.display = 'none';
+                } else {
+                    let html = '';
+                    
+                    data.users.forEach(user => {
+                        const roleClass = user.role === 'admin' ? 'role-admin' : 'role-user';
+                        const statusClass = user.is_verified ? 'status-verified' : 'status-pending';
+                        const statusText = user.is_verified ? 'Vérifié' : 'En attente';
+                        const registrationDate = new Date(user.created_at).toLocaleDateString();
+                        
+                        html += `
+                            <div class="table-row" data-id="${user.id}">
+                                <div class="user-cell">
+                                    <div class="user-avatar-small">
+                                        ${(user.username || user.email.charAt(0)).toUpperCase()}
+                                    </div>
+                                    <div class="user-info-small">
+                                        <div class="user-email">${user.email}</div>
+                                        <div class="user-username">${user.username || 'Non défini'}</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="role-badge ${roleClass}">${user.role}</span>
+                                </div>
+                                <div>
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                </div>
+                                <div class="coins-cell">
+                                    <i class="fas fa-coins"></i> ${user.coins || 0}
+                                </div>
+                                <div>${registrationDate}</div>
+                                <div class="action-buttons">
+                                    <button class="btn btn-sm btn-secondary" onclick="editUser('${user.id}')">
+                                        <i class="fas fa-edit"></i> Modifier
+                                    </button>
+                                    <button class="btn btn-sm btn-primary" onclick="showAddCoinsModal('${user.id}', '${user.email}')">
+                                        <i class="fas fa-plus"></i> Coins
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="confirmDeleteUser('${user.id}', '${user.email}')">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    usersTable.innerHTML = html;
+                    
+                    // Mettre à jour la pagination
+                    updatePagination(data.pagination);
+                }
+                
+                // Mettre à jour les informations utilisateur
+                const adminUser = JSON.parse(localStorage.getItem('user') || '{}');
+                if (adminUser.email) {
+                    document.getElementById('userEmail').textContent = adminUser.email;
+                    document.getElementById('userName').textContent = adminUser.username || 'Admin';
+                    document.getElementById('userAvatar').textContent = (adminUser.username || 'A').charAt(0).toUpperCase();
+                }
+                
+            } catch (error) {
+                console.error('Erreur chargement utilisateurs:', error);
+                showNotification('Erreur lors du chargement des utilisateurs', 'error');
+            }
+        }
+
+        // Mettre à jour la pagination
+        function updatePagination(pagination) {
+            const paginationDiv = document.getElementById('pagination');
+            const currentPageSpan = document.getElementById('currentPage');
+            const totalPagesSpan = document.getElementById('totalPages');
+            const prevBtn = paginationDiv.querySelector('.page-btn:first-child');
+            const nextBtn = paginationDiv.querySelector('.page-btn:last-child');
+            
+            if (!pagination || pagination.pages <= 1) {
+                paginationDiv.style.display = 'none';
+                return;
+            }
+            
+            paginationDiv.style.display = 'flex';
+            currentPageSpan.textContent = pagination.page;
+            totalPagesSpan.textContent = pagination.pages;
+            
+            // Désactiver/activer les boutons précédent/suivant
+            prevBtn.disabled = pagination.page <= 1;
+            nextBtn.disabled = pagination.page >= pagination.pages;
+            
+            // Mettre à jour l'apparence des boutons
+            prevBtn.style.opacity = prevBtn.disabled ? '0.5' : '1';
+            nextBtn.style.opacity = nextBtn.disabled ? '0.5' : '1';
+        }
+
+        // Changer de page
+        function changePage(page) {
+            if (page < 1 || page > totalPages) return;
+            loadUsers(page);
+        }
+
+        // Rechercher des utilisateurs
+        function searchUsers() {
+            const searchInput = document.getElementById('searchInput');
+            const roleFilter = document.getElementById('roleFilter');
+            const statusFilter = document.getElementById('statusFilter');
+            const sortBy = document.getElementById('sortBy');
+            const sortOrder = document.getElementById('sortOrder');
+            
+            currentFilters.search = searchInput.value.trim();
+            currentFilters.role = roleFilter.value;
+            currentFilters.status = statusFilter.value;
+            currentFilters.sortBy = sortBy.value;
+            currentFilters.sortOrder = sortOrder.value;
+            
+            loadUsers(1);
+        }
+
+        // Effacer la recherche
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('roleFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('sortBy').value = 'created_at';
+            document.getElementById('sortOrder').value = 'desc';
+            
+            currentFilters.search = '';
+            currentFilters.role = '';
+            currentFilters.status = '';
+            currentFilters.sortBy = 'created_at';
+            currentFilters.sortOrder = 'desc';
+            
+            loadUsers(1);
+        }
+
+        // Écouteurs pour les filtres
+        document.getElementById('roleFilter').addEventListener('change', searchUsers);
+        document.getElementById('statusFilter').addEventListener('change', searchUsers);
+        document.getElementById('sortBy').addEventListener('change', searchUsers);
+        document.getElementById('sortOrder').addEventListener('change', searchUsers);
+
+        // Recherche avec la touche Entrée
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchUsers();
+            }
+        });
+
+        // Éditer un utilisateur
+        async function editUser(userId) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const user = data.user;
+                    
+                    document.getElementById('editUserId').value = user.id;
+                    document.getElementById('editUserEmail').value = user.email;
+                    document.getElementById('editUsername').value = user.username || '';
+                    document.getElementById('editUserCoins').value = user.coins || 0;
+                    document.getElementById('editUserRole').value = user.role || 'user';
+                    document.getElementById('editUserVerified').value = user.is_verified ? 'true' : 'false';
+                    
+                    editUserModal.style.display = 'flex';
+                } else {
+                    throw new Error(data.error || 'Erreur lors du chargement de l\'utilisateur');
+                }
+            } catch (error) {
+                console.error('Erreur chargement utilisateur:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+
+        // Soumettre la modification d'utilisateur
+        document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('editUserId').value;
+            const email = document.getElementById('editUserEmail').value;
+            const username = document.getElementById('editUsername').value;
+            const coins = parseInt(document.getElementById('editUserCoins').value);
+            const role = document.getElementById('editUserRole').value;
+            const isVerified = document.getElementById('editUserVerified').value === 'true';
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email,
+                        username,
+                        coins,
+                        role,
+                        is_verified: isVerified
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showNotification('Utilisateur mis à jour avec succès', 'success');
+                    editUserModal.style.display = 'none';
+                    loadUsers(currentPage);
+                } else {
+                    throw new Error(data.error || 'Erreur lors de la mise à jour');
+                }
+            } catch (error) {
+                console.error('Erreur mise à jour utilisateur:', error);
+                showNotification(error.message, 'error');
+            }
+        });
+
+        // Ajouter des coins à un utilisateur
+        function showAddCoinsModal(userId, userEmail) {
+            document.getElementById('coinsUserId').value = userId;
+            document.getElementById('addCoinsForm').reset();
+            addCoinsModal.style.display = 'flex';
+            
+            // Mettre à jour le titre du modal
+            document.querySelector('#addCoinsModal h3').innerHTML = `
+                <i class="fas fa-coins"></i> Ajouter des Coins à ${userEmail}
+            `;
+        }
+
+        // Soumettre l'ajout de coins
+        document.getElementById('addCoinsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('coinsUserId').value;
+            const amount = parseInt(document.getElementById('coinsAmount').value);
+            const description = document.getElementById('coinsDescription').value;
+            
+            if (!amount || amount <= 0) {
+                showNotification('Veuillez entrer un montant valide', 'error');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/admin/users/${userId}/add-coins`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount,
+                        description: description || `Ajout administrateur de ${amount} coins`
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showNotification(`${amount} coins ajoutés avec succès`, 'success');
+                    addCoinsModal.style.display = 'none';
+                    loadUsers(currentPage);
+                } else {
+                    throw new Error(data.error || 'Erreur lors de l\'ajout de coins');
+                }
+            } catch (error) {
+                console.error('Erreur ajout coins:', error);
+                showNotification(error.message, 'error');
+            }
+        });
+
+        // Ajouter/retirer des coins depuis le modal d'édition
+        function addCoinsToUser() {
+            const amount = parseInt(document.getElementById('coinsToAdd').value);
+            const currentCoins = parseInt(document.getElementById('editUserCoins').value);
+            
+            if (amount && amount > 0) {
+                document.getElementById('editUserCoins').value = currentCoins + amount;
+                showNotification(`${amount} coins ajoutés`, 'success');
+            }
+        }
+
+        function removeCoinsFromUser() {
+            const amount = parseInt(document.getElementById('coinsToAdd').value);
+            const currentCoins = parseInt(document.getElementById('editUserCoins').value);
+            
+            if (amount && amount > 0) {
+                const newCoins = Math.max(0, currentCoins - amount);
+                document.getElementById('editUserCoins').value = newCoins;
+                showNotification(`${amount} coins retirés`, 'success');
+            }
+        }
+
+        // Confirmer la suppression d'un utilisateur
+        function confirmDeleteUser(userId, userEmail) {
+            const modalHtml = `
+                <div class="modal" id="confirmDeleteModal" style="display: flex;">
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h3><i class="fas fa-exclamation-triangle" style="color: var(--danger-color);"></i> Confirmer la suppression</h3>
+                            <button class="modal-close" onclick="document.getElementById('confirmDeleteModal').style.display='none'">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="text-align: center; padding: 20px;">
+                                <i class="fas fa-user-slash" style="font-size: 60px; color: var(--danger-color); margin-bottom: 20px;"></i>
+                                <h3 style="color: white; margin-bottom: 15px;">Supprimer ${userEmail} ?</h3>
+                                <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 25px;">
+                                    Cette action est irréversible. Toutes les données de l'utilisateur seront supprimées.
+                                </p>
+                                <div style="display: flex; gap: 15px; justify-content: center;">
+                                    <button class="btn btn-secondary" onclick="document.getElementById('confirmDeleteModal').style.display='none'">
+                                        <i class="fas fa-times"></i> Annuler
+                                    </button>
+                                    <button class="btn btn-danger" onclick="deleteUser('${userId}')">
+                                        <i class="fas fa-trash"></i> Confirmer la suppression
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        // Supprimer un utilisateur
+        async function deleteUser(userId) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showNotification('Utilisateur supprimé avec succès', 'success');
+                    document.getElementById('confirmDeleteModal').style.display = 'none';
+                    loadUsers(currentPage);
+                } else {
+                    throw new Error(data.error || 'Erreur lors de la suppression');
+                }
+            } catch (error) {
+                console.error('Erreur suppression utilisateur:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+
+        // Exporter les utilisateurs en CSV
+        function exportUsers() {
+            showNotification('Fonctionnalité d\'export en cours de développement', 'success');
+        }
+
+        // Écouteur pour le bouton de suppression dans le modal d'édition
+        document.getElementById('deleteUserBtn').addEventListener('click', () => {
+            const userId = document.getElementById('editUserId').value;
+            const userEmail = document.getElementById('editUserEmail').value;
+            
+            editUserModal.style.display = 'none';
+            setTimeout(() => {
+                confirmDeleteUser(userId, userEmail);
+            }, 300);
+        });
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            // Vérifier l'authentification et les droits admin
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            if (user.role !== 'admin') {
+                showNotification('Accès administrateur requis', 'error');
+                setTimeout(() => window.location.href = '/dashboard', 2000);
+                return;
+            }
+
+            // Charger les utilisateurs
+            loadUsers();
+
+            // Raccourcis clavier
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (editUserModal.style.display === 'flex') {
+                        editUserModal.style.display = 'none';
+                    }
+                    if (addCoinsModal.style.display === 'flex') {
+                        addCoinsModal.style.display = 'none';
+                    }
+                    if (sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                    }
+                }
+                if (e.key === 'f' && e.ctrlKey) {
+                    document.getElementById('searchInput').focus();
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

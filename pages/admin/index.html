@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Admin - KermHost</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #8a2be2;
+            --secondary-color: #4a00e0;
+            --accent-color: #00d4ff;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --dark-color: #0f0f23;
+            --light-color: #1a1a2e;
+            --text-color: #ffffff;
+            --text-muted: #a0a0c0;
+            --success-color: #00ff9d;
+            --warning-color: #ffcc00;
+            --danger-color: #ff4757;
+            --sidebar-width: 280px;
+            --border-radius: 15px;
+            --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --glow-shadow: 0 0 20px var(--accent-glow);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--dark-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(74, 0, 224, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.1) 0%, transparent 20%);
+            min-height: 100vh;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 4px;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 1000;
+            box-shadow: var(--box-shadow);
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid var(--glass-border);
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+        }
+
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .sidebar-header img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-header span {
+            font-weight: 700;
+            font-size: 22px;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-menu ul {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+            border-radius: var(--border-radius);
+        }
+
+        .sidebar-menu a.active {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+            color: var(--text-color);
+            border-left: 4px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-menu a:hover {
+            color: var(--text-color);
+            background: var(--glass-bg);
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu i {
+            width: 24px;
+            text-align: center;
+            font-size: 18px;
+            color: var(--accent-color);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(26, 26, 46, 0.9);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            box-shadow: var(--glow-shadow);
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            background: transparent;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--accent-color);
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent-color), var(--primary-color));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .stat-icon {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+        }
+
+        .stat-value {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .stat-trend {
+            font-size: 14px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .trend-up {
+            color: var(--success-color);
+        }
+
+        .trend-down {
+            color: var(--danger-color);
+        }
+
+        /* Charts Container */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chart-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            background: var(--glass-bg);
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+
+        /* Recent Activity */
+        .activity-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 40px;
+        }
+
+        .activity-list {
+            margin-top: 20px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+
+        .activity-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 18px;
+        }
+
+        .activity-icon.user {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .activity-icon.bot {
+            background: linear-gradient(135deg, #00d4ff, #4a00e0);
+        }
+
+        .activity-icon.coin {
+            background: linear-gradient(135deg, #00ff9d, #00b894);
+        }
+
+        .activity-icon.deploy {
+            background: linear-gradient(135deg, #ffcc00, #ff9f43);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            color: white;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .activity-time {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .action-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .action-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            color: var(--accent-color);
+        }
+
+        .action-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .action-desc {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 20px 30px;
+            border-radius: var(--border-radius);
+            background: var(--light-color);
+            color: white;
+            box-shadow: var(--box-shadow), var(--glow-shadow);
+            transform: translateX(150%);
+            transition: transform 0.4s;
+            z-index: 2100;
+            max-width: 400px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading i {
+            font-size: 40px;
+            color: var(--accent-color);
+            animation: spin 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-card {
+                padding: 15px;
+            }
+
+            .activity-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            .activity-icon {
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="https://files.catbox.moe/uqw1b5.jpeg" alt="KermHost Logo">
+                    <span>KermHost</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <ul>
+                    <li>
+                        <a href="/admin" class="active">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/users">
+                            <i class="fas fa-users"></i>
+                            <span>Utilisateurs</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/bot-request">
+                            <i class="fas fa-robot"></i>
+                            <span>Demandes Bots</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/add-heroku">
+                            <i class="fas fa-server"></i>
+                            <span>Comptes Heroku</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/database">
+                            <i class="fas fa-database"></i>
+                            <span>Base de Données</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/maintenance">
+                            <i class="fas fa-tools"></i>
+                            <span>Maintenance</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Retour Dashboard</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Admin</div>
+                        <div class="user-email" id="userEmail">admin@kermhost.com</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div>
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>
+                        <i class="fas fa-chart-line"></i>
+                        Dashboard Administrateur
+                    </h1>
+                </div>
+                <div class="chart-actions">
+                    <button class="btn" onclick="refreshStats()">
+                        <i class="fas fa-sync-alt"></i> Actualiser
+                    </button>
+                    <button class="btn btn-primary" onclick="window.location.href='/admin/add-heroku'">
+                        <i class="fas fa-plus"></i> Ajouter Serveur
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">UTILISATEURS</div>
+                    <div class="stat-trend trend-up" id="usersTrend">
+                        <i class="fas fa-arrow-up"></i> <span id="usersChange">0%</span> aujourd'hui
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="stat-value" id="totalBots">0</div>
+                    <div class="stat-label">BOTS DÉPLOYÉS</div>
+                    <div class="stat-trend trend-up" id="botsTrend">
+                        <i class="fas fa-arrow-up"></i> <span id="botsChange">0%</span> aujourd'hui
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="stat-value" id="totalCoins">0</div>
+                    <div class="stat-label">COINS CIRCULANT</div>
+                    <div class="stat-trend trend-up" id="coinsTrend">
+                        <i class="fas fa-arrow-up"></i> <span id="coinsChange">0%</span> aujourd'hui
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="stat-value" id="activeServers">0</div>
+                    <div class="stat-label">SERVEURS ACTIFS</div>
+                    <div class="stat-trend trend-up" id="serversTrend">
+                        <i class="fas fa-arrow-up"></i> <span id="serversChange">0%</span> capacité
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-container">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">Activité des Utilisateurs</div>
+                        <select class="btn" id="activityPeriod">
+                            <option value="7">7 derniers jours</option>
+                            <option value="30" selected>30 derniers jours</option>
+                            <option value="90">90 derniers jours</option>
+                        </select>
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="usersChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">Déploiements par Jour</div>
+                        <select class="btn" id="deploymentsPeriod">
+                            <option value="7">7 derniers jours</option>
+                            <option value="30" selected>30 derniers jours</option>
+                            <option value="90">90 derniers jours</option>
+                        </select>
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="deploymentsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <h2 style="margin-bottom: 20px; color: white; font-size: 24px;">
+                <i class="fas fa-bolt"></i> Actions Rapides
+            </h2>
+            <div class="quick-actions">
+                <div class="action-card" onclick="window.location.href='/admin/users'">
+                    <div class="action-icon">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <div class="action-title">Gérer les Utilisateurs</div>
+                    <div class="action-desc">Vérifier les comptes, modifier les rôles, attribuer des coins</div>
+                </div>
+
+                <div class="action-card" onclick="window.location.href='/admin/bot-request'">
+                    <div class="action-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="action-title">Approuver les Bots</div>
+                    <div class="action-desc">Examiner et approuver les nouvelles demandes de bots</div>
+                </div>
+
+                <div class="action-card" onclick="window.location.href='/admin/add-heroku'">
+                    <div class="action-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="action-title">Ajouter un Serveur</div>
+                    <div class="action-desc">Configurer un nouveau compte Heroku pour augmenter la capacité</div>
+                </div>
+
+                <div class="action-card" onclick="window.location.href='/admin/maintenance'">
+                    <div class="action-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div class="action-title">Mode Maintenance</div>
+                    <div class="action-desc">Activer/désactiver le mode maintenance du site</div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-card">
+                <h2 style="color: white; font-size: 24px; margin-bottom: 10px;">
+                    <i class="fas fa-history"></i> Activité Récente
+                </h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Les dernières actions sur la plateforme
+                </p>
+                <div class="activity-list" id="activityList">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p style="margin-top: 20px; color: var(--text-muted);">Chargement de l'activité...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Variables globales pour les charts
+        let usersChart = null;
+        let deploymentsChart = null;
+
+        // Gestion du menu mobile
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Fonction de notification
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? '✓' : '✗';
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 24px; font-weight: bold;">${icon}</div>
+                    <div>${message}</div>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    container.removeChild(notification);
+                }, 400);
+            }, 4000);
+        }
+
+        // Charger les statistiques
+        async function loadStats() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/admin/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (response.status === 403) {
+                    showNotification('Accès administrateur requis', 'error');
+                    setTimeout(() => window.location.href = '/dashboard', 2000);
+                    return;
+                }
+
+                const data = await response.json();
+                
+                if (data.stats) {
+                    // Mettre à jour les stats principales
+                    document.getElementById('totalUsers').textContent = data.stats.totalUsers || 0;
+                    document.getElementById('totalBots').textContent = data.stats.totalBots || 0;
+                    document.getElementById('totalCoins').textContent = data.stats.totalCoins || 0;
+                    document.getElementById('activeServers').textContent = data.stats.activeServers || 0;
+
+                    // Calculer et afficher les tendances (simulées pour l'exemple)
+                    updateTrends(data);
+                }
+
+                // Charger l'activité récente
+                if (data.recentActivity) {
+                    loadRecentActivity(data.recentActivity);
+                }
+
+                // Charger les données pour les charts
+                if (data.deploymentStats) {
+                    loadChartData(data.deploymentStats);
+                }
+
+                // Mettre à jour les informations utilisateur
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (user.email) {
+                    document.getElementById('userEmail').textContent = user.email;
+                    document.getElementById('userName').textContent = user.username || 'Admin';
+                    document.getElementById('userAvatar').textContent = (user.username || 'A').charAt(0).toUpperCase();
+                }
+
+            } catch (error) {
+                console.error('Erreur chargement stats:', error);
+                showNotification('Erreur lors du chargement des statistiques', 'error');
+            }
+        }
+
+        // Mettre à jour les tendances
+        function updateTrends(data) {
+            // Simuler des tendances pour l'exemple
+            const trends = {
+                users: { change: '+12%', trend: 'up' },
+                bots: { change: '+8%', trend: 'up' },
+                coins: { change: '+25%', trend: 'up' },
+                servers: { change: '+5%', trend: 'up' }
+            };
+
+            // Utilisateurs
+            const usersTrend = document.getElementById('usersTrend');
+            const usersChange = document.getElementById('usersChange');
+            usersChange.textContent = trends.users.change;
+            usersTrend.className = `stat-trend trend-${trends.users.trend}`;
+
+            // Bots
+            const botsTrend = document.getElementById('botsTrend');
+            const botsChange = document.getElementById('botsChange');
+            botsChange.textContent = trends.bots.change;
+            botsTrend.className = `stat-trend trend-${trends.bots.trend}`;
+
+            // Coins
+            const coinsTrend = document.getElementById('coinsTrend');
+            const coinsChange = document.getElementById('coinsChange');
+            coinsChange.textContent = trends.coins.change;
+            coinsTrend.className = `stat-trend trend-${trends.coins.trend}`;
+
+            // Serveurs
+            const serversTrend = document.getElementById('serversTrend');
+            const serversChange = document.getElementById('serversChange');
+            serversChange.textContent = trends.servers.change;
+            serversTrend.className = `stat-trend trend-${trends.servers.trend}`;
+        }
+
+        // Charger l'activité récente
+        function loadRecentActivity(activities) {
+            const activityList = document.getElementById('activityList');
+            
+            if (!activities || activities.length === 0) {
+                activityList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px;"></i>
+                        <p>Aucune activité récente</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            activities.forEach(activity => {
+                let iconClass = 'user';
+                let icon = 'fas fa-user';
+                let text = activity.action || 'Action inconnue';
+                
+                // Déterminer l'icône selon le type d'action
+                if (activity.action.includes('BOT')) {
+                    iconClass = 'bot';
+                    icon = 'fas fa-robot';
+                } else if (activity.action.includes('COIN')) {
+                    iconClass = 'coin';
+                    icon = 'fas fa-coins';
+                } else if (activity.action.includes('DEPLOY')) {
+                    iconClass = 'deploy';
+                    icon = 'fas fa-rocket';
+                }
+
+                // Formater le texte
+                if (activity.user && activity.user.email) {
+                    text = `${activity.action} par ${activity.user.email}`;
+                }
+
+                // Formater la date
+                const timeAgo = formatTimeAgo(new Date(activity.created_at));
+
+                html += `
+                    <div class="activity-item">
+                        <div class="activity-icon ${iconClass}">
+                            <i class="${icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-text">${text}</div>
+                            <div class="activity-time">${timeAgo}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            activityList.innerHTML = html;
+        }
+
+        // Formater le temps écoulé
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'À l\'instant';
+            if (diffMins < 60) return `Il y a ${diffMins} minute${diffMins > 1 ? 's' : ''}`;
+            if (diffHours < 24) return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
+            if (diffDays < 7) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+            return date.toLocaleDateString();
+        }
+
+        // Charger les données des charts
+        function loadChartData(statsData) {
+            // Données simulées pour l'exemple
+            const userData = {
+                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil'],
+                datasets: [{
+                    label: 'Nouveaux Utilisateurs',
+                    data: [65, 59, 80, 81, 56, 55, 40],
+                    borderColor: '#00d4ff',
+                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            };
+
+            const deploymentData = {
+                labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+                datasets: [{
+                    label: 'Déploiements',
+                    data: [12, 19, 8, 15, 22, 18, 25],
+                    borderColor: '#8a2be2',
+                    backgroundColor: 'rgba(138, 43, 226, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            };
+
+            // Initialiser ou mettre à jour le chart des utilisateurs
+            const usersCtx = document.getElementById('usersChart').getContext('2d');
+            if (usersChart) {
+                usersChart.destroy();
+            }
+            usersChart = new Chart(usersCtx, {
+                type: 'line',
+                data: userData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Initialiser ou mettre à jour le chart des déploiements
+            const deploymentsCtx = document.getElementById('deploymentsChart').getContext('2d');
+            if (deploymentsChart) {
+                deploymentsChart.destroy();
+            }
+            deploymentsChart = new Chart(deploymentsCtx, {
+                type: 'bar',
+                data: deploymentData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Rafraîchir les statistiques
+        function refreshStats() {
+            loadStats();
+            showNotification('Statistiques actualisées', 'success');
+        }
+
+        // Écouteurs pour les sélecteurs de période
+        document.getElementById('activityPeriod').addEventListener('change', function() {
+            console.log('Période activité:', this.value);
+            // Ici, vous récupéreriez les nouvelles données selon la période
+        });
+
+        document.getElementById('deploymentsPeriod').addEventListener('change', function() {
+            console.log('Période déploiements:', this.value);
+            // Ici, vous récupéreriez les nouvelles données selon la période
+        });
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            // Vérifier l'authentification et les droits admin
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            if (user.role !== 'admin') {
+                showNotification('Accès administrateur requis', 'error');
+                setTimeout(() => window.location.href = '/dashboard', 2000);
+                return;
+            }
+
+            // Charger les statistiques
+            loadStats();
+
+            // Raccourcis clavier
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'r' && e.ctrlKey) {
+                    refreshStats();
+                    e.preventDefault();
+                }
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
+            });
+
+            // Rafraîchissement automatique toutes les minutes
+            setInterval(() => {
+                if (!document.hidden) {
+                    loadStats();
+                }
+            }, 60000);
+        });
+    </script>
+</body>
+</html>

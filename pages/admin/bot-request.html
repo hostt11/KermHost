@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Demandes de Bots - KermHost Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #8a2be2;
+            --secondary-color: #4a00e0;
+            --accent-color: #00d4ff;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --dark-color: #0f0f23;
+            --light-color: #1a1a2e;
+            --text-color: #ffffff;
+            --text-muted: #a0a0c0;
+            --success-color: #00ff9d;
+            --warning-color: #ffcc00;
+            --danger-color: #ff4757;
+            --sidebar-width: 280px;
+            --border-radius: 15px;
+            --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --glow-shadow: 0 0 20px var(--accent-glow);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--dark-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(74, 0, 224, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.1) 0%, transparent 20%);
+            min-height: 100vh;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 4px;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 1000;
+            box-shadow: var(--box-shadow);
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid var(--glass-border);
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+        }
+
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .sidebar-header img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-header span {
+            font-weight: 700;
+            font-size: 22px;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-menu ul {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+            border-radius: var(--border-radius);
+        }
+
+        .sidebar-menu a.active {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+            color: var(--text-color);
+            border-left: 4px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-menu a:hover {
+            color: var(--text-color);
+            background: var(--glass-bg);
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu i {
+            width: 24px;
+            text-align: center;
+            font-size: 18px;
+            color: var(--accent-color);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(26, 26, 46, 0.9);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            box-shadow: var(--glow-shadow);
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            background: transparent;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            background: var(--glass-bg);
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #00b894);
+            color: white;
+            border: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color), #ff6b6b);
+            color: white;
+            border: none;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning-color), #ff9f43);
+            color: var(--dark-color);
+            border: none;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--accent-color);
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 15px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: var(--text-color);
+            background: var(--glass-bg);
+        }
+
+        .tab.active {
+            color: var(--accent-color);
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -16px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+
+        .badge-pending {
+            background: var(--warning-color);
+            color: var(--dark-color);
+        }
+
+        .badge-approved {
+            background: var(--success-color);
+            color: var(--dark-color);
+        }
+
+        /* Bot Cards */
+        .bots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .bot-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .bot-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
+        }
+
+        .bot-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .bot-header {
+            padding: 25px;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(74, 0, 224, 0.1));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bot-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bot-name i {
+            color: var(--accent-color);
+        }
+
+        .bot-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, var(--warning-color), #ff9f43);
+            color: var(--dark-color);
+        }
+
+        .status-approved {
+            background: linear-gradient(135deg, var(--success-color), #00b894);
+            color: var(--dark-color);
+        }
+
+        .bot-body {
+            padding: 25px;
+        }
+
+        .bot-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .bot-info-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .bot-info-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .bot-info-value {
+            font-weight: 600;
+            font-size: 16px;
+            color: white;
+            word-break: break-all;
+        }
+
+        .bot-description {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .bot-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .bot-actions .btn {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 2px dashed var(--glass-border);
+            border-radius: var(--border-radius);
+        }
+
+        .empty-state i {
+            font-size: 80px;
+            color: var(--accent-color);
+            margin-bottom: 30px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: white;
+            font-weight: 700;
+        }
+
+        .empty-state p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin: 0 auto 30px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--light-color);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--glow-shadow), 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        /* Bot Details */
+        .bot-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .bot-detail-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .bot-detail-title {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .bot-detail-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            word-break: break-all;
+        }
+
+        .env-vars-section {
+            margin-top: 30px;
+        }
+
+        .env-vars-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .env-var-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .env-var-name {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .env-var-description {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .env-var-required {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .required-true {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .required-false {
+            background: var(--success-color);
+            color: var(--dark-color);
+        }
+
+        .env-var-default {
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 8px;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 20px 30px;
+            border-radius: var(--border-radius);
+            background: var(--light-color);
+            color: white;
+            box-shadow: var(--box-shadow), var(--glow-shadow);
+            transform: translateX(150%);
+            transition: transform 0.4s;
+            z-index: 2100;
+            max-width: 400px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .notification.warning {
+            border-left: 4px solid var(--warning-color);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading i {
+            font-size: 40px;
+            color: var(--accent-color);
+            animation: spin 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Kerm JSON Viewer */
+        .json-viewer {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            border: 1px solid var(--glass-border);
+        }
+
+        .json-key {
+            color: var(--accent-color);
+        }
+
+        .json-string {
+            color: var(--success-color);
+        }
+
+        .json-number {
+            color: #ffcc00;
+        }
+
+        .json-boolean {
+            color: #ff6b6b;
+        }
+
+        .json-null {
+            color: #999;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .bots-grid {
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .bots-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .bot-info {
+                grid-template-columns: 1fr;
+            }
+
+            .bot-actions {
+                flex-direction: column;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .bot-details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .env-vars-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                flex: 1;
+                min-width: 120px;
+                text-align: center;
+            }
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+        }
+
+        .page-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Search */
+        .search-container {
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 15px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-color);
+            font-size: 16px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="https://files.catbox.moe/uqw1b5.jpeg" alt="KermHost Logo">
+                    <span>KermHost</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <ul>
+                    <li>
+                        <a href="/admin">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/users">
+                            <i class="fas fa-users"></i>
+                            <span>Utilisateurs</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/bot-request" class="active">
+                            <i class="fas fa-robot"></i>
+                            <span>Demandes Bots</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/add-heroku">
+                            <i class="fas fa-server"></i>
+                            <span>Comptes Heroku</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/database">
+                            <i class="fas fa-database"></i>
+                            <span>Base de Données</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/admin/maintenance">
+                            <i class="fas fa-tools"></i>
+                            <span>Maintenance</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Retour Dashboard</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Admin</div>
+                        <div class="user-email" id="userEmail">admin@kermhost.com</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div>
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>
+                        <i class="fas fa-robot"></i>
+                        Demandes de Bots
+                    </h1>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="refreshBotRequests()">
+                        <i class="fas fa-sync-alt"></i> Actualiser
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-status="pending" onclick="changeTab('pending')">
+                    <i class="fas fa-clock"></i> En attente
+                    <span class="badge badge-pending" id="pendingCount">0</span>
+                </button>
+                <button class="tab" data-status="approved" onclick="changeTab('approved')">
+                    <i class="fas fa-check-circle"></i> Approuvés
+                    <span class="badge badge-approved" id="approvedCount">0</span>
+                </button>
+            </div>
+
+            <!-- Search -->
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" 
+                           placeholder="Rechercher un bot par nom, dépôt GitHub ou propriétaire...">
+                    <button class="btn btn-primary" onclick="searchBots()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bot Requests List -->
+            <div id="botRequestsList">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p style="margin-top: 20px; color: var(--text-muted);">Chargement des demandes de bots...</p>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination" style="display: none;">
+                <button class="page-btn" id="prevPage" onclick="changePage(currentPage - 1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="page-info">Page <span id="currentPage">1</span> sur <span id="totalPages">1</span></span>
+                <button class="page-btn" id="nextPage" onclick="changePage(currentPage + 1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Details Modal -->
+    <div class="modal" id="botDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-robot"></i> <span id="botDetailsTitle">Détails du Bot</span></h3>
+                <button class="modal-close" id="closeDetailsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="botDetailsContent">
+                    <!-- Bot details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approve/Reject Modal -->
+    <div class="modal" id="actionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-check-circle"></i> <span id="actionTitle">Action sur le Bot</span></h3>
+                <button class="modal-close" id="closeActionModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="actionForm">
+                    <input type="hidden" id="actionBotId">
+                    <input type="hidden" id="actionType">
+                    
+                    <div class="form-group" id="rejectReasonGroup" style="display: none;">
+                        <label class="form-label">
+                            <i class="fas fa-exclamation-triangle"></i> Raison du rejet (optionnel)
+                        </label>
+                        <textarea class="form-control" id="rejectReason" rows="4" 
+                                  placeholder="Expliquez pourquoi le bot est rejeté..."></textarea>
+                    </div>
+
+                    <div id="approveInfo" style="display: none;">
+                        <div style="background: rgba(0, 255, 157, 0.1); border: 1px solid var(--success-color); border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                            <h4 style="color: var(--success-color); margin-bottom: 10px;">
+                                <i class="fas fa-info-circle"></i> Information
+                            </h4>
+                            <p style="color: var(--text-muted); margin-bottom: 0;">
+                                En approuvant ce bot, il deviendra disponible pour tous les utilisateurs.
+                                Un email sera envoyé au propriétaire pour l'informer de l'approbation.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="rejectInfo" style="display: none;">
+                        <div style="background: rgba(255, 71, 87, 0.1); border: 1px solid var(--danger-color); border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                            <h4 style="color: var(--danger-color); margin-bottom: 10px;">
+                                <i class="fas fa-exclamation-triangle"></i> Attention
+                            </h4>
+                            <p style="color: var(--text-muted); margin-bottom: 0;">
+                                En rejetant ce bot, il ne sera pas disponible pour les utilisateurs.
+                                Un email sera envoyé au propriétaire avec la raison du rejet.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 30px;">
+                        <div style="display: flex; gap: 15px;">
+                            <button type="button" class="btn btn-secondary" onclick="closeActionModal()" style="flex: 1;">
+                                <i class="fas fa-times"></i> Annuler
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="actionSubmitBtn" style="flex: 1;">
+                                <i class="fas fa-check"></i> Confirmer
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <script>
+        // Variables globales
+        let currentTab = 'pending';
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentSearch = '';
+
+        // Gestion du menu mobile
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Gestion des modals
+        const botDetailsModal = document.getElementById('botDetailsModal');
+        const closeDetailsModal = document.getElementById('closeDetailsModal');
+        const actionModal = document.getElementById('actionModal');
+        const closeActionModalBtn = document.getElementById('closeActionModal');
+
+        closeDetailsModal.addEventListener('click', () => {
+            botDetailsModal.style.display = 'none';
+        });
+
+        closeActionModalBtn.addEventListener('click', () => {
+            actionModal.style.display = 'none';
+        });
+
+        // Fermer les modals en cliquant à l'extérieur
+        window.addEventListener('click', (e) => {
+            if (e.target === botDetailsModal) {
+                botDetailsModal.style.display = 'none';
+            }
+            if (e.target === actionModal) {
+                actionModal.style.display = 'none';
+            }
+            if (e.target === sidebar) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Fonction de notification
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : '⚠';
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 24px; font-weight: bold;">${icon}</div>
+                    <div>${message}</div>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    container.removeChild(notification);
+                }, 400);
+            }, 4000);
+        }
+
+        // Changer d'onglet
+        function changeTab(status) {
+            currentTab = status;
+            currentPage = 1;
+            currentSearch = '';
+            
+            // Mettre à jour les classes des onglets
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.status === status) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Réinitialiser la recherche
+            document.getElementById('searchInput').value = '';
+            
+            // Charger les demandes
+            loadBotRequests();
+        }
+
+        // Charger les demandes de bots
+        async function loadBotRequests() {
+            try {
+                const token = localStorage.getItem('token');
+                const params = new URLSearchParams({
+                    status: currentTab,
+                    page: currentPage,
+                    limit: 12,
+                    search: currentSearch
+                });
+
+                const response = await fetch(`/api/admin/bot-requests?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (response.status === 403) {
+                    showNotification('Accès administrateur requis', 'error');
+                    setTimeout(() => window.location.href = '/dashboard', 2000);
+                    return;
+                }
+
+                const data = await response.json();
+                const botRequestsList = document.getElementById('botRequestsList');
+                
+                if (!data.requests || data.requests.length === 0) {
+                    const emptyMessage = currentTab === 'pending' 
+                        ? 'Aucune demande de bot en attente' 
+                        : 'Aucun bot approuvé';
+                    
+                    botRequestsList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-robot"></i>
+                            <h3>${emptyMessage}</h3>
+                            <p>${currentTab === 'pending' 
+                                ? 'Toutes les demandes ont été traitées' 
+                                : 'Les bots approuvés apparaîtront ici'}</p>
+                        </div>
+                    `;
+                    
+                    document.getElementById('pagination').style.display = 'none';
+                } else {
+                    let html = '<div class="bots-grid">';
+                    
+                    data.requests.forEach(bot => {
+                        const envCount = bot.kerm_json?.env ? Object.keys(bot.kerm_json.env).length : 0;
+                        const statusClass = bot.is_approved ? 'status-approved' : 'status-pending';
+                        const statusText = bot.is_approved ? 'APPROUVÉ' : 'EN ATTENTE';
+                        const submittedDate = new Date(bot.created_at).toLocaleDateString();
+                        
+                        html += `
+                            <div class="bot-card" data-id="${bot.id}">
+                                <div class="bot-header">
+                                    <div class="bot-name">
+                                        <i class="fas fa-robot"></i>
+                                        ${bot.name}
+                                    </div>
+                                    <div class="bot-status ${statusClass}">${statusText}</div>
+                                </div>
+                                <div class="bot-body">
+                                    ${bot.description ? `
+                                        <div class="bot-description">
+                                            ${bot.description}
+                                        </div>
+                                    ` : ''}
+                                    
+                                    <div class="bot-info">
+                                        <div class="bot-info-item">
+                                            <div class="bot-info-label">PROPRIÉTAIRE</div>
+                                            <div class="bot-info-value">${bot.user?.email || 'N/A'}</div>
+                                        </div>
+                                        <div class="bot-info-item">
+                                            <div class="bot-info-label">DÉPÔT GITHUB</div>
+                                            <div class="bot-info-value">${bot.github_repo}</div>
+                                        </div>
+                                        <div class="bot-info-item">
+                                            <div class="bot-info-label">COÛT</div>
+                                            <div class="bot-info-value">${bot.cost || 10} coins</div>
+                                        </div>
+                                        <div class="bot-info-item">
+                                            <div class="bot-info-label">ENVIRONNEMENTS</div>
+                                            <div class="bot-info-value">${envCount}</div>
+                                        </div>
+                                        <div class="bot-info-item">
+                                            <div class="bot-info-label">SOUMIS LE</div>
+                                            <div class="bot-info-value">${submittedDate}</div>
+                                        </div>
+                                        <div class="bot-info-item">
+                                            <div class="bot-info-label">EMAIL VÉRIFICATION</div>
+                                            <div class="bot-info-value">${bot.owner_verification || 'N/A'}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bot-actions">
+                                        <button class="btn btn-secondary" onclick="viewBotDetails('${bot.id}')">
+                                            <i class="fas fa-eye"></i> Voir Détails
+                                        </button>
+                                        ${!bot.is_approved ? `
+                                            <button class="btn btn-success" onclick="showApproveModal('${bot.id}', '${bot.name}')">
+                                                <i class="fas fa-check"></i> Approuver
+                                            </button>
+                                            <button class="btn btn-danger" onclick="showRejectModal('${bot.id}', '${bot.name}')">
+                                                <i class="fas fa-times"></i> Rejeter
+                                            </button>
+                                        ` : `
+                                            <button class="btn btn-warning" onclick="showRejectModal('${bot.id}', '${bot.name}')">
+                                                <i class="fas fa-ban"></i> Désapprouver
+                                            </button>
+                                        `}
+                                        <button class="btn btn-primary" onclick="deleteBotRequest('${bot.id}', '${bot.name}')">
+                                            <i class="fas fa-trash"></i> Supprimer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    botRequestsList.innerHTML = html;
+                    
+                    // Mettre à jour la pagination
+                    if (data.pagination && data.pagination.pages > 1) {
+                        updatePagination(data.pagination);
+                    } else {
+                        document.getElementById('pagination').style.display = 'none';
+                    }
+                }
+                
+                // Mettre à jour les compteurs (simulés)
+                updateCounters(data);
+                
+                // Mettre à jour les informations utilisateur
+                const adminUser = JSON.parse(localStorage.getItem('user') || '{}');
+                if (adminUser.email) {
+                    document.getElementById('userEmail').textContent = adminUser.email;
+                    document.getElementById('userName').textContent = adminUser.username || 'Admin';
+                    document.getElementById('userAvatar').textContent = (adminUser.username || 'A').charAt(0).toUpperCase();
+                }
+                
+            } catch (error) {
+                console.error('Erreur chargement demandes bots:', error);
+                showNotification('Erreur lors du chargement des demandes', 'error');
+            }
+        }
+
+        // Mettre à jour les compteurs
+        function updateCounters(data) {
+            // Simuler les compteurs pour l'exemple
+            // Dans une vraie implémentation, vous récupéreriez ces données depuis l'API
+            if (currentTab === 'pending') {
+                document.getElementById('pendingCount').textContent = data.requests?.length || 0;
+                document.getElementById('approvedCount').textContent = '0';
+            } else {
+                document.getElementById('approvedCount').textContent = data.requests?.length || 0;
+                document.getElementById('pendingCount').textContent = '0';
+            }
+        }
+
+        // Mettre à jour la pagination
+        function updatePagination(pagination) {
+            const paginationDiv = document.getElementById('pagination');
+            const currentPageSpan = document.getElementById('currentPage');
+            const totalPagesSpan = document.getElementById('totalPages');
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+            
+            paginationDiv.style.display = 'flex';
+            currentPageSpan.textContent = pagination.page;
+            totalPagesSpan.textContent = pagination.pages;
+            
+            // Désactiver/activer les boutons
+            prevBtn.disabled = pagination.page <= 1;
+            nextBtn.disabled = pagination.page >= pagination.pages;
+            
+            // Mettre à jour l'apparence
+            prevBtn.style.opacity = prevBtn.disabled ? '0.5' : '1';
+            nextBtn.style.opacity = nextBtn.disabled ? '0.5' : '1';
+        }
+
+        // Changer de page
+        function changePage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadBotRequests();
+        }
+
+        // Rechercher des bots
+        function searchBots() {
+            const searchInput = document.getElementById('searchInput');
+            currentSearch = searchInput.value.trim();
+            currentPage = 1;
+            loadBotRequests();
+        }
+
+        // Recherche avec la touche Entrée
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchBots();
+            }
+        });
+
+        // Rafraîchir la liste
+        function refreshBotRequests() {
+            loadBotRequests();
+            showNotification('Liste actualisée', 'success');
+        }
+
+        // Voir les détails d'un bot
+        async function viewBotDetails(botId) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/admin/bot-requests/${botId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const bot = data.request;
+                    const kermJson = bot.kerm_json || {};
+                    const envVars = kermJson.env || {};
+                    
+                    // Formater le JSON pour l'affichage
+                    const formattedJson = JSON.stringify(kermJson, null, 2)
+                        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?)/g, match => {
+                            let cls = 'json-number';
+                            if (/^"/.test(match)) {
+                                if (/:$/.test(match)) {
+                                    cls = 'json-key';
+                                } else {
+                                    cls = 'json-string';
+                                }
+                            } else if (/true|false/.test(match)) {
+                                cls = 'json-boolean';
+                            } else if (/null/.test(match)) {
+                                cls = 'json-null';
+                            }
+                            return `<span class="${cls}">${match}</span>`;
+                        });
+                    
+                    let envVarsHtml = '';
+                    if (Object.keys(envVars).length > 0) {
+                        envVarsHtml = '<div class="env-vars-section">';
+                        envVarsHtml += '<h4 style="color: white; margin-bottom: 15px;">Variables d\'Environnement</h4>';
+                        envVarsHtml += '<div class="env-vars-grid">';
+                        
+                        Object.entries(envVars).forEach(([key, config]) => {
+                            envVarsHtml += `
+                                <div class="env-var-item">
+                                    <div class="env-var-name">${key}</div>
+                                    <div class="env-var-required ${config.required !== false ? 'required-true' : 'required-false'}">
+                                        ${config.required !== false ? 'OBLIGATOIRE' : 'OPTIONNEL'}
+                                    </div>
+                                    <div class="env-var-description">${config.description || 'Pas de description'}</div>
+                                    ${config.value ? `
+                                        <div class="env-var-default">
+                                            <strong>Valeur par défaut:</strong> ${config.value}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        });
+                        
+                        envVarsHtml += '</div></div>';
+                    }
+                    
+                    const botDetailsContent = document.getElementById('botDetailsContent');
+                    botDetailsContent.innerHTML = `
+                        <div class="bot-details-grid">
+                            <div class="bot-detail-card">
+                                <div class="bot-detail-title">NOM DU BOT</div>
+                                <div class="bot-detail-value">${bot.name}</div>
+                            </div>
+                            <div class="bot-detail-card">
+                                <div class="bot-detail-title">PROPRIÉTAIRE</div>
+                                <div class="bot-detail-value">${bot.user?.email || 'N/A'}</div>
+                            </div>
+                            <div class="bot-detail-card">
+                                <div class="bot-detail-title">DÉPÔT GITHUB</div>
+                                <div class="bot-detail-value">
+                                    <a href="https://github.com/${bot.github_repo}" target="_blank" style="color: var(--accent-color); text-decoration: none;">
+                                        ${bot.github_repo}
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="bot-detail-card">
+                                <div class="bot-detail-title">COÛT DE DÉPLOIEMENT</div>
+                                <div class="bot-detail-value">${bot.cost || 10} coins</div>
+                            </div>
+                            <div class="bot-detail-card">
+                                <div class="bot-detail-title">STATUT</div>
+                                <div class="bot-detail-value">
+                                    <span class="bot-status ${bot.is_approved ? 'status-approved' : 'status-pending'}" style="display: inline-block;">
+                                        ${bot.is_approved ? 'APPROUVÉ' : 'EN ATTENTE'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="bot-detail-card">
+                                <div class="bot-detail-title">DATE DE SOUMISSION</div>
+                                <div class="bot-detail-value">${new Date(bot.created_at).toLocaleString()}</div>
+                            </div>
+                        </div>
+                        
+                        ${bot.description ? `
+                            <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                                <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 10px;">DESCRIPTION</div>
+                                <div style="color: white; line-height: 1.6;">${bot.description}</div>
+                            </div>
+                        ` : ''}
+                        
+                        ${kermJson.documentation_link ? `
+                            <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                                <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 10px;">LIEN DE DOCUMENTATION</div>
+                                <div style="color: white;">
+                                    <a href="${kermJson.documentation_link}" target="_blank" style="color: var(--accent-color); text-decoration: none;">
+                                        ${kermJson.documentation_link}
+                                    </a>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${envVarsHtml}
+                        
+                        <div style="margin-top: 30px;">
+                            <h4 style="color: white; margin-bottom: 15px;">Fichier kerm.json</h4>
+                            <div class="json-viewer">${formattedJson}</div>
+                        </div>
+                        
+                        <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: flex-end;">
+                            ${!bot.is_approved ? `
+                                <button class="btn btn-success" onclick="showApproveModal('${bot.id}', '${bot.name}')">
+                                    <i class="fas fa-check"></i> Approuver
+                                </button>
+                                <button class="btn btn-danger" onclick="showRejectModal('${bot.id}', '${bot.name}')">
+                                    <i class="fas fa-times"></i> Rejeter
+                                </button>
+                            ` : `
+                                <button class="btn btn-warning" onclick="showRejectModal('${bot.id}', '${bot.name}')">
+                                    <i class="fas fa-ban"></i> Désapprouver
+                                </button>
+                            `}
+                            <button class="btn btn-primary" onclick="deleteBotRequest('${bot.id}', '${bot.name}')">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
+                        </div>
+                    `;
+                    
+                    document.getElementById('botDetailsTitle').textContent = bot.name;
+                    botDetailsModal.style.display = 'flex';
+                } else {
+                    throw new Error(data.error || 'Erreur lors du chargement des détails');
+                }
+            } catch (error) {
+                console.error('Erreur chargement détails bot:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+
+        // Afficher le modal d'approbation
+        function showApproveModal(botId, botName) {
+            document.getElementById('actionBotId').value = botId;
+            document.getElementById('actionType').value = 'approve';
+            document.getElementById('actionTitle').innerHTML = `<i class="fas fa-check-circle"></i> Approuver "${botName}"`;
+            document.getElementById('actionSubmitBtn').innerHTML = '<i class="fas fa-check"></i> Approuver';
+            document.getElementById('actionSubmitBtn').className = 'btn btn-success';
+            
+            document.getElementById('rejectReasonGroup').style.display = 'none';
+            document.getElementById('approveInfo').style.display = 'block';
+            document.getElementById('rejectInfo').style.display = 'none';
+            
+            actionModal.style.display = 'flex';
+        }
+
+        // Afficher le modal de rejet
+        function showRejectModal(botId, botName) {
+            document.getElementById('actionBotId').value = botId;
+            document.getElementById('actionType').value = 'reject';
+            const isApproved = currentTab === 'approved';
+            const actionText = isApproved ? 'Désapprouver' : 'Rejeter';
+            
+            document.getElementById('actionTitle').innerHTML = `<i class="fas fa-times-circle"></i> ${actionText} "${botName}"`;
+            document.getElementById('actionSubmitBtn').innerHTML = `<i class="fas fa-times"></i> ${actionText}`;
+            document.getElementById('actionSubmitBtn').className = 'btn btn-danger';
+            
+            document.getElementById('rejectReasonGroup').style.display = 'block';
+            document.getElementById('approveInfo').style.display = 'none';
+            document.getElementById('rejectInfo').style.display = 'block';
+            document.getElementById('rejectReason').value = '';
+            
+            actionModal.style.display = 'flex';
+        }
+
+        // Fermer le modal d'action
+        function closeActionModal() {
+            actionModal.style.display = 'none';
+            document.getElementById('actionForm').reset();
+        }
+
+        // Soumettre l'action (approbation/rejet)
+        document.getElementById('actionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const botId = document.getElementById('actionBotId').value;
+            const actionType = document.getElementById('actionType').value;
+            const rejectReason = document.getElementById('rejectReason').value;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/admin/bot-requests/${botId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        approve: actionType === 'approve',
+                        reason: rejectReason
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const message = actionType === 'approve' 
+                        ? 'Bot approuvé avec succès' 
+                        : 'Bot rejeté avec succès';
+                    
+                    showNotification(message, 'success');
+                    
+                    // Fermer les modals
+                    actionModal.style.display = 'none';
+                    botDetailsModal.style.display = 'none';
+                    
+                    // Recharger la liste
+                    setTimeout(() => {
+                        loadBotRequests();
+                    }, 1000);
+                } else {
+                    throw new Error(data.error || 'Erreur lors de l\'action');
+                }
+            } catch (error) {
+                console.error('Erreur action bot:', error);
+                showNotification(error.message, 'error');
+            }
+        });
+
+        // Supprimer une demande de bot
+        async function deleteBotRequest(botId, botName) {
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer le bot "${botName}" ? Cette action est irréversible.`)) {
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/admin/bot-requests/${botId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showNotification('Demande de bot supprimée avec succès', 'success');
+                    
+                    // Fermer le modal de détails s'il est ouvert
+                    botDetailsModal.style.display = 'none';
+                    
+                    // Recharger la liste
+                    setTimeout(() => {
+                        loadBotRequests();
+                    }, 1000);
+                } else {
+                    throw new Error(data.error || 'Erreur lors de la suppression');
+                }
+            } catch (error) {
+                console.error('Erreur suppression bot:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            // Vérifier l'authentification et les droits admin
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            if (user.role !== 'admin') {
+                showNotification('Accès administrateur requis', 'error');
+                setTimeout(() => window.location.href = '/dashboard', 2000);
+                return;
+            }
+
+            // Charger les demandes de bots
+            loadBotRequests();
+
+            // Raccourcis clavier
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (botDetailsModal.style.display === 'flex') {
+                        botDetailsModal.style.display = 'none';
+                    }
+                    if (actionModal.style.display === 'flex') {
+                        actionModal.style.display = 'none';
+                    }
+                    if (sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                    }
+                }
+                if (e.ctrlKey && e.key === 'f') {
+                    document.getElementById('searchInput').focus();
+                    e.preventDefault();
+                }
+                if (e.key === 'r' && e.ctrlKey) {
+                    refreshBotRequests();
+                    e.preventDefault();
+                }
+            });
+
+            // Rafraîchissement automatique toutes les 30 secondes
+            setInterval(() => {
+                if (!document.hidden && currentTab === 'pending') {
+                    loadBotRequests();
+                }
+            }, 30000);
+        });
+    </script>
+</body>
+</html>
