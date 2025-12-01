@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Page non trouvée - KermHost</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #8a2be2;
+            --secondary-color: #4a00e0;
+            --accent-color: #00d4ff;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --dark-color: #0f0f23;
+            --text-color: #ffffff;
+            --text-muted: #a0a0c0;
+            --border-radius: 15px;
+            --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --glow-shadow: 0 0 20px var(--accent-glow);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--dark-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(74, 0, 224, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.1) 0%, transparent 20%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px;
+        }
+
+        .logo {
+            margin-bottom: 40px;
+        }
+
+        .logo img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+            margin-bottom: 20px;
+            transition: var(--transition);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(5deg); }
+            66% { transform: translateY(-10px) rotate(-5deg); }
+        }
+
+        .logo h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .error-code {
+            font-size: 12rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 40px rgba(0, 212, 255, 0.4);
+            line-height: 1;
+            margin: 40px 0;
+            position: relative;
+            display: inline-block;
+        }
+
+        .error-code::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            border-radius: 2px;
+        }
+
+        .error-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .error-message {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            line-height: 1.6;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .error-details {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 40px;
+            text-align: left;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .error-details h3 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-details ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .error-details li {
+            margin-bottom: 12px;
+            padding-left: 30px;
+            position: relative;
+            color: var(--text-muted);
+        }
+
+        .error-details li::before {
+            content: '•';
+            color: var(--accent-color);
+            font-size: 24px;
+            position: absolute;
+            left: 0;
+            top: -5px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .btn {
+            padding: 18px 35px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+            min-width: 200px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: 0 6px 20px rgba(138, 43, 226, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(138, 43, 226, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+        }
+
+        /* Animation des éléments */
+        .error-code, .error-title, .error-message, .error-details, .actions {
+            animation: fadeInUp 0.8s ease forwards;
+            opacity: 0;
+        }
+
+        .error-code { animation-delay: 0.1s; }
+        .error-title { animation-delay: 0.2s; }
+        .error-message { animation-delay: 0.3s; }
+        .error-details { animation-delay: 0.4s; }
+        .actions { animation-delay: 0.5s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Astronaute flottant */
+        .astronaut {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.1;
+            animation: floatAround 20s linear infinite;
+        }
+
+        @keyframes floatAround {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            25% {
+                transform: translate(100px, -50px) rotate(90deg);
+            }
+            50% {
+                transform: translate(50px, 100px) rotate(180deg);
+            }
+            75% {
+                transform: translate(-100px, 50px) rotate(270deg);
+            }
+            100% {
+                transform: translate(0, 0) rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .logo img {
+                width: 100px;
+                height: 100px;
+            }
+
+            .logo h1 {
+                font-size: 2.5rem;
+            }
+
+            .error-code {
+                font-size: 8rem;
+            }
+
+            .error-title {
+                font-size: 2rem;
+            }
+
+            .error-message {
+                font-size: 1.1rem;
+            }
+
+            .actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .error-code {
+                font-size: 6rem;
+            }
+
+            .error-title {
+                font-size: 1.8rem;
+            }
+
+            .error-message {
+                font-size: 1rem;
+            }
+
+            .error-details {
+                padding: 20px;
+            }
+        }
+
+        /* Effets spéciaux */
+        .glowing-dots {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: -2;
+        }
+
+        .glowing-dots div {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-color);
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Effets de fond -->
+    <div class="glowing-dots" id="glowingDots"></div>
+
+    <div class="container">
+        <div class="logo">
+            <img src="https://files.catbox.moe/uqw1b5.jpeg" alt="KermHost Logo">
+            <h1>KermHost</h1>
+        </div>
+
+        <div class="error-code">404</div>
+
+        <h2 class="error-title">
+            <i class="fas fa-exclamation-triangle"></i> Page non trouvée
+        </h2>
+
+        <p class="error-message">
+            Oups ! Il semble que la page que vous cherchez s'est égarée dans l'espace numérique.
+            Peut-être a-t-elle été déplacée, supprimée ou n'a-t-elle jamais existé.
+        </p>
+
+        <div class="error-details">
+            <h3><i class="fas fa-rocket"></i> Que faire maintenant ?</h3>
+            <ul>
+                <li>Vérifiez l'URL pour d'éventuelles fautes de frappe</li>
+                <li>Retournez à la page d'accueil pour explorer notre plateforme</li>
+                <li>Consultez notre dashboard si vous êtes connecté</li>
+                <li>Contactez notre support si le problème persiste</li>
+            </ul>
+        </div>
+
+        <div class="actions">
+            <a href="/" class="btn btn-primary">
+                <i class="fas fa-home"></i> Retour à l'accueil
+            </a>
+            <a href="/dashboard" class="btn btn-secondary">
+                <i class="fas fa-tachometer-alt"></i> Aller au Dashboard
+            </a>
+            <a href="javascript:history.back()" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Page précédente
+            </a>
+        </div>
+
+        <!-- Statistiques amusantes -->
+        <div style="margin-top: 50px; color: var(--text-muted); font-size: 0.9rem;">
+            <p>
+                <i class="fas fa-info-circle"></i> 
+                Vous êtes le <span id="visitorCount">1 234 567</span>ème visiteur à découvrir cette page 404
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Générer des points lumineux aléatoires
+        function createGlowingDots() {
+            const container = document.getElementById('glowingDots');
+            const dotCount = 50;
+            
+            for (let i = 0; i < dotCount; i++) {
+                const dot = document.createElement('div');
+                dot.style.left = `${Math.random() * 100}%`;
+                dot.style.top = `${Math.random() * 100}%`;
+                dot.style.animationDelay = `${Math.random() * 5}s`;
+                dot.style.width = `${Math.random() * 6 + 2}px`;
+                dot.style.height = dot.style.width;
+                container.appendChild(dot);
+            }
+        }
+
+        // Générer un nombre de visiteur aléatoire
+        function generateVisitorCount() {
+            const base = 1234567;
+            const randomIncrement = Math.floor(Math.random() * 1000);
+            document.getElementById('visitorCount').textContent = 
+                (base + randomIncrement).toLocaleString('fr-FR');
+        }
+
+        // Ajouter des écouteurs d'événements pour les boutons
+        document.addEventListener('DOMContentLoaded', () => {
+            createGlowingDots();
+            generateVisitorCount();
+            
+            // Animation au survol des boutons
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.05)';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // Raccourci clavier: Échap pour retour en arrière
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    window.history.back();
+                }
+            });
+
+            // Animation de l'astronaute
+            const astronaut = document.createElement('div');
+            astronaut.className = 'astronaut';
+            astronaut.innerHTML = '👨‍🚀';
+            astronaut.style.fontSize = '100px';
+            astronaut.style.left = `${Math.random() * 80 + 10}%`;
+            astronaut.style.top = `${Math.random() * 80 + 10}%`;
+            document.body.appendChild(astronaut);
+        });
+
+        // Simulation d'un compteur de visiteurs
+        setInterval(() => {
+            const current = document.getElementById('visitorCount').textContent;
+            const numeric = parseInt(current.replace(/\s/g, ''));
+            document.getElementById('visitorCount').textContent = 
+                (numeric + 1).toLocaleString('fr-FR');
+        }, 5000);
+    </script>
+</body>
+</html>
