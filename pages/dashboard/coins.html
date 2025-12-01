@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Coins - KermHost</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #8a2be2;
+            --secondary-color: #4a00e0;
+            --accent-color: #00d4ff;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --dark-color: #0f0f23;
+            --light-color: #1a1a2e;
+            --text-color: #ffffff;
+            --text-muted: #a0a0c0;
+            --success-color: #00ff9d;
+            --warning-color: #ffcc00;
+            --danger-color: #ff4757;
+            --sidebar-width: 280px;
+            --border-radius: 15px;
+            --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --glow-shadow: 0 0 20px var(--accent-glow);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--dark-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(74, 0, 224, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.1) 0%, transparent 20%);
+            min-height: 100vh;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 4px;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 1000;
+            box-shadow: var(--box-shadow);
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid var(--glass-border);
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+        }
+
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .sidebar-header img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-header span {
+            font-weight: 700;
+            font-size: 22px;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-menu ul {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+            border-radius: var(--border-radius);
+        }
+
+        .sidebar-menu a.active {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+            color: var(--text-color);
+            border-left: 4px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-menu a:hover {
+            color: var(--text-color);
+            background: var(--glass-bg);
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu i {
+            width: 24px;
+            text-align: center;
+            font-size: 18px;
+            color: var(--accent-color);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(26, 26, 46, 0.9);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            box-shadow: var(--glow-shadow);
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            background: transparent;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--accent-color);
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Coin Balance */
+        .coin-balance {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 40px;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .coin-balance::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 30%, rgba(0, 212, 255, 0.1), transparent 50%);
+            z-index: 0;
+        }
+
+        .coin-icon {
+            font-size: 60px;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px var(--accent-color);
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-amount {
+            font-size: 64px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .balance-subtitle {
+            color: var(--text-muted);
+            font-size: 16px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Actions Grid */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .action-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            transition: var(--transition);
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .action-card:hover::before {
+            left: 100%;
+        }
+
+        .action-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .action-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+        }
+
+        .action-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .action-description {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .action-button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .action-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(138, 43, 226, 0.4);
+        }
+
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Transactions */
+        .transactions-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--accent-color);
+        }
+
+        .transactions-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+
+        .transaction-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .transaction-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 20px;
+        }
+
+        .transaction-icon.earning {
+            background: linear-gradient(135deg, var(--success-color), #00b894);
+            color: var(--dark-color);
+        }
+
+        .transaction-icon.spending {
+            background: linear-gradient(135deg, var(--danger-color), #ff6b6b);
+            color: white;
+        }
+
+        .transaction-icon.transfer {
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+            color: white;
+        }
+
+        .transaction-details {
+            flex: 1;
+        }
+
+        .transaction-title {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .transaction-description {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .transaction-amount {
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .transaction-amount.positive {
+            color: var(--success-color);
+        }
+
+        .transaction-amount.negative {
+            color: var(--danger-color);
+        }
+
+        .transaction-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .empty-transactions {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .empty-transactions i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 15, 35, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--light-color);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            width: 95%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--glow-shadow), 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-label i {
+            color: var(--accent-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-color);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-help {
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(138, 43, 226, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 20px 30px;
+            border-radius: var(--border-radius);
+            background: var(--light-color);
+            color: white;
+            box-shadow: var(--box-shadow), var(--glow-shadow);
+            transform: translateX(150%);
+            transition: transform 0.4s;
+            z-index: 2100;
+            max-width: 400px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .notification.warning {
+            border-left: 4px solid var(--warning-color);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading i {
+            font-size: 40px;
+            color: var(--accent-color);
+            animation: spin 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .coin-balance {
+                padding: 30px 20px;
+            }
+
+            .balance-amount {
+                font-size: 48px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .transaction-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .transaction-icon {
+                margin-right: 0;
+            }
+
+            .transaction-details {
+                text-align: center;
+            }
+        }
+
+        /* Timer */
+        .timer {
+            font-size: 14px;
+            color: var(--warning-color);
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .timer i {
+            font-size: 16px;
+        }
+
+        /* Coin Animation */
+        @keyframes coinRain {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .coin-rain {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            animation: coinRain linear forwards;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="https://files.catbox.moe/uqw1b5.jpeg" alt="KermHost Logo">
+                    <span>KermHost</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <ul>
+                    <li>
+                        <a href="/dashboard">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/bots">
+                            <i class="fas fa-robot"></i>
+                            <span>Mes Bots</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/coins" class="active">
+                            <i class="fas fa-coins"></i>
+                            <span>Coins</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/invite">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Parrainage</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/request">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Ajouter un Bot</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/profile">
+                            <i class="fas fa-user"></i>
+                            <span>Profil</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Déconnexion</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Utilisateur</div>
+                        <div class="user-email" id="userEmail">Chargement...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div>
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>
+                        <i class="fas fa-coins"></i>
+                        Gestion des Coins
+                    </h1>
+                </div>
+                <div class="timer" id="dailyTimer">
+                    <i class="fas fa-clock"></i>
+                    <span id="nextClaimTimer">Prochain claim dans: 00:00:00</span>
+                </div>
+            </div>
+
+            <!-- Coin Balance -->
+            <div class="coin-balance">
+                <div class="coin-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="balance-label">VOTRE SOLDE</div>
+                <div class="balance-amount" id="balanceAmount">0</div>
+                <div class="balance-subtitle">
+                    <i class="fas fa-info-circle"></i>
+                    Les coins vous permettent de déployer des bots sur Heroku
+                </div>
+            </div>
+
+            <!-- Actions Grid -->
+            <div class="actions-grid">
+                <div class="action-card" id="dailyRewardCard">
+                    <div class="action-icon">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <div class="action-title">Récompense Quotidienne</div>
+                    <div class="action-description">
+                        Recevez <strong>10 coins</strong> chaque jour en vous connectant. 
+                        Ne manquez pas votre récompense !
+                    </div>
+                    <button class="action-button" id="claimDailyBtn">
+                        <i class="fas fa-gift"></i> Claim 10 Coins
+                    </button>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-share-alt"></i>
+                    </div>
+                    <div class="action-title">Envoyer des Coins</div>
+                    <div class="action-description">
+                        Envoyez des coins à d'autres utilisateurs par email. 
+                        Partagez avec vos amis !
+                    </div>
+                    <button class="action-button" id="sendCoinsBtn">
+                        <i class="fas fa-paper-plane"></i> Envoyer des Coins
+                    </button>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="action-title">Historique</div>
+                    <div class="action-description">
+                        Consultez toutes vos transactions de coins. 
+                        Suivez vos gains et dépenses.
+                    </div>
+                    <button class="action-button" onclick="loadTransactions()">
+                        <i class="fas fa-list"></i> Voir l'Historique
+                    </button>
+                </div>
+            </div>
+
+            <!-- Transactions -->
+            <div class="transactions-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-exchange-alt"></i>
+                        Dernières Transactions
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadTransactions()">
+                        <i class="fas fa-sync-alt"></i> Actualiser
+                    </button>
+                </div>
+                <div class="transactions-list" id="transactionsList">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p style="margin-top: 20px; color: var(--text-muted);">Chargement des transactions...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Coins Modal -->
+    <div class="modal" id="sendCoinsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-paper-plane"></i> Envoyer des Coins</h3>
+                <button class="modal-close" id="closeSendModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="sendCoinsForm">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-envelope"></i>
+                            Email du destinataire
+                        </label>
+                        <input type="email" class="form-control" id="recipientEmail" 
+                               placeholder="destinataire@exemple.com" required>
+                        <div class="form-help">
+                            L'email de l'utilisateur qui recevra les coins
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-coins"></i>
+                            Montant
+                        </label>
+                        <input type="number" class="form-control" id="sendAmount" 
+                               min="1" max="1000" placeholder="10" required>
+                        <div class="form-help">
+                            Vous avez <span id="availableCoins">0</span> coins disponibles
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-comment"></i>
+                            Message (optionnel)
+                        </label>
+                        <textarea class="form-control" id="sendMessage" 
+                                  rows="3" placeholder="Un petit mot pour le destinataire..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary" id="sendCoinsSubmit">
+                            <i class="fas fa-paper-plane"></i> Envoyer les Coins
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <script>
+        // Variables globales
+        let userBalance = 0;
+        let lastClaimTime = null;
+        let canClaimDaily = false;
+
+        // Gestion du menu mobile
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Gestion du modal
+        const sendCoinsModal = document.getElementById('sendCoinsModal');
+        const closeSendModal = document.getElementById('closeSendModal');
+        const sendCoinsBtn = document.getElementById('sendCoinsBtn');
+
+        sendCoinsBtn.addEventListener('click', () => {
+            document.getElementById('availableCoins').textContent = userBalance;
+            sendCoinsModal.style.display = 'flex';
+        });
+
+        closeSendModal.addEventListener('click', () => {
+            sendCoinsModal.style.display = 'none';
+        });
+
+        // Fermer le modal en cliquant à l'extérieur
+        window.addEventListener('click', (e) => {
+            if (e.target === sendCoinsModal) {
+                sendCoinsModal.style.display = 'none';
+            }
+        });
+
+        // Fonction de notification
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : '⚠';
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 24px; font-weight: bold;">${icon}</div>
+                    <div>${message}</div>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    container.removeChild(notification);
+                }, 400);
+            }, 4000);
+        }
+
+        // Charger les informations utilisateur
+        async function loadUserInfo() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Récupérer les informations utilisateur
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                
+                if (user.email) {
+                    document.getElementById('userEmail').textContent = user.email;
+                    document.getElementById('userName').textContent = user.username || user.email.split('@')[0];
+                    document.getElementById('userAvatar').textContent = (user.username || user.email.charAt(0)).toUpperCase();
+                    
+                    if (user.coins) {
+                        userBalance = user.coins;
+                        updateBalanceDisplay();
+                    }
+                }
+
+                // Vérifier le statut du claim quotidien
+                await checkDailyClaimStatus();
+
+                // Charger les transactions
+                await loadTransactions();
+
+            } catch (error) {
+                console.error('Erreur chargement info:', error);
+            }
+        }
+
+        // Mettre à jour l'affichage du solde
+        function updateBalanceDisplay() {
+            const balanceElement = document.getElementById('balanceAmount');
+            const currentBalance = parseInt(balanceElement.textContent) || 0;
+            const targetBalance = userBalance;
+            
+            // Animation de comptage
+            const duration = 1000; // 1 seconde
+            const steps = 60;
+            const increment = (targetBalance - currentBalance) / steps;
+            let currentStep = 0;
+            
+            const timer = setInterval(() => {
+                currentStep++;
+                const newBalance = Math.round(currentBalance + (increment * currentStep));
+                balanceElement.textContent = newBalance;
+                
+                if (currentStep >= steps) {
+                    balanceElement.textContent = targetBalance;
+                    clearInterval(timer);
+                }
+            }, duration / steps);
+        }
+
+        // Vérifier le statut du claim quotidien
+        async function checkDailyClaimStatus() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/coin/daily-status', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    canClaimDaily = data.can_claim;
+                    lastClaimTime = data.last_claim_time;
+                    
+                    updateDailyClaimButton();
+                    updateCountdownTimer();
+                }
+            } catch (error) {
+                console.error('Erreur vérification claim:', error);
+            }
+        }
+
+        // Mettre à jour le bouton de claim quotidien
+        function updateDailyClaimButton() {
+            const claimBtn = document.getElementById('claimDailyBtn');
+            const dailyCard = document.getElementById('dailyRewardCard');
+            
+            if (canClaimDaily) {
+                claimBtn.disabled = false;
+                claimBtn.innerHTML = '<i class="fas fa-gift"></i> Claim 10 Coins';
+                dailyCard.style.borderColor = 'var(--success-color)';
+                dailyCard.style.boxShadow = '0 0 20px rgba(0, 255, 157, 0.3)';
+            } else {
+                claimBtn.disabled = true;
+                claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
+                dailyCard.style.borderColor = 'var(--glass-border)';
+                dailyCard.style.boxShadow = 'none';
+            }
+        }
+
+        // Mettre à jour le compte à rebours
+        function updateCountdownTimer() {
+            const timerElement = document.getElementById('nextClaimTimer');
+            
+            if (!lastClaimTime) {
+                timerElement.textContent = 'Prochain claim disponible';
+                return;
+            }
+
+            const lastClaim = new Date(lastClaimTime);
+            const nextClaim = new Date(lastClaim);
+            nextClaim.setDate(nextClaim.getDate() + 1);
+            
+            function updateTimer() {
+                const now = new Date();
+                const timeLeft = nextClaim - now;
+                
+                if (timeLeft <= 0) {
+                    canClaimDaily = true;
+                    updateDailyClaimButton();
+                    timerElement.textContent = 'Claim disponible !';
+                    return;
+                }
+                
+                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                
+                timerElement.textContent = `Prochain claim dans: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+
+        // Claim quotidien
+        document.getElementById('claimDailyBtn').addEventListener('click', async () => {
+            if (!canClaimDaily) {
+                showNotification('Vous avez déjà réclamé votre récompense aujourd\'hui', 'warning');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/coin/claim-daily', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Mettre à jour le solde local
+                    userBalance += 10;
+                    
+                    // Mettre à jour l'utilisateur dans le localStorage
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    user.coins = userBalance;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    // Mettre à jour l'affichage
+                    updateBalanceDisplay();
+                    
+                    // Mettre à jour le statut
+                    canClaimDaily = false;
+                    lastClaimTime = new Date().toISOString();
+                    updateDailyClaimButton();
+                    updateCountdownTimer();
+                    
+                    // Effet visuel
+                    createCoinRain();
+                    
+                    showNotification('🎉 10 coins réclamés avec succès !', 'success');
+                    
+                    // Recharger les transactions
+                    setTimeout(() => loadTransactions(), 1000);
+                } else {
+                    throw new Error(data.error || 'Erreur lors du claim');
+                }
+            } catch (error) {
+                console.error('Erreur claim:', error);
+                showNotification(error.message, 'error');
+            }
+        });
+
+        // Envoyer des coins
+        document.getElementById('sendCoinsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const recipientEmail = document.getElementById('recipientEmail').value;
+            const amount = parseInt(document.getElementById('sendAmount').value);
+            const message = document.getElementById('sendMessage').value;
+            
+            if (!recipientEmail || !amount) {
+                showNotification('Veuillez remplir tous les champs', 'error');
+                return;
+            }
+            
+            if (amount > userBalance) {
+                showNotification('Solde insuffisant', 'error');
+                return;
+            }
+            
+            if (amount <= 0) {
+                showNotification('Montant invalide', 'error');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/coin/transfer', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        recipient_email: recipientEmail,
+                        amount: amount,
+                        message: message
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Mettre à jour le solde local
+                    userBalance -= amount;
+                    
+                    // Mettre à jour l'utilisateur dans le localStorage
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    user.coins = userBalance;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    // Mettre à jour l'affichage
+                    updateBalanceDisplay();
+                    
+                    // Fermer le modal
+                    sendCoinsModal.style.display = 'none';
+                    
+                    // Réinitialiser le formulaire
+                    document.getElementById('sendCoinsForm').reset();
+                    
+                    showNotification(`${amount} coins envoyés à ${recipientEmail}`, 'success');
+                    
+                    // Recharger les transactions
+                    setTimeout(() => loadTransactions(), 1000);
+                } else {
+                    throw new Error(data.error || 'Erreur lors de l\'envoi');
+                }
+            } catch (error) {
+                console.error('Erreur envoi coins:', error);
+                showNotification(error.message, 'error');
+            }
+        });
+
+        // Charger les transactions
+        async function loadTransactions() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/coin/transactions', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                const transactionsList = document.getElementById('transactionsList');
+                
+                if (!data.transactions || data.transactions.length === 0) {
+                    transactionsList.innerHTML = `
+                        <div class="empty-transactions">
+                            <i class="fas fa-exchange-alt"></i>
+                            <p>Aucune transaction pour le moment</p>
+                            <p style="font-size: 14px; margin-top: 10px;">Réclamez votre récompense quotidienne pour commencer !</p>
+                        </div>
+                    `;
+                } else {
+                    let html = '';
+                    
+                    data.transactions.forEach(transaction => {
+                        const isIncoming = transaction.receiver_id === user.id;
+                        const amountClass = isIncoming ? 'positive' : 'negative';
+                        const amountPrefix = isIncoming ? '+' : '-';
+                        const iconClass = isIncoming ? 'earning' : transaction.type === 'transfer' ? 'transfer' : 'spending';
+                        
+                        let icon = 'fas fa-exchange-alt';
+                        let title = 'Transaction';
+                        
+                        switch (transaction.type) {
+                            case 'daily':
+                                icon = 'fas fa-gift';
+                                title = 'Récompense quotidienne';
+                                break;
+                            case 'referral':
+                                icon = 'fas fa-user-plus';
+                                title = 'Parrainage';
+                                break;
+                            case 'deployment':
+                                icon = 'fas fa-rocket';
+                                title = 'Déploiement de bot';
+                                break;
+                            case 'transfer':
+                                icon = 'fas fa-paper-plane';
+                                title = isIncoming ? 'Coins reçus' : 'Coins envoyés';
+                                break;
+                            case 'admin':
+                                icon = 'fas fa-crown';
+                                title = 'Bonus administrateur';
+                                break;
+                        }
+                        
+                        html += `
+                            <div class="transaction-item">
+                                <div class="transaction-icon ${iconClass}">
+                                    <i class="${icon}"></i>
+                                </div>
+                                <div class="transaction-details">
+                                    <div class="transaction-title">${title}</div>
+                                    <div class="transaction-description">${transaction.description || 'Sans description'}</div>
+                                    <div class="transaction-time">
+                                        <i class="fas fa-clock"></i> ${new Date(transaction.created_at).toLocaleString()}
+                                    </div>
+                                </div>
+                                <div class="transaction-amount ${amountClass}">
+                                    ${amountPrefix}${transaction.amount} coins
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    transactionsList.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Erreur chargement transactions:', error);
+                showNotification('Erreur lors du chargement des transactions', 'error');
+            }
+        }
+
+        // Effet de pluie de coins
+        function createCoinRain() {
+            const coinIcon = '🪙';
+            const coinsCount = 20;
+            
+            for (let i = 0; i < coinsCount; i++) {
+                const coin = document.createElement('div');
+                coin.className = 'coin-rain';
+                coin.textContent = coinIcon;
+                coin.style.cssText = `
+                    left: ${Math.random() * 100}vw;
+                    font-size: ${20 + Math.random() * 20}px;
+                    animation-duration: ${1 + Math.random() * 2}s;
+                    animation-delay: ${Math.random() * 0.5}s;
+                `;
+                
+                document.body.appendChild(coin);
+                
+                // Supprimer après l'animation
+                setTimeout(() => {
+                    coin.remove();
+                }, 3000);
+            }
+        }
+
+        // Déconnexion
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Déconnexion ? Vous serez redirigé vers la page d\'accueil.')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/';
+            }
+        });
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            // Vérifier l'authentification
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            // Charger les informations
+            loadUserInfo();
+
+            // Raccourcis clavier
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (sendCoinsModal.style.display === 'flex') {
+                        sendCoinsModal.style.display = 'none';
+                    }
+                    if (sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                    }
+                }
+                if (e.key === 'c' && e.ctrlKey) {
+                    sendCoinsBtn.click();
+                    e.preventDefault();
+                }
+                if (e.key === 'r' && e.ctrlKey) {
+                    loadUserInfo();
+                    e.preventDefault();
+                }
+            });
+
+            // Vérifier automatiquement le claim toutes les minutes
+            setInterval(() => {
+                checkDailyClaimStatus();
+            }, 60000);
+        });
+    </script>
+</body>
+</html>

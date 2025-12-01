@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Parrainage - KermHost</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #8a2be2;
+            --secondary-color: #4a00e0;
+            --accent-color: #00d4ff;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --dark-color: #0f0f23;
+            --light-color: #1a1a2e;
+            --text-color: #ffffff;
+            --text-muted: #a0a0c0;
+            --success-color: #00ff9d;
+            --warning-color: #ffcc00;
+            --danger-color: #ff4757;
+            --sidebar-width: 280px;
+            --border-radius: 15px;
+            --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --glow-shadow: 0 0 20px var(--accent-glow);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--dark-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(74, 0, 224, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.1) 0%, transparent 20%);
+            min-height: 100vh;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 4px;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 1000;
+            box-shadow: var(--box-shadow);
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid var(--glass-border);
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+        }
+
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .sidebar-header img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-header span {
+            font-weight: 700;
+            font-size: 22px;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-menu ul {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+            border-radius: var(--border-radius);
+        }
+
+        .sidebar-menu a.active {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+            color: var(--text-color);
+            border-left: 4px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-menu a:hover {
+            color: var(--text-color);
+            background: var(--glass-bg);
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu i {
+            width: 24px;
+            text-align: center;
+            font-size: 18px;
+            color: var(--accent-color);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(26, 26, 46, 0.9);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            box-shadow: var(--glow-shadow);
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            background: transparent;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--accent-color);
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent-color), var(--primary-color));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .stat-icon {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+        }
+
+        .stat-value {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        /* Referral Content */
+        .referral-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 992px) {
+            .referral-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .referral-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+        }
+
+        .referral-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .referral-title i {
+            color: var(--accent-color);
+        }
+
+        /* Link Card */
+        .link-card {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(74, 0, 224, 0.1));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .link-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .link-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .link-input {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-color);
+            font-size: 14px;
+            font-family: monospace;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #00b894);
+            color: white;
+        }
+
+        .code-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .code-box {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            color: var(--accent-color);
+            font-family: monospace;
+        }
+
+        /* Share Buttons */
+        .share-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .share-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px;
+            border-radius: 10px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .share-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .share-btn i {
+            font-size: 18px;
+        }
+
+        .share-btn.whatsapp {
+            color: #25D366;
+        }
+
+        .share-btn.telegram {
+            color: #0088cc;
+        }
+
+        .share-btn.twitter {
+            color: #1DA1F2;
+        }
+
+        .share-btn.facebook {
+            color: #1877F2;
+        }
+
+        /* Referrals List */
+        .referrals-list {
+            margin-top: 30px;
+        }
+
+        .referrals-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            padding: 15px;
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+            border-radius: 10px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .referral-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .user-email {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .coins-cell {
+            font-weight: 600;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .step {
+            text-align: center;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-weight: bold;
+            font-size: 20px;
+            color: white;
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .step-description {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            background: var(--glass-bg);
+            border: 2px dashed var(--glass-border);
+            border-radius: var(--border-radius);
+        }
+
+        .empty-state i {
+            font-size: 60px;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .empty-state p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 20px 30px;
+            border-radius: var(--border-radius);
+            background: var(--light-color);
+            color: white;
+            box-shadow: var(--box-shadow), var(--glow-shadow);
+            transform: translateX(150%);
+            transition: transform 0.4s;
+            z-index: 2100;
+            max-width: 400px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .referrals-header,
+            .referral-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .share-buttons {
+                flex-direction: column;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+            }
+
+            .link-container {
+                flex-direction: column;
+            }
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading i {
+            font-size: 40px;
+            color: var(--accent-color);
+            animation: spin 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* QR Code */
+        .qr-container {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        #qrCode {
+            max-width: 200px;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .qr-note {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="https://files.catbox.moe/uqw1b5.jpeg" alt="KermHost Logo">
+                    <span>KermHost</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <ul>
+                    <li>
+                        <a href="/dashboard">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/bots">
+                            <i class="fas fa-robot"></i>
+                            <span>Mes Bots</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/coins">
+                            <i class="fas fa-coins"></i>
+                            <span>Coins</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/invite" class="active">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Parrainage</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/request">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Ajouter un Bot</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/profile">
+                            <i class="fas fa-user"></i>
+                            <span>Profil</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Déconnexion</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Utilisateur</div>
+                        <div class="user-email" id="userEmail">Chargement...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div>
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>
+                        <i class="fas fa-user-plus"></i>
+                        Programme de Parrainage
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value" id="totalReferrals">0</div>
+                    <div class="stat-label">PARRAINAGES</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="stat-value" id="referralCoins">0</div>
+                    <div class="stat-label">COINS GAGNÉS</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <div class="stat-value" id="pendingRewards">0</div>
+                    <div class="stat-label">RÉCOMPENSES EN ATTENTE</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-value" id="rank">#0</div>
+                    <div class="stat-label">CLASSEMENT</div>
+                </div>
+            </div>
+
+            <!-- Referral Content -->
+            <div class="referral-content">
+                <!-- Left Column: Link Sharing -->
+                <div class="referral-card">
+                    <h2 class="referral-title">
+                        <i class="fas fa-link"></i>
+                        Votre Lien de Parrainage
+                    </h2>
+                    
+                    <div class="link-card">
+                        <div class="link-label">Partagez ce lien pour inviter des amis :</div>
+                        <div class="link-container">
+                            <input type="text" class="link-input" id="referralLink" readonly>
+                            <button class="btn btn-primary" id="copyLinkBtn">
+                                <i class="fas fa-copy"></i> Copier
+                            </button>
+                        </div>
+                        
+                        <div class="link-label">Code de parrainage :</div>
+                        <div class="code-container">
+                            <div class="code-box" id="referralCode">CHARGEMENT</div>
+                            <button class="btn btn-secondary" id="copyCodeBtn">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 25px 0 15px; color: white;">Partager sur :</h3>
+                    <div class="share-buttons">
+                        <button class="share-btn whatsapp" id="shareWhatsApp">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button class="share-btn telegram" id="shareTelegram">
+                            <i class="fab fa-telegram"></i> Telegram
+                        </button>
+                        <button class="share-btn twitter" id="shareTwitter">
+                            <i class="fab fa-twitter"></i> Twitter
+                        </button>
+                        <button class="share-btn facebook" id="shareFacebook">
+                            <i class="fab fa-facebook"></i> Facebook
+                        </button>
+                    </div>
+
+                    <!-- QR Code -->
+                    <div class="qr-container">
+                        <div class="link-label">QR Code pour partager facilement :</div>
+                        <div id="qrCode"></div>
+                        <div class="qr-note">
+                            Scannez ce code avec votre téléphone pour inviter des amis
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Referral Details -->
+                <div class="referral-card">
+                    <h2 class="referral-title">
+                        <i class="fas fa-info-circle"></i>
+                        Détails du Programme
+                    </h2>
+
+                    <div style="margin-bottom: 25px;">
+                        <h3 style="color: var(--accent-color); margin-bottom: 15px;">
+                            <i class="fas fa-gift"></i> Comment ça marche ?
+                        </h3>
+                        <ul style="color: var(--text-muted); line-height: 1.8; padding-left: 20px;">
+                            <li>Partagez votre lien de parrainage avec vos amis</li>
+                            <li>Ils reçoivent <strong>20 coins</strong> à l'inscription (10 bonus + 10 normaux)</li>
+                            <li>Vous recevez <strong>10 coins</strong> pour chaque inscription réussie</li>
+                            <li>Les coins sont crédités instantanément</li>
+                            <li>Aucune limite au nombre de parrainages</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(138, 43, 226, 0.1)); padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <h3 style="color: white; margin-bottom: 15px;">
+                            <i class="fas fa-chart-line"></i> Statistiques Avancées
+                        </h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Taux de conversion</div>
+                                <div style="font-size: 24px; font-weight: bold; color: var(--success-color);" id="conversionRate">0%</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Moyenne par jour</div>
+                                <div style="font-size: 24px; font-weight: bold; color: var(--accent-color);" id="avgPerDay">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <h3 style="color: white; margin-bottom: 15px;">
+                            <i class="fas fa-bullhorn"></i> Conseils de Partage
+                        </h3>
+                        <div style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">
+                            <p>• Partagez dans vos groupes WhatsApp et Telegram</p>
+                            <p>• Publiez sur vos réseaux sociaux</p>
+                            <p>• Incluez le lien dans votre signature d'email</p>
+                            <p>• Créez un tutoriel vidéo montrant comment utiliser KermHost</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referrals List -->
+            <div class="referral-card">
+                <h2 class="referral-title">
+                    <i class="fas fa-list"></i>
+                    Votre Réseau de Parrainage
+                </h2>
+
+                <div id="referralsList">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p style="margin-top: 20px; color: var(--text-muted);">Chargement de votre réseau...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How It Works -->
+            <div class="how-it-works">
+                <h2 class="referral-title">
+                    <i class="fas fa-graduation-cap"></i>
+                    Comment Inviter Plus de Personnes ?
+                </h2>
+                
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-title">Créez du Contenu</div>
+                        <div class="step-description">
+                            Partagez vos expériences avec KermHost, créez des tutoriels ou montrez vos bots déployés
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-title">Utilisez les Réseaux</div>
+                        <div class="step-description">
+                            WhatsApp, Telegram, Discord, Facebook - chaque plateforme est une opportunité
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-title">Offrez de l'Aide</div>
+                        <div class="step-description">
+                            Aidez les nouveaux à comprendre la plateforme, votre lien sera naturellement partagé
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-title">Suivez vos Résultats</div>
+                        <div class="step-description">
+                            Surveillez vos statistiques et ajustez votre stratégie de partage
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <script>
+        // Variables
+        let referralData = null;
+        let userData = null;
+
+        // Gestion du menu mobile
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Fonction de notification
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? '✓' : '✗';
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 24px; font-weight: bold;">${icon}</div>
+                    <div>${message}</div>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    container.removeChild(notification);
+                }, 400);
+            }, 4000);
+        }
+
+        // Charger les données de parrainage
+        async function loadReferralData() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Charger les données utilisateur
+                const userResponse = await fetch('/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (userResponse.status === 401) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const userResult = await userResponse.json();
+                userData = userResult.user;
+
+                // Mettre à jour les infos utilisateur
+                document.getElementById('userEmail').textContent = userData.email;
+                document.getElementById('userName').textContent = userData.username || userData.email.split('@')[0];
+                document.getElementById('userAvatar').textContent = (userData.username || userData.email.charAt(0)).toUpperCase();
+
+                // Charger les données de parrainage
+                const referralResponse = await fetch('/api/coin/referral-data', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const referralResult = await referralResponse.json();
+                referralData = referralResult;
+
+                // Mettre à jour l'interface
+                updateReferralUI();
+                
+            } catch (error) {
+                console.error('Erreur chargement données parrainage:', error);
+                showNotification('Erreur lors du chargement des données', 'error');
+            }
+        }
+
+        // Mettre à jour l'interface utilisateur
+        function updateReferralUI() {
+            if (!referralData || !userData) return;
+
+            // Mettre à jour les statistiques
+            document.getElementById('totalReferrals').textContent = referralData.totalReferrals || 0;
+            document.getElementById('referralCoins').textContent = referralData.totalCoinsEarned || 0;
+            document.getElementById('pendingRewards').textContent = referralData.pendingRewards || 0;
+            document.getElementById('rank').textContent = `#${referralData.rank || '0'}`;
+            
+            // Mettre à jour les statistiques avancées
+            document.getElementById('conversionRate').textContent = 
+                referralData.conversionRate ? `${referralData.conversionRate}%` : '0%';
+            document.getElementById('avgPerDay').textContent = referralData.avgPerDay || 0;
+
+            // Mettre à jour le lien de parrainage
+            const appUrl = '${process.env.APP_URL}' || window.location.origin;
+            const referralLink = `${appUrl}/signup?ref=${userData.referral_code}`;
+            document.getElementById('referralLink').value = referralLink;
+            document.getElementById('referralCode').textContent = userData.referral_code || 'ERROR';
+
+            // Générer le QR Code
+            QRCode.toCanvas(document.getElementById('qrCode'), referralLink, {
+                width: 200,
+                height: 200,
+                color: {
+                    dark: '#00d4ff',
+                    light: 'rgba(26, 26, 46, 0.8)'
+                }
+            }, function(error) {
+                if (error) console.error('Erreur génération QR code:', error);
+            });
+
+            // Mettre à jour la liste des parrainages
+            updateReferralsList();
+        }
+
+        // Mettre à jour la liste des parrainages
+        function updateReferralsList() {
+            const referralsList = document.getElementById('referralsList');
+            
+            if (!referralData.referrals || referralData.referrals.length === 0) {
+                referralsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <h3>Aucun parrainage pour l'instant</h3>
+                        <p>Commencez à partager votre lien pour inviter vos premiers amis !</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="referrals-header">
+                    <div>Utilisateur</div>
+                    <div>Date d'inscription</div>
+                    <div>Récompense</div>
+                </div>
+            `;
+
+            referralData.referrals.forEach(referral => {
+                const registrationDate = new Date(referral.created_at).toLocaleDateString();
+                const rewardStatus = referral.reward_given ? 
+                    `<span style="color: var(--success-color);"><i class="fas fa-check"></i> 10 coins</span>` :
+                    `<span style="color: var(--warning-color);"><i class="fas fa-clock"></i> En attente</span>`;
+                
+                html += `
+                    <div class="referral-item">
+                        <div class="user-cell">
+                            <div class="user-avatar-small">
+                                ${(referral.referred_email?.charAt(0) || 'U').toUpperCase()}
+                            </div>
+                            <div>
+                                <div class="user-email">${referral.referred_email || 'Utilisateur'}</div>
+                            </div>
+                        </div>
+                        <div>${registrationDate}</div>
+                        <div class="coins-cell">
+                            ${rewardStatus}
+                        </div>
+                    </div>
+                `;
+            });
+
+            referralsList.innerHTML = html;
+        }
+
+        // Copier le lien de parrainage
+        document.getElementById('copyLinkBtn').addEventListener('click', async () => {
+            const linkInput = document.getElementById('referralLink');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            
+            try {
+                await navigator.clipboard.writeText(linkInput.value);
+                showNotification('Lien copié dans le presse-papier !', 'success');
+            } catch (err) {
+                // Fallback pour anciens navigateurs
+                document.execCommand('copy');
+                showNotification('Lien copié !', 'success');
+            }
+        });
+
+        // Copier le code de parrainage
+        document.getElementById('copyCodeBtn').addEventListener('click', async () => {
+            const code = document.getElementById('referralCode').textContent;
+            
+            try {
+                await navigator.clipboard.writeText(code);
+                showNotification('Code copié dans le presse-papier !', 'success');
+            } catch (err) {
+                // Fallback pour anciens navigateurs
+                const textArea = document.createElement('textarea');
+                textArea.value = code;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showNotification('Code copié !', 'success');
+            }
+        });
+
+        // Partager sur WhatsApp
+        document.getElementById('shareWhatsApp').addEventListener('click', () => {
+            const link = document.getElementById('referralLink').value;
+            const message = `Rejoins-moi sur KermHost ! Déploie tes bots WhatsApp gratuitement avec ${link}`;
+            const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        });
+
+        // Partager sur Telegram
+        document.getElementById('shareTelegram').addEventListener('click', () => {
+            const link = document.getElementById('referralLink').value;
+            const message = `Rejoins-moi sur KermHost ! Déploie tes bots WhatsApp gratuitement`;
+            const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        });
+
+        // Partager sur Twitter
+        document.getElementById('shareTwitter').addEventListener('click', () => {
+            const link = document.getElementById('referralLink').value;
+            const message = `Je viens de découvrir KermHost, une plateforme géniale pour déployer des bots WhatsApp ! Rejoins-moi avec mon lien de parrainage:`;
+            const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(link)}`;
+            window.open(url, '_blank');
+        });
+
+        // Partager sur Facebook
+        document.getElementById('shareFacebook').addEventListener('click', () => {
+            const link = document.getElementById('referralLink').value;
+            const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
+            window.open(url, '_blank');
+        });
+
+        // Déconnexion
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Déconnexion ? Vous serez redirigé vers la page d\'accueil.')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/';
+            }
+        });
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            // Vérifier l'authentification
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            // Charger les données
+            loadReferralData();
+
+            // Raccourcis clavier
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
+                if (e.key === 'c' && e.ctrlKey) {
+                    document.getElementById('copyLinkBtn').click();
+                    e.preventDefault();
+                }
+            });
+
+            // Rafraîchissement automatique toutes les minutes
+            setInterval(() => {
+                if (!document.hidden) {
+                    loadReferralData();
+                }
+            }, 60000);
+        });
+    </script>
+</body>
+</html>

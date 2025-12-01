@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard - KermHost</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #8a2be2;
+            --secondary-color: #4a00e0;
+            --accent-color: #00d4ff;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --dark-color: #0f0f23;
+            --light-color: #1a1a2e;
+            --text-color: #ffffff;
+            --text-muted: #a0a0c0;
+            --success-color: #00ff9d;
+            --warning-color: #ffcc00;
+            --danger-color: #ff4757;
+            --sidebar-width: 280px;
+            --border-radius: 15px;
+            --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --glow-shadow: 0 0 20px var(--accent-glow);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--dark-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(74, 0, 224, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.1) 0%, transparent 20%);
+            min-height: 100vh;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 4px;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: var(--transition);
+            z-index: 1000;
+            box-shadow: var(--box-shadow);
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid var(--glass-border);
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+        }
+
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .sidebar-header img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-header span {
+            font-weight: 700;
+            font-size: 22px;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-menu ul {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+            border-radius: var(--border-radius);
+        }
+
+        .sidebar-menu a.active {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+            color: var(--text-color);
+            border-left: 4px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .sidebar-menu a:hover {
+            color: var(--text-color);
+            background: var(--glass-bg);
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu i {
+            width: 24px;
+            text-align: center;
+            font-size: 18px;
+            color: var(--accent-color);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(26, 26, 46, 0.9);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            box-shadow: var(--glow-shadow);
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            background: transparent;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            background: var(--glass-bg);
+            color: var(--text-color);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            box-shadow: 0 6px 20px rgba(138, 43, 226, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(138, 43, 226, 0.6);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #00b894);
+            color: white;
+            border: none;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning-color), #ff9f43);
+            color: white;
+            border: none;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--accent-color);
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Welcome Banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+        }
+
+        .welcome-banner h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .welcome-banner p {
+            color: var(--text-muted);
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent-color), var(--primary-color));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: var(--accent-color);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .action-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+            box-shadow: var(--glow-shadow);
+        }
+
+        .action-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+        }
+
+        .action-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .action-desc {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        /* Recent Bots */
+        .recent-bots {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .bot-card-small {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .bot-card-small:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-3px);
+        }
+
+        .bot-header-small {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .bot-name-small {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bot-status-small {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: linear-gradient(135deg, var(--success-color), #00b894);
+            color: white;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, var(--warning-color), #ff9f43);
+            color: white;
+        }
+
+        .bot-info-small {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+        }
+
+        .info-value {
+            color: white;
+            font-weight: 500;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 2px dashed var(--glass-border);
+            border-radius: var(--border-radius);
+        }
+
+        .empty-state i {
+            font-size: 60px;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .empty-state p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            max-width: 400px;
+            margin: 0 auto 30px;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 20px 30px;
+            border-radius: var(--border-radius);
+            background: var(--light-color);
+            color: white;
+            box-shadow: var(--box-shadow), var(--glow-shadow);
+            transform: translateX(150%);
+            transition: transform 0.4s;
+            z-index: 2100;
+            max-width: 400px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading i {
+            font-size: 40px;
+            color: var(--accent-color);
+            animation: spin 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Claim Coins Banner */
+        .claim-coins {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(74, 0, 224, 0.2));
+            border: 1px solid var(--accent-color);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+        }
+
+        .claim-coins h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .claim-coins p {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bots-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bot-info-small {
+                grid-template-columns: 1fr;
+            }
+
+            .header-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .welcome-banner {
+                padding: 20px;
+            }
+
+            .welcome-banner h2 {
+                font-size: 22px;
+            }
+
+            .action-card {
+                padding: 20px;
+            }
+
+            .action-icon {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="https://files.catbox.moe/uqw1b5.jpeg" alt="KermHost Logo">
+                    <span>KermHost</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <ul>
+                    <li>
+                        <a href="/dashboard" class="active">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/bots">
+                            <i class="fas fa-robot"></i>
+                            <span>Mes Bots</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/coins">
+                            <i class="fas fa-coins"></i>
+                            <span>Coins</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/invite">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Parrainage</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/request">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Ajouter un Bot</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/profile">
+                            <i class="fas fa-user"></i>
+                            <span>Profil</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Déconnexion</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Utilisateur</div>
+                        <div class="user-email" id="userEmail">Chargement...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div>
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>
+                        <i class="fas fa-chart-line"></i>
+                        Mon Dashboard
+                    </h1>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="window.location.href='/dashboard/bots'">
+                        <i class="fas fa-robot"></i> Mes Bots
+                    </button>
+                    <button class="btn btn-success" onclick="claimDailyCoins()" id="claimCoinsBtn">
+                        <i class="fas fa-gift"></i> Réclamer les Coins
+                    </button>
+                </div>
+            </div>
+
+            <!-- Welcome Banner -->
+            <div class="welcome-banner" id="welcomeBanner">
+                <h2>Bienvenue sur KermHost, <span id="userGreeting">Utilisateur</span> !</h2>
+                <p>Hébergez vos bots WhatsApp facilement avec Heroku. Déployez, gérez et surveillez tous vos bots depuis une seule interface.</p>
+            </div>
+
+            <!-- Claim Coins Banner (si disponible) -->
+            <div class="claim-coins" id="claimCoinsBanner" style="display: none;">
+                <h3><i class="fas fa-gift"></i> Réclamez vos coins quotidiens !</h3>
+                <p>Vous pouvez réclamer <strong>10 coins</strong> tous les 24h. Ne manquez pas cette opportunité !</p>
+                <button class="btn btn-success" onclick="claimDailyCoins()">
+                    <i class="fas fa-coins"></i> Réclamer maintenant
+                </button>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="stat-value" id="totalBots">0</div>
+                    <div class="stat-label">BOTS DÉPLOYÉS</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="stat-value" id="totalCoins">0</div>
+                    <div class="stat-label">COINS DISPONIBLES</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value" id="referralsCount">0</div>
+                    <div class="stat-label">PARRAINAGES</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="stat-value" id="activeBots">0</div>
+                    <div class="stat-label">BOTS ACTIFS</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <h2 style="margin-bottom: 20px; color: white; font-size: 24px;">
+                <i class="fas fa-bolt"></i> Actions Rapides
+            </h2>
+            <div class="quick-actions">
+                <div class="action-card" onclick="window.location.href='/dashboard/bots'">
+                    <div class="action-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <div class="action-title">Déployer un Bot</div>
+                    <div class="action-desc">Choisissez parmi nos bots approuvés et déployez-le en quelques clics</div>
+                    <button class="btn btn-primary">Commencer</button>
+                </div>
+
+                <div class="action-card" onclick="window.location.href='/dashboard/request'">
+                    <div class="action-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="action-title">Ajouter un Bot</div>
+                    <div class="action-desc">Soumettez votre bot WhatsApp pour qu'il soit disponible sur la plateforme</div>
+                    <button class="btn btn-primary">Soumettre</button>
+                </div>
+
+                <div class="action-card" onclick="window.location.href='/dashboard/invite'">
+                    <div class="action-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="action-title">Parrainer des Amis</div>
+                    <div class="action-desc">Invitez vos amis et gagnez 10 coins pour chaque inscription réussie</div>
+                    <button class="btn btn-success">Inviter</button>
+                </div>
+            </div>
+
+            <!-- Recent Bots -->
+            <div class="recent-bots">
+                <div class="section-header">
+                    <h2><i class="fas fa-history"></i> Bots Récemment Déployés</h2>
+                    <button class="btn" onclick="window.location.href='/dashboard/bots'">
+                        <i class="fas fa-eye"></i> Voir tous
+                    </button>
+                </div>
+                <div id="recentBots">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p style="margin-top: 20px; color: var(--text-muted);">Chargement de vos bots...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Tips -->
+            <div style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: var(--border-radius); padding: 25px; margin-top: 30px;">
+                <h3 style="color: white; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-lightbulb"></i> Conseils Rapides
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 10px;">
+                        <div style="color: var(--accent-color); font-weight: 600; margin-bottom: 5px;">🎯 Gagnez plus de coins</div>
+                        <div style="color: var(--text-muted); font-size: 13px;">Réclamez vos coins quotidiens et parrainez des amis pour augmenter votre solde</div>
+                    </div>
+                    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 10px;">
+                        <div style="color: var(--accent-color); font-weight: 600; margin-bottom: 5px;">⚡ Déploiement rapide</div>
+                        <div style="color: var(--text-muted); font-size: 13px;">Utilisez notre documentation pour configurer rapidement vos variables d'environnement</div>
+                    </div>
+                    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 10px;">
+                        <div style="color: var(--accent-color); font-weight: 600; margin-bottom: 5px;">🔧 Surveillez vos bots</div>
+                        <div style="color: var(--text-muted); font-size: 13px;">Vérifiez régulièrement l'état de vos déploiements et les logs de déploiement</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <script>
+        // Variables globales
+        let userData = null;
+        let canClaimCoins = false;
+
+        // Gestion du menu mobile
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Fonction de notification
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : '⚠';
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 24px; font-weight: bold;">${icon}</div>
+                    <div>${message}</div>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    container.removeChild(notification);
+                }, 400);
+            }, 4000);
+        }
+
+        // Charger les données du dashboard
+        async function loadDashboardData() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Charger les données utilisateur
+                const userResponse = await fetch('/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (userResponse.status === 401) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                userData = await userResponse.json();
+                
+                if (userData.user) {
+                    updateUserInfo(userData.user);
+                }
+
+                // Charger les statistiques
+                const statsResponse = await fetch('/api/user/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    updateStats(statsData);
+                }
+
+                // Charger les bots récents
+                const botsResponse = await fetch('/api/deploy/user-deployments?limit=3', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (botsResponse.ok) {
+                    const botsData = await botsResponse.json();
+                    updateRecentBots(botsData.deployments || []);
+                }
+
+                // Vérifier si l'utilisateur peut réclamer des coins
+                checkCoinClaimStatus();
+
+            } catch (error) {
+                console.error('Erreur chargement dashboard:', error);
+                showNotification('Erreur lors du chargement des données', 'error');
+            }
+        }
+
+        // Mettre à jour les informations utilisateur
+        function updateUserInfo(user) {
+            // Mettre à jour la barre latérale
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('userName').textContent = user.username || user.email.split('@')[0];
+            document.getElementById('userAvatar').textContent = (user.username || user.email.charAt(0)).toUpperCase();
+            
+            // Mettre à jour la bannière de bienvenue
+            document.getElementById('userGreeting').textContent = user.username || user.email.split('@')[0];
+            
+            // Mettre à jour le stockage local
+            localStorage.setItem('user', JSON.stringify(user));
+        }
+
+        // Mettre à jour les statistiques
+        function updateStats(stats) {
+            // Statistiques principales
+            document.getElementById('totalBots').textContent = stats.totalBots || 0;
+            document.getElementById('totalCoins').textContent = stats.totalCoins || 0;
+            document.getElementById('referralsCount').textContent = stats.referralsCount || 0;
+            document.getElementById('activeBots').textContent = stats.activeBots || 0;
+        }
+
+        // Mettre à jour les bots récents
+        function updateRecentBots(deployments) {
+            const recentBotsContainer = document.getElementById('recentBots');
+            
+            if (!deployments || deployments.length === 0) {
+                recentBotsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-robot"></i>
+                        <h3>Aucun bot déployé</h3>
+                        <p>Vous n'avez pas encore déployé de bot. Commencez par déployer votre premier bot !</p>
+                        <button class="btn btn-primary" onclick="window.location.href='/dashboard/bots'">
+                            <i class="fas fa-rocket"></i> Déployer un bot
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="bots-grid">';
+            
+            deployments.slice(0, 3).forEach(deployment => {
+                const statusClass = deployment.status === 'active' ? 'status-active' : 
+                                   deployment.status === 'pending' ? 'status-pending' : 'status-pending';
+                const statusText = deployment.status === 'active' ? 'ACTIF' : 
+                                   deployment.status === 'pending' ? 'EN ATTENTE' : 'INACTIF';
+                
+                html += `
+                    <div class="bot-card-small" onclick="window.location.href='/dashboard/bots'">
+                        <div class="bot-header-small">
+                            <div class="bot-name-small">
+                                <i class="fas fa-robot"></i>
+                                ${deployment.bot?.name || 'Bot'}
+                            </div>
+                            <div class="bot-status-small ${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="bot-info-small">
+                            <div class="info-label">Coût</div>
+                            <div class="info-value">${deployment.cost || 0} coins</div>
+                            <div class="info-label">Déployé le</div>
+                            <div class="info-value">${new Date(deployment.created_at).toLocaleDateString()}</div>
+                            <div class="info-label">Serveur</div>
+                            <div class="info-value">${deployment.heroku_app_name || 'N/A'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            recentBotsContainer.innerHTML = html;
+        }
+
+        // Vérifier le statut de réclamation des coins
+        async function checkCoinClaimStatus() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/coin/claim-status', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    canClaimCoins = data.canClaim || false;
+                    
+                    if (canClaimCoins) {
+                        document.getElementById('claimCoinsBanner').style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur vérification coins:', error);
+            }
+        }
+
+        // Réclamer les coins quotidiens
+        async function claimDailyCoins() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/coin/claim', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showNotification(data.message || 'Coins réclamés avec succès !', 'success');
+                    
+                    // Mettre à jour l'affichage des coins
+                    if (userData && userData.user) {
+                        userData.user.coins += 10;
+                        document.getElementById('totalCoins').textContent = userData.user.coins;
+                    }
+                    
+                    // Cacher la bannière
+                    document.getElementById('claimCoinsBanner').style.display = 'none';
+                    
+                    // Désactiver le bouton pendant 24h
+                    document.getElementById('claimCoinsBtn').disabled = true;
+                    document.getElementById('claimCoinsBtn').innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
+                } else {
+                    throw new Error(data.error || 'Erreur lors de la réclamation');
+                }
+            } catch (error) {
+                console.error('Erreur réclamation coins:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+
+        // Déconnexion
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/';
+            }
+        });
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            // Vérifier l'authentification
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            // Charger les données du dashboard
+            loadDashboardData();
+
+            // Raccourcis clavier
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
+                if (e.key === 'd' && e.ctrlKey) {
+                    loadDashboardData();
+                    showNotification('Dashboard actualisé', 'success');
+                    e.preventDefault();
+                }
+            });
+
+            // Rafraîchissement automatique toutes les 30 secondes
+            setInterval(() => {
+                if (!document.hidden) {
+                    loadDashboardData();
+                }
+            }, 30000);
+        });
+
+        // Gérer le redimensionnement de la fenêtre
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 992) {
+                sidebar.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
