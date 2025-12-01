@@ -7,7 +7,6 @@
     "start": "babel-node server.js",
     "dev": "nodemon --exec babel-node server.js"
   },
-  "type": "commonjs",
   "dependencies": {
     "express": "^4.19.2",
     "express-session": "^1.18.0",
