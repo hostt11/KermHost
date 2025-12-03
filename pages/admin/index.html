@@ -371,6 +371,12 @@
             border: none;
         }
 
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            transform: translateY(-2px);
+            box-shadow: var(--glow-shadow);
+        }
+
         .chart-canvas {
             width: 100%;
             height: 300px;
@@ -681,10 +687,10 @@
                     </h1>
                 </div>
                 <div class="chart-actions">
-                    <button class="btn" onclick="refreshStats()">
+                    <button class="btn" id="refreshStatsBtn">
                         <i class="fas fa-sync-alt"></i> Actualiser
                     </button>
-                    <button class="btn btn-primary" onclick="window.location.href='/admin/add-heroku'">
+                    <button class="btn btn-primary" id="addServerBtn">
                         <i class="fas fa-plus"></i> Ajouter Serveur
                     </button>
                 </div>
@@ -773,7 +779,7 @@
                 <i class="fas fa-bolt"></i> Actions Rapides
             </h2>
             <div class="quick-actions">
-                <div class="action-card" onclick="window.location.href='/admin/users'">
+                <div class="action-card" id="manageUsersBtn">
                     <div class="action-icon">
                         <i class="fas fa-user-cog"></i>
                     </div>
@@ -781,7 +787,7 @@
                     <div class="action-desc">Vérifier les comptes, modifier les rôles, attribuer des coins</div>
                 </div>
 
-                <div class="action-card" onclick="window.location.href='/admin/bot-request'">
+                <div class="action-card" id="approveBotsBtn">
                     <div class="action-icon">
                         <i class="fas fa-check-circle"></i>
                     </div>
@@ -789,7 +795,7 @@
                     <div class="action-desc">Examiner et approuver les nouvelles demandes de bots</div>
                 </div>
 
-                <div class="action-card" onclick="window.location.href='/admin/add-heroku'">
+                <div class="action-card" id="addServerBtn2">
                     <div class="action-icon">
                         <i class="fas fa-server"></i>
                     </div>
@@ -797,7 +803,7 @@
                     <div class="action-desc">Configurer un nouveau compte Heroku pour augmenter la capacité</div>
                 </div>
 
-                <div class="action-card" onclick="window.location.href='/admin/maintenance'">
+                <div class="action-card" id="maintenanceBtn">
                     <div class="action-icon">
                         <i class="fas fa-tools"></i>
                     </div>
@@ -849,7 +855,10 @@
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
             
-            const icon = type === 'success' ? '✓' : '✗';
+            const icon = type === 'success' ? '✓' : 
+                        type === 'error' ? '✗' : 
+                        type === 'warning' ? '⚠' : 'ℹ';
+            
             notification.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <div style="font-size: 24px; font-weight: bold;">${icon}</div>
@@ -871,11 +880,11 @@
             }, 4000);
         }
 
-        // Charger les statistiques
-        async function loadStats() {
+        // Charger les statistiques du dashboard
+        async function loadDashboardStats() {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/admin/stats', {
+                const response = await fetch('/api/admin/dashboard', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -901,18 +910,13 @@
                     document.getElementById('totalCoins').textContent = data.stats.totalCoins || 0;
                     document.getElementById('activeServers').textContent = data.stats.activeServers || 0;
 
-                    // Calculer et afficher les tendances (simulées pour l'exemple)
+                    // Mettre à jour les tendances avec les données réelles
                     updateTrends(data);
                 }
 
                 // Charger l'activité récente
                 if (data.recentActivity) {
                     loadRecentActivity(data.recentActivity);
-                }
-
-                // Charger les données pour les charts
-                if (data.deploymentStats) {
-                    loadChartData(data.deploymentStats);
                 }
 
                 // Mettre à jour les informations utilisateur
@@ -929,15 +933,59 @@
             }
         }
 
+        // Charger les statistiques détaillées
+        async function loadDetailedStats() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/admin/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Mettre à jour les compteurs si les données sont disponibles
+                    if (data.stats) {
+                        document.getElementById('totalUsers').textContent = data.stats.users?.total || 0;
+                        document.getElementById('totalBots').textContent = data.stats.bots?.total || 0;
+                        document.getElementById('totalCoins').textContent = data.stats.coins?.total || 0;
+                        document.getElementById('activeServers').textContent = data.stats.heroku?.activeAccounts || 0;
+                        
+                        // Mettre à jour l'activité
+                        if (data.recentActivity) {
+                            loadRecentActivity(data.recentActivity);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur chargement stats détaillées:', error);
+            }
+        }
+
         // Mettre à jour les tendances
         function updateTrends(data) {
-            // Simuler des tendances pour l'exemple
+            // Calculer les tendances basées sur les données
             const trends = {
-                users: { change: '+12%', trend: 'up' },
-                bots: { change: '+8%', trend: 'up' },
-                coins: { change: '+25%', trend: 'up' },
-                servers: { change: '+5%', trend: 'up' }
+                users: { change: '+0%', trend: 'up' },
+                bots: { change: '+0%', trend: 'up' },
+                coins: { change: '+0%', trend: 'up' },
+                servers: { change: '+0%', trend: 'up' }
             };
+
+            // Si on a des données de tendances
+            if (data.trends) {
+                if (data.trends.usersToday > 0) {
+                    trends.users.change = `+${data.trends.usersToday}`;
+                }
+                if (data.trends.deploymentsToday > 0) {
+                    trends.bots.change = `+${data.trends.deploymentsToday}`;
+                }
+                if (data.trends.coinsToday > 0) {
+                    trends.coins.change = `+${data.trends.coinsToday}`;
+                }
+            }
 
             // Utilisateurs
             const usersTrend = document.getElementById('usersTrend');
@@ -960,8 +1008,16 @@
             // Serveurs
             const serversTrend = document.getElementById('serversTrend');
             const serversChange = document.getElementById('serversChange');
-            serversChange.textContent = trends.servers.change;
-            serversTrend.className = `stat-trend trend-${trends.servers.trend}`;
+            
+            // Calculer le pourcentage d'utilisation
+            if (data.stats && data.stats.heroku) {
+                const usagePercentage = data.stats.heroku.usagePercentage || 0;
+                serversChange.textContent = `${usagePercentage}%`;
+                serversTrend.className = `stat-trend trend-${usagePercentage > 80 ? 'down' : 'up'}`;
+            } else {
+                serversChange.textContent = trends.servers.change;
+                serversTrend.className = `stat-trend trend-${trends.servers.trend}`;
+            }
         }
 
         // Charger l'activité récente
@@ -985,13 +1041,13 @@
                 let text = activity.action || 'Action inconnue';
                 
                 // Déterminer l'icône selon le type d'action
-                if (activity.action.includes('BOT')) {
+                if (activity.action && activity.action.includes('BOT')) {
                     iconClass = 'bot';
                     icon = 'fas fa-robot';
-                } else if (activity.action.includes('COIN')) {
+                } else if (activity.action && activity.action.includes('COIN')) {
                     iconClass = 'coin';
                     icon = 'fas fa-coins';
-                } else if (activity.action.includes('DEPLOY')) {
+                } else if (activity.action && activity.action.includes('DEPLOY')) {
                     iconClass = 'deploy';
                     icon = 'fas fa-rocket';
                 }
@@ -999,10 +1055,12 @@
                 // Formater le texte
                 if (activity.user && activity.user.email) {
                     text = `${activity.action} par ${activity.user.email}`;
+                } else if (activity.user_email) {
+                    text = `${activity.action} par ${activity.user_email}`;
                 }
 
                 // Formater la date
-                const timeAgo = formatTimeAgo(new Date(activity.created_at));
+                const timeAgo = formatTimeAgo(new Date(activity.created_at || activity.created_at || Date.now()));
 
                 html += `
                     <div class="activity-item">
@@ -1032,17 +1090,28 @@
             if (diffMins < 60) return `Il y a ${diffMins} minute${diffMins > 1 ? 's' : ''}`;
             if (diffHours < 24) return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
             if (diffDays < 7) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
-            return date.toLocaleDateString();
+            return date.toLocaleDateString('fr-FR');
         }
 
-        // Charger les données des charts
-        function loadChartData(statsData) {
+        // Rafraîchir les statistiques
+        async function refreshStats() {
+            try {
+                await loadDetailedStats();
+                showNotification('Statistiques actualisées', 'success');
+            } catch (error) {
+                console.error('Erreur rafraîchissement:', error);
+                showNotification('Erreur lors de l\'actualisation', 'error');
+            }
+        }
+
+        // Initialiser les charts (placeholder)
+        function initCharts() {
             // Données simulées pour l'exemple
             const userData = {
-                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil'],
+                labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
                 datasets: [{
                     label: 'Nouveaux Utilisateurs',
-                    data: [65, 59, 80, 81, 56, 55, 40],
+                    data: [12, 19, 8, 15, 22, 18, 25],
                     borderColor: '#00d4ff',
                     backgroundColor: 'rgba(0, 212, 255, 0.1)',
                     tension: 0.4,
@@ -1054,7 +1123,7 @@
                 labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
                 datasets: [{
                     label: 'Déploiements',
-                    data: [12, 19, 8, 15, 22, 18, 25],
+                    data: [8, 12, 6, 9, 15, 11, 18],
                     borderColor: '#8a2be2',
                     backgroundColor: 'rgba(138, 43, 226, 0.1)',
                     tension: 0.4,
@@ -1062,11 +1131,10 @@
                 }]
             };
 
-            // Initialiser ou mettre à jour le chart des utilisateurs
+            // Chart des utilisateurs
             const usersCtx = document.getElementById('usersChart').getContext('2d');
-            if (usersChart) {
-                usersChart.destroy();
-            }
+            if (usersChart) usersChart.destroy();
+            
             usersChart = new Chart(usersCtx, {
                 type: 'line',
                 data: userData,
@@ -1075,37 +1143,26 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            labels: {
-                                color: 'white'
-                            }
+                            labels: { color: 'white' }
                         }
                     },
                     scales: {
                         x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white' }
                         },
                         y: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white' }
                         }
                     }
                 }
             });
 
-            // Initialiser ou mettre à jour le chart des déploiements
+            // Chart des déploiements
             const deploymentsCtx = document.getElementById('deploymentsChart').getContext('2d');
-            if (deploymentsChart) {
-                deploymentsChart.destroy();
-            }
+            if (deploymentsChart) deploymentsChart.destroy();
+            
             deploymentsChart = new Chart(deploymentsCtx, {
                 type: 'bar',
                 data: deploymentData,
@@ -1114,49 +1171,49 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            labels: {
-                                color: 'white'
-                            }
+                            labels: { color: 'white' }
                         }
                     },
                     scales: {
                         x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white' }
                         },
                         y: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'white' }
                         }
                     }
                 }
             });
         }
 
-        // Rafraîchir les statistiques
-        function refreshStats() {
-            loadStats();
-            showNotification('Statistiques actualisées', 'success');
-        }
-
-        // Écouteurs pour les sélecteurs de période
-        document.getElementById('activityPeriod').addEventListener('change', function() {
-            console.log('Période activité:', this.value);
-            // Ici, vous récupéreriez les nouvelles données selon la période
+        // Ajouter un écouteur pour le bouton d'ajout de serveur
+        document.getElementById('addServerBtn').addEventListener('click', function() {
+            window.location.href = '/admin/add-heroku';
         });
 
-        document.getElementById('deploymentsPeriod').addEventListener('change', function() {
-            console.log('Période déploiements:', this.value);
-            // Ici, vous récupéreriez les nouvelles données selon la période
+        document.getElementById('addServerBtn2').addEventListener('click', function() {
+            window.location.href = '/admin/add-heroku';
         });
+
+        // Ajouter un écouteur pour le bouton de gestion des utilisateurs
+        document.getElementById('manageUsersBtn').addEventListener('click', function() {
+            window.location.href = '/admin/users';
+        });
+
+        // Ajouter un écouteur pour le bouton d'approbation des bots
+        document.getElementById('approveBotsBtn').addEventListener('click', function() {
+            window.location.href = '/admin/bot-request';
+        });
+
+        // Ajouter un écouteur pour le bouton de maintenance
+        document.getElementById('maintenanceBtn').addEventListener('click', function() {
+            window.location.href = '/admin/maintenance';
+        });
+
+        // Ajouter un écouteur pour le bouton de rafraîchissement
+        document.getElementById('refreshStatsBtn').addEventListener('click', refreshStats);
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
@@ -1176,7 +1233,10 @@
             }
 
             // Charger les statistiques
-            loadStats();
+            loadDashboardStats();
+            
+            // Initialiser les charts
+            initCharts();
 
             // Raccourcis clavier
             document.addEventListener('keydown', (e) => {
@@ -1189,12 +1249,12 @@
                 }
             });
 
-            // Rafraîchissement automatique toutes les minutes
+            // Rafraîchissement automatique toutes les 2 minutes
             setInterval(() => {
                 if (!document.hidden) {
-                    loadStats();
+                    loadDashboardStats();
                 }
-            }, 60000);
+            }, 120000);
         });
     </script>
 </body>
