@@ -1103,22 +1103,22 @@
                     </div>
                     
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px;">
-                        <div class="avatar-option" onclick="selectAvatar('👑')">
+                        <div class="avatar-option" onclick="selectAvatar(this, '👑')">
                             <div style="font-size: 40px; text-align: center;">👑</div>
                         </div>
-                        <div class="avatar-option" onclick="selectAvatar('🛡️')">
+                        <div class="avatar-option" onclick="selectAvatar(this, '🛡️')">
                             <div style="font-size: 40px; text-align: center;">🛡️</div>
                         </div>
-                        <div class="avatar-option" onclick="selectAvatar('⚡')">
+                        <div class="avatar-option" onclick="selectAvatar(this, '⚡')">
                             <div style="font-size: 40px; text-align: center;">⚡</div>
                         </div>
-                        <div class="avatar-option" onclick="selectAvatar('🔑')">
+                        <div class="avatar-option" onclick="selectAvatar(this, '🔑')">
                             <div style="font-size: 40px; text-align: center;">🔑</div>
                         </div>
-                        <div class="avatar-option" onclick="selectAvatar('🚀')">
+                        <div class="avatar-option" onclick="selectAvatar(this, '🚀')">
                             <div style="font-size: 40px; text-align: center;">🚀</div>
                         </div>
-                        <div class="avatar-option" onclick="selectAvatar('💻')">
+                        <div class="avatar-option" onclick="selectAvatar(this, '💻')">
                             <div style="font-size: 40px; text-align: center;">💻</div>
                         </div>
                     </div>
@@ -1265,7 +1265,7 @@
                 }
 
                 const userData = await userResponse.json();
-                currentUser = userData.user;
+                currentUser = userData.profile;
 
                 // Mettre à jour l'interface utilisateur
                 updateProfileUI();
@@ -1304,6 +1304,11 @@
             // Formulaire
             document.getElementById('emailInput').value = currentUser.email;
             document.getElementById('usernameInput').value = currentUser.username || '';
+            
+            // Mettre à jour les statistiques de base
+            if (currentUser.stats) {
+                document.getElementById('coinsCount').textContent = currentUser.stats.coins || 0;
+            }
         }
 
         // Charger les statistiques
@@ -1311,32 +1316,18 @@
             try {
                 const token = localStorage.getItem('token');
                 
-                // Charger les statistiques depuis l'API admin
-                const statsResponse = await fetch('/api/admin/stats', {
+                // Charger les statistiques personnelles
+                const userStatsResponse = await fetch('/api/user/stats', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
 
-                if (statsResponse.ok) {
-                    const statsData = await statsResponse.json();
-                    
-                    // Mettre à jour les compteurs
-                    document.getElementById('coinsCount').textContent = currentUser.coins || 0;
-                    
-                    // Charger les statistiques personnelles
-                    const userStatsResponse = await fetch('/api/user/stats', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-
-                    if (userStatsResponse.ok) {
-                        const userStats = await userStatsResponse.json();
-                        document.getElementById('botsCount').textContent = userStats.totalBots || 0;
-                        document.getElementById('deploymentsCount').textContent = userStats.totalDeployments || 0;
-                        document.getElementById('actionsCount').textContent = userStats.totalActions || 0;
-                    }
+                if (userStatsResponse.ok) {
+                    const userStats = await userStatsResponse.json();
+                    document.getElementById('botsCount').textContent = userStats.totalBots || 0;
+                    document.getElementById('deploymentsCount').textContent = userStats.totalDeployments || 0;
+                    document.getElementById('actionsCount').textContent = userStats.totalActions || 0;
                 }
             } catch (error) {
                 console.error('Erreur chargement stats:', error);
@@ -1416,7 +1407,7 @@
                 const token = localStorage.getItem('token');
                 const activityLog = document.getElementById('activityLog');
 
-                const response = await fetch('/api/user/activity', {
+                const response = await fetch('/api/user/activity?limit=10', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -1436,7 +1427,7 @@
                     }
 
                     let html = '';
-                    data.activity.slice(0, 10).forEach(activity => {
+                    data.activity.forEach(activity => {
                         const time = new Date(activity.created_at).toLocaleString();
                         const action = activity.action || 'Action inconnue';
                         const details = activity.details ? JSON.stringify(activity.details) : '';
@@ -1521,8 +1512,8 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        currentPassword,
-                        newPassword
+                        current_password: currentPassword,
+                        new_password: newPassword
                     })
                 });
 
@@ -1594,15 +1585,17 @@
             document.getElementById('avatarModal').style.display = 'flex';
         }
 
-        function selectAvatar(emoji) {
+        function selectAvatar(element, emoji) {
             selectedAvatar = emoji;
             document.getElementById('modalAvatar').innerHTML = `<span style="font-size: 48px;">${emoji}</span>`;
             
             // Ajouter un effet de sélection
             document.querySelectorAll('.avatar-option').forEach(option => {
                 option.style.border = '2px solid transparent';
+                option.style.borderRadius = '10px';
             });
-            event.target.closest('.avatar-option').style.border = `2px solid ${var(--accent-color)}`;
+            element.style.border = `2px solid #00d4ff`;
+            element.style.borderRadius = '10px';
         }
 
         function saveAvatar() {
@@ -1643,14 +1636,12 @@
         function regenerateSupabaseKey() {
             if (confirm('Êtes-vous sûr de vouloir régénérer la clé API Supabase ? Cette action est irréversible.')) {
                 showNotification('Clé API Supabase régénérée avec succès', 'success');
-                // Ici, vous appelleriez l'API pour régénérer la clé
             }
         }
 
         function regenerateResendKey() {
             if (confirm('Êtes-vous sûr de vouloir régénérer la clé API Resend ? Cette action est irréversible.')) {
                 showNotification('Clé API Resend régénérée avec succès', 'success');
-                // Ici, vous appelleriez l'API pour régénérer la clé
             }
         }
 
@@ -1696,23 +1687,20 @@
                 <div class="modal" id="confirmDeleteAccountModal" style="display: flex;">
                     <div class="modal-content" style="max-width: 500px;">
                         <div class="modal-header">
-                            <h3><i class="fas fa-exclamation-triangle" style="color: var(--danger-color);"></i> Confirmer la suppression</h3>
+                            <h3><i class="fas fa-exclamation-triangle" style="color: #ff4757;"></i> Confirmer la suppression</h3>
                             <button class="modal-close" onclick="document.getElementById('confirmDeleteAccountModal').style.display='none'">&times;</button>
                         </div>
                         <div class="modal-body">
                             <div style="text-align: center; padding: 20px;">
-                                <i class="fas fa-user-slash" style="font-size: 60px; color: var(--danger-color); margin-bottom: 20px;"></i>
+                                <i class="fas fa-user-slash" style="font-size: 60px; color: #ff4757; margin-bottom: 20px;"></i>
                                 <h3 style="color: white; margin-bottom: 15px;">Supprimer votre compte administrateur ?</h3>
-                                <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 25px;">
+                                <p style="color: #a0a0c0; line-height: 1.6; margin-bottom: 25px;">
                                     Cette action est irréversible. Toutes vos données seront supprimées.<br>
                                     <strong>Attention :</strong> Vous devez transférer vos privilèges d'administration à un autre utilisateur avant de supprimer votre compte.
                                 </p>
                                 <div style="display: flex; gap: 15px; justify-content: center;">
                                     <button class="btn btn-secondary" onclick="document.getElementById('confirmDeleteAccountModal').style.display='none'">
                                         <i class="fas fa-times"></i> Annuler
-                                    </button>
-                                    <button class="btn btn-danger" onclick="transferAdminPrivileges()">
-                                        <i class="fas fa-user-friends"></i> Transférer les privilèges
                                     </button>
                                     <button class="btn btn-danger" onclick="deleteAccount()">
                                         <i class="fas fa-trash"></i> Supprimer définitivement
@@ -1725,11 +1713,6 @@
             `;
             
             document.body.insertAdjacentHTML('beforeend', modalHtml);
-        }
-
-        function transferAdminPrivileges() {
-            document.getElementById('confirmDeleteAccountModal').style.display = 'none';
-            showNotification('Fonctionnalité de transfert en cours de développement', 'info');
         }
 
         async function deleteAccount() {
@@ -1770,12 +1753,6 @@
                 return;
             }
             
-            if (user.role !== 'admin') {
-                showNotification('Accès administrateur requis', 'error');
-                setTimeout(() => window.location.href = '/dashboard', 2000);
-                return;
-            }
-
             // Charger les données du profil
             loadProfileData();
 
@@ -1787,6 +1764,9 @@
                     }
                     if (document.getElementById('apiKeysModal').style.display === 'flex') {
                         document.getElementById('apiKeysModal').style.display = 'none';
+                    }
+                    if (document.getElementById('confirmDeleteAccountModal')) {
+                        document.getElementById('confirmDeleteAccountModal').style.display = 'none';
                     }
                     if (sidebar.classList.contains('active')) {
                         sidebar.classList.remove('active');
