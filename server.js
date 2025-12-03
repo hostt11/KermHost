@@ -12,9 +12,9 @@ const PORT = process.env.PORT || 3000;
 
 // Configuration de rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 1 * 60 * 1000, // 15 minutes
   max: 100, // Limite chaque IP à 100 requêtes par fenêtre
-  message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
+  message: 'Trop de requêtes depuis cette IP, veuillez réessayer dans 1 minute😙 - Powered by Kerm.',
   standardHeaders: true,
   legacyHeaders: false,
 });
