@@ -1011,6 +1011,128 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+// Dashboard admin avec données simplifiées
+router.get('/dashboard', async (req, res) => {
+  try {
+    // Récupérer les statistiques principales
+    const [usersStats, botsStats, herokuStats, recentActivity] = await Promise.all([
+      // Statistiques utilisateurs
+      supabase
+        .from('users')
+        .select('created_at', { count: 'exact', head: true }),
+      
+      // Statistiques bots
+      supabase
+        .from('bots')
+        .select('created_at, is_approved', { count: 'exact', head: true }),
+      
+      // Statistiques Heroku
+      supabase
+        .from('heroku_accounts')
+        .select('is_active, max_deployments, used_count'),
+      
+      // Activité récente
+      supabase
+        .from('activity_logs')
+        .select(`
+          *,
+          user:users(email, username)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10)
+    ]);
+
+    // Calculer les statistiques
+    const totalUsers = usersStats.count || 0;
+    const totalBots = botsStats.count || 0;
+    const approvedBots = botsStats.data?.filter(b => b.is_approved).length || 0;
+    
+    // Calculer les stats Heroku
+    let activeServers = 0;
+    let totalCapacity = 0;
+    let usedCapacity = 0;
+    
+    if (herokuStats.data) {
+      activeServers = herokuStats.data.filter(h => h.is_active).length;
+      totalCapacity = herokuStats.data.reduce((sum, h) => sum + (h.max_deployments || 0), 0);
+      usedCapacity = herokuStats.data.reduce((sum, h) => sum + (h.used_count || 0), 0);
+    }
+
+    // Calculer les coins totaux
+    const { data: usersCoins } = await supabase
+      .from('users')
+      .select('coins');
+
+    const totalCoins = usersCoins?.reduce((sum, user) => sum + (user.coins || 0), 0) || 0;
+
+    res.json({
+      stats: {
+        totalUsers,
+        totalBots,
+        approvedBots,
+        totalCoins,
+        activeServers,
+        totalCapacity,
+        usedCapacity,
+        availableCapacity: Math.max(0, totalCapacity - usedCapacity)
+      },
+      recentActivity: recentActivity.data || [],
+      // Statistiques pour les tendances (7 derniers jours)
+      trends: {
+        usersToday: await getNewUsersToday(),
+        deploymentsToday: await getDeploymentsToday(),
+        coinsToday: await getCoinsToday()
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur dashboard:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Fonctions helpers pour les tendances
+async function getNewUsersToday() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const { count } = await supabase
+    .from('users')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', today.toISOString());
+    
+  return count || 0;
+}
+
+async function getDeploymentsToday() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const { count } = await supabase
+    .from('deployments')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', today.toISOString());
+    
+  return count || 0;
+}
+
+async function getCoinsToday() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const { data } = await supabase
+    .from('coin_transactions')
+    .select('amount, type')
+    .gte('created_at', today.toISOString());
+    
+  return data?.reduce((sum, t) => {
+    if (t.type === 'daily' || t.type === 'referral' || t.type === 'admin') {
+      return sum + (t.amount || 0);
+    }
+    return sum;
+  }, 0) || 0;
+}
+
 // Exporter les données
 router.get('/export/:type', async (req, res) => {
   try {
