@@ -258,10 +258,21 @@
             border: none;
         }
 
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(138, 43, 226, 0.4);
+        }
+
         .btn-success {
             background: linear-gradient(135deg, var(--success-color), #00b894);
             color: white;
             border: none;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 184, 148, 0.4);
         }
 
         .btn-danger {
@@ -270,10 +281,20 @@
             border: none;
         }
 
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
         .btn-warning {
             background: linear-gradient(135deg, var(--warning-color), #ff9f43);
             color: var(--dark-color);
             border: none;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 159, 67, 0.4);
         }
 
         .btn-sm {
@@ -302,6 +323,7 @@
             margin-bottom: 30px;
             border-bottom: 1px solid var(--glass-border);
             padding-bottom: 15px;
+            position: relative;
         }
 
         .tab {
@@ -1015,7 +1037,7 @@
                     </h1>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-primary" onclick="refreshBotRequests()">
+                    <button class="btn btn-primary" id="refreshBtn">
                         <i class="fas fa-sync-alt"></i> Actualiser
                     </button>
                 </div>
@@ -1023,11 +1045,11 @@
 
             <!-- Tabs -->
             <div class="tabs">
-                <button class="tab active" data-status="pending" onclick="changeTab('pending')">
+                <button class="tab active" data-status="pending" id="pendingTab">
                     <i class="fas fa-clock"></i> En attente
                     <span class="badge badge-pending" id="pendingCount">0</span>
                 </button>
-                <button class="tab" data-status="approved" onclick="changeTab('approved')">
+                <button class="tab" data-status="approved" id="approvedTab">
                     <i class="fas fa-check-circle"></i> Approuvés
                     <span class="badge badge-approved" id="approvedCount">0</span>
                 </button>
@@ -1038,7 +1060,7 @@
                 <div class="search-box">
                     <input type="text" class="search-input" id="searchInput" 
                            placeholder="Rechercher un bot par nom, dépôt GitHub ou propriétaire...">
-                    <button class="btn btn-primary" onclick="searchBots()">
+                    <button class="btn btn-primary" id="searchBtn">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
@@ -1054,11 +1076,11 @@
 
             <!-- Pagination -->
             <div class="pagination" id="pagination" style="display: none;">
-                <button class="page-btn" id="prevPage" onclick="changePage(currentPage - 1)">
+                <button class="page-btn" id="prevPage">
                     <i class="fas fa-chevron-left"></i>
                 </button>
                 <span class="page-info">Page <span id="currentPage">1</span> sur <span id="totalPages">1</span></span>
-                <button class="page-btn" id="nextPage" onclick="changePage(currentPage + 1)">
+                <button class="page-btn" id="nextPage">
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
@@ -1126,7 +1148,7 @@
 
                     <div class="form-group" style="margin-top: 30px;">
                         <div style="display: flex; gap: 15px;">
-                            <button type="button" class="btn btn-secondary" onclick="closeActionModal()" style="flex: 1;">
+                            <button type="button" class="btn btn-secondary" id="cancelActionBtn" style="flex: 1;">
                                 <i class="fas fa-times"></i> Annuler
                             </button>
                             <button type="submit" class="btn btn-primary" id="actionSubmitBtn" style="flex: 1;">
@@ -1149,40 +1171,62 @@
         let totalPages = 1;
         let currentSearch = '';
 
-        // Gestion du menu mobile
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const sidebar = document.getElementById('sidebar');
+        // Initialiser les écouteurs d'événements
+        function initEventListeners() {
+            // Gestion du menu mobile
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
 
-        mobileMenuBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-        });
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
 
-        // Gestion des modals
-        const botDetailsModal = document.getElementById('botDetailsModal');
-        const closeDetailsModal = document.getElementById('closeDetailsModal');
-        const actionModal = document.getElementById('actionModal');
-        const closeActionModalBtn = document.getElementById('closeActionModal');
+            // Bouton d'actualisation
+            document.getElementById('refreshBtn').addEventListener('click', refreshBotRequests);
 
-        closeDetailsModal.addEventListener('click', () => {
-            botDetailsModal.style.display = 'none';
-        });
+            // Bouton de recherche
+            document.getElementById('searchBtn').addEventListener('click', searchBots);
 
-        closeActionModalBtn.addEventListener('click', () => {
-            actionModal.style.display = 'none';
-        });
+            // Recherche avec la touche Entrée
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchBots();
+                }
+            });
 
-        // Fermer les modals en cliquant à l'extérieur
-        window.addEventListener('click', (e) => {
-            if (e.target === botDetailsModal) {
-                botDetailsModal.style.display = 'none';
-            }
-            if (e.target === actionModal) {
-                actionModal.style.display = 'none';
-            }
-            if (e.target === sidebar) {
-                sidebar.classList.remove('active');
-            }
-        });
+            // Tabs
+            document.getElementById('pendingTab').addEventListener('click', () => changeTab('pending'));
+            document.getElementById('approvedTab').addEventListener('click', () => changeTab('approved'));
+
+            // Gestion des modals
+            const closeDetailsModal = document.getElementById('closeDetailsModal');
+            const closeActionModalBtn = document.getElementById('closeActionModal');
+            const cancelActionBtn = document.getElementById('cancelActionBtn');
+
+            closeDetailsModal.addEventListener('click', () => {
+                document.getElementById('botDetailsModal').style.display = 'none';
+            });
+
+            closeActionModalBtn.addEventListener('click', () => {
+                closeActionModal();
+            });
+
+            cancelActionBtn.addEventListener('click', () => {
+                closeActionModal();
+            });
+
+            // Pagination
+            document.getElementById('prevPage').addEventListener('click', () => {
+                changePage(currentPage - 1);
+            });
+
+            document.getElementById('nextPage').addEventListener('click', () => {
+                changePage(currentPage + 1);
+            });
+
+            // Form action
+            document.getElementById('actionForm').addEventListener('submit', handleActionSubmit);
+        }
 
         // Fonction de notification
         function showNotification(message, type = 'success') {
@@ -1190,7 +1234,10 @@
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
             
-            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : '⚠';
+            const icon = type === 'success' ? '✓' : 
+                        type === 'error' ? '✗' : 
+                        type === 'warning' ? '⚠' : 'ℹ';
+            
             notification.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <div style="font-size: 24px; font-weight: bold;">${icon}</div>
@@ -1212,11 +1259,24 @@
             }, 4000);
         }
 
+        // Charger les informations utilisateur
+        function loadUserInfo() {
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (user.email) {
+                    document.getElementById('userEmail').textContent = user.email;
+                    document.getElementById('userName').textContent = user.username || 'Admin';
+                    document.getElementById('userAvatar').textContent = (user.username || 'A').charAt(0).toUpperCase();
+                }
+            } catch (error) {
+                console.error('Erreur chargement info utilisateur:', error);
+            }
+        }
+
         // Changer d'onglet
         function changeTab(status) {
             currentTab = status;
             currentPage = 1;
-            currentSearch = '';
             
             // Mettre à jour les classes des onglets
             document.querySelectorAll('.tab').forEach(tab => {
@@ -1226,9 +1286,6 @@
                 }
             });
             
-            // Réinitialiser la recherche
-            document.getElementById('searchInput').value = '';
-            
             // Charger les demandes
             loadBotRequests();
         }
@@ -1237,12 +1294,20 @@
         async function loadBotRequests() {
             try {
                 const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+
                 const params = new URLSearchParams({
                     status: currentTab,
                     page: currentPage,
-                    limit: 12,
-                    search: currentSearch
+                    limit: 12
                 });
+
+                if (currentSearch) {
+                    params.append('search', currentSearch);
+                }
 
                 const response = await fetch(`/api/admin/bot-requests?${params}`, {
                     headers: {
@@ -1280,8 +1345,16 @@
                     `;
                     
                     document.getElementById('pagination').style.display = 'none';
+                    document.getElementById('pendingCount').textContent = '0';
+                    document.getElementById('approvedCount').textContent = '0';
                 } else {
                     let html = '<div class="bots-grid">';
+                    
+                    // Mettre à jour les compteurs si disponibles
+                    if (data.counts) {
+                        document.getElementById('pendingCount').textContent = data.counts.pending || 0;
+                        document.getElementById('approvedCount').textContent = data.counts.approved || 0;
+                    }
                     
                     data.requests.forEach(bot => {
                         const envCount = bot.kerm_json?.env ? Object.keys(bot.kerm_json.env).length : 0;
@@ -1368,33 +1441,9 @@
                     }
                 }
                 
-                // Mettre à jour les compteurs (simulés)
-                updateCounters(data);
-                
-                // Mettre à jour les informations utilisateur
-                const adminUser = JSON.parse(localStorage.getItem('user') || '{}');
-                if (adminUser.email) {
-                    document.getElementById('userEmail').textContent = adminUser.email;
-                    document.getElementById('userName').textContent = adminUser.username || 'Admin';
-                    document.getElementById('userAvatar').textContent = (adminUser.username || 'A').charAt(0).toUpperCase();
-                }
-                
             } catch (error) {
                 console.error('Erreur chargement demandes bots:', error);
                 showNotification('Erreur lors du chargement des demandes', 'error');
-            }
-        }
-
-        // Mettre à jour les compteurs
-        function updateCounters(data) {
-            // Simuler les compteurs pour l'exemple
-            // Dans une vraie implémentation, vous récupéreriez ces données depuis l'API
-            if (currentTab === 'pending') {
-                document.getElementById('pendingCount').textContent = data.requests?.length || 0;
-                document.getElementById('approvedCount').textContent = '0';
-            } else {
-                document.getElementById('approvedCount').textContent = data.requests?.length || 0;
-                document.getElementById('pendingCount').textContent = '0';
             }
         }
 
@@ -1433,13 +1482,6 @@
             currentPage = 1;
             loadBotRequests();
         }
-
-        // Recherche avec la touche Entrée
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                searchBots();
-            }
-        });
 
         // Rafraîchir la liste
         function refreshBotRequests() {
@@ -1590,7 +1632,7 @@
                     `;
                     
                     document.getElementById('botDetailsTitle').textContent = bot.name;
-                    botDetailsModal.style.display = 'flex';
+                    document.getElementById('botDetailsModal').style.display = 'flex';
                 } else {
                     throw new Error(data.error || 'Erreur lors du chargement des détails');
                 }
@@ -1612,7 +1654,7 @@
             document.getElementById('approveInfo').style.display = 'block';
             document.getElementById('rejectInfo').style.display = 'none';
             
-            actionModal.style.display = 'flex';
+            document.getElementById('actionModal').style.display = 'flex';
         }
 
         // Afficher le modal de rejet
@@ -1624,24 +1666,24 @@
             
             document.getElementById('actionTitle').innerHTML = `<i class="fas fa-times-circle"></i> ${actionText} "${botName}"`;
             document.getElementById('actionSubmitBtn').innerHTML = `<i class="fas fa-times"></i> ${actionText}`;
-            document.getElementById('actionSubmitBtn').className = 'btn btn-danger';
+            document.getElementById('actionSubmitBtn').className = isApproved ? 'btn btn-warning' : 'btn btn-danger';
             
             document.getElementById('rejectReasonGroup').style.display = 'block';
             document.getElementById('approveInfo').style.display = 'none';
             document.getElementById('rejectInfo').style.display = 'block';
             document.getElementById('rejectReason').value = '';
             
-            actionModal.style.display = 'flex';
+            document.getElementById('actionModal').style.display = 'flex';
         }
 
         // Fermer le modal d'action
         function closeActionModal() {
-            actionModal.style.display = 'none';
+            document.getElementById('actionModal').style.display = 'none';
             document.getElementById('actionForm').reset();
         }
 
-        // Soumettre l'action (approbation/rejet)
-        document.getElementById('actionForm').addEventListener('submit', async (e) => {
+        // Gérer la soumission d'action
+        async function handleActionSubmit(e) {
             e.preventDefault();
             
             const botId = document.getElementById('actionBotId').value;
@@ -1672,8 +1714,8 @@
                     showNotification(message, 'success');
                     
                     // Fermer les modals
-                    actionModal.style.display = 'none';
-                    botDetailsModal.style.display = 'none';
+                    closeActionModal();
+                    document.getElementById('botDetailsModal').style.display = 'none';
                     
                     // Recharger la liste
                     setTimeout(() => {
@@ -1686,7 +1728,7 @@
                 console.error('Erreur action bot:', error);
                 showNotification(error.message, 'error');
             }
-        });
+        }
 
         // Supprimer une demande de bot
         async function deleteBotRequest(botId, botName) {
@@ -1709,7 +1751,7 @@
                     showNotification('Demande de bot supprimée avec succès', 'success');
                     
                     // Fermer le modal de détails s'il est ouvert
-                    botDetailsModal.style.display = 'none';
+                    document.getElementById('botDetailsModal').style.display = 'none';
                     
                     // Recharger la liste
                     setTimeout(() => {
@@ -1726,7 +1768,7 @@
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
-            // Vérifier l'authentification et les droits admin
+            // Vérifier l'authentification
             const token = localStorage.getItem('token');
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             
@@ -1735,11 +1777,18 @@
                 return;
             }
             
+            // Vérifier les droits admin
             if (user.role !== 'admin') {
                 showNotification('Accès administrateur requis', 'error');
                 setTimeout(() => window.location.href = '/dashboard', 2000);
                 return;
             }
+
+            // Initialiser les écouteurs d'événements
+            initEventListeners();
+
+            // Charger les informations utilisateur
+            loadUserInfo();
 
             // Charger les demandes de bots
             loadBotRequests();
@@ -1747,14 +1796,14 @@
             // Raccourcis clavier
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
-                    if (botDetailsModal.style.display === 'flex') {
-                        botDetailsModal.style.display = 'none';
+                    if (document.getElementById('botDetailsModal').style.display === 'flex') {
+                        document.getElementById('botDetailsModal').style.display = 'none';
                     }
-                    if (actionModal.style.display === 'flex') {
-                        actionModal.style.display = 'none';
+                    if (document.getElementById('actionModal').style.display === 'flex') {
+                        closeActionModal();
                     }
-                    if (sidebar.classList.contains('active')) {
-                        sidebar.classList.remove('active');
+                    if (document.getElementById('sidebar').classList.contains('active')) {
+                        document.getElementById('sidebar').classList.remove('active');
                     }
                 }
                 if (e.ctrlKey && e.key === 'f') {
@@ -1764,6 +1813,18 @@
                 if (e.key === 'r' && e.ctrlKey) {
                     refreshBotRequests();
                     e.preventDefault();
+                }
+            });
+
+            // Fermer le menu mobile en cliquant en dehors
+            document.addEventListener('click', (e) => {
+                const sidebar = document.getElementById('sidebar');
+                const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+                
+                if (sidebar.classList.contains('active') && 
+                    !sidebar.contains(e.target) && 
+                    !mobileMenuBtn.contains(e.target)) {
+                    sidebar.classList.remove('active');
                 }
             });
 
