@@ -117,8 +117,207 @@ router.put('/profile', authMiddleware, async (req, res) => {
   }
 });
 
-// Changer le mot de passe
-router.put('/change-password', authMiddleware, async (req, res) => {
+// Récupérer les statistiques personnelles de l'utilisateur
+router.get('/stats', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [
+      botsCount,
+      deploymentsCount,
+      actionsCount,
+      referralsCount,
+      transactionsCount
+    ] = await Promise.all([
+      // Nombre de bots
+      supabase
+        .from('bots')
+        .select('*', { count: 'exact', head: true })
+        .eq('owner_id', userId),
+      
+      // Nombre de déploiements
+      supabase
+        .from('deployments')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId),
+      
+      // Nombre d'actions (logs)
+      supabase
+        .from('activity_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId),
+      
+      // Nombre de parrainages
+      supabase
+        .from('referrals')
+        .select('*', { count: 'exact', head: true })
+        .eq('referrer_id', userId),
+      
+      // Nombre de transactions
+      supabase
+        .from('coin_transactions')
+        .select('*', { count: 'exact', head: true })
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+    ]);
+
+    res.json({
+      totalBots: botsCount.count || 0,
+      totalDeployments: deploymentsCount.count || 0,
+      totalActions: actionsCount.count || 0,
+      totalReferrals: referralsCount.count || 0,
+      totalTransactions: transactionsCount.count || 0
+    });
+  } catch (error) {
+    console.error('Erreur récupération statistiques:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Récupérer les sessions actives de l'utilisateur
+router.get('/sessions', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const { data: sessions, error } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('user_id', userId)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Ajouter des informations de détection de navigateur
+    const sessionsWithDetails = (sessions || []).map(session => {
+      let device = 'Appareil inconnu';
+      let location = 'Localisation inconnue';
+      
+      if (session.user_agent) {
+        // Détection simple du navigateur
+        if (session.user_agent.includes('Mobile')) {
+          device = 'Mobile';
+        } else if (session.user_agent.includes('Tablet')) {
+          device = 'Tablette';
+        } else {
+          device = 'Ordinateur';
+        }
+
+        // Détection du navigateur
+        if (session.user_agent.includes('Chrome')) {
+          device += ' (Chrome)';
+        } else if (session.user_agent.includes('Firefox')) {
+          device += ' (Firefox)';
+        } else if (session.user_agent.includes('Safari')) {
+          device += ' (Safari)';
+        } else if (session.user_agent.includes('Edge')) {
+          device += ' (Edge)';
+        }
+      }
+
+      // Vérifier si c'est la session actuelle
+      const currentToken = req.headers.authorization?.split(' ')[1];
+      const isCurrent = session.token === currentToken;
+
+      return {
+        ...session,
+        device,
+        location,
+        is_current: isCurrent,
+        last_active: session.created_at
+      };
+    });
+
+    res.json({ sessions: sessionsWithDetails });
+  } catch (error) {
+    console.error('Erreur récupération sessions:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Terminer une session spécifique
+router.delete('/sessions/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // Vérifier que la session appartient à l'utilisateur
+    const { data: session, error: checkError } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (checkError || !session) {
+      return res.status(404).json({ error: 'Session non trouvée' });
+    }
+
+    // Supprimer la session
+    const { error } = await supabase
+      .from('sessions')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    res.json({ message: 'Session terminée avec succès' });
+  } catch (error) {
+    console.error('Erreur suppression session:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Récupérer l'activité récente de l'utilisateur
+router.get('/activity', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { limit = 20 } = req.query;
+
+    const { data: activity, error } = await supabase
+      .from('activity_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(parseInt(limit));
+
+    if (error) throw error;
+
+    res.json({ activity: activity || [] });
+  } catch (error) {
+    console.error('Erreur récupération activité:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Déconnecter toutes les sessions (sauf la courante)
+router.post('/logout-all', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const currentToken = req.headers.authorization?.split(' ')[1];
+
+    // Supprimer toutes les sessions sauf la courante
+    const { error } = await supabase
+      .from('sessions')
+      .delete()
+      .eq('user_id', userId)
+      .neq('token', currentToken);
+
+    if (error) throw error;
+
+    res.json({ 
+      message: 'Toutes les sessions ont été déconnectées',
+      sessions_terminated: true
+    });
+  } catch (error) {
+    console.error('Erreur déconnexion sessions:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// CORRECTION pour le changement de mot de passe (changer PUT en POST ou vice-versa)
+// Le HTML utilise POST, donc changeons la route dans user.js de PUT à POST :
+router.post('/change-password', authMiddleware, async (req, res) => {
+  // Copie exacte de la fonction existante mais avec POST au lieu de PUT
   try {
     const { current_password, new_password } = req.body;
     const userId = req.user.id;
@@ -181,6 +380,7 @@ router.put('/change-password', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+
 
 // Supprimer le compte
 router.delete('/account', authMiddleware, async (req, res) => {
