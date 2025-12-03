@@ -6,6 +6,7 @@
     <title>Profil Admin - KermHost</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* [TOUT LE CSS RESTE IDENTIQUE - NE PAS MODIFIER] */
         :root {
             --primary-color: #8a2be2;
             --secondary-color: #4a00e0;
@@ -1013,7 +1014,7 @@
                         </div>
 
                         <div class="form-group">
-                            <button type="button" class="btn btn-success" onclick="changePassword()">
+                            <button type="button" class="btn btn-success" id="changePasswordBtn">
                                 <i class="fas fa-key"></i> Changer le mot de passe
                             </button>
                         </div>
@@ -1064,7 +1065,7 @@
                             </div>
                             
                             <div class="form-group">
-                                <button class="btn btn-secondary btn-block" onclick="showApiKeys()">
+                                <button class="btn btn-secondary btn-block" id="apiKeysBtn">
                                     <i class="fas fa-key"></i> Gérer les Clés API
                                 </button>
                             </div>
@@ -1072,13 +1073,13 @@
 
                         <div class="form-row">
                             <div class="form-group">
-                                <button class="btn btn-danger btn-block" onclick="confirmDeleteAccount()">
+                                <button class="btn btn-danger btn-block" id="deleteAccountBtn">
                                     <i class="fas fa-trash"></i> Supprimer mon compte
                                 </button>
                             </div>
                             
                             <div class="form-group">
-                                <button class="btn btn-secondary btn-block" onclick="logoutAllSessions()">
+                                <button class="btn btn-secondary btn-block" id="logoutAllBtn">
                                     <i class="fas fa-sign-out-alt"></i> Déconnecter toutes les sessions
                                 </button>
                             </div>
@@ -1094,7 +1095,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="fas fa-user-circle"></i> Changer l'avatar</h3>
-                <button class="modal-close" onclick="document.getElementById('avatarModal').style.display='none'">&times;</button>
+                <button class="modal-close" id="closeAvatarModal">&times;</button>
             </div>
             <div class="modal-body">
                 <div style="text-align: center; padding: 20px;">
@@ -1103,27 +1104,27 @@
                     </div>
                     
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px;">
-                        <div class="avatar-option" onclick="selectAvatar(this, '👑')">
+                        <div class="avatar-option" data-emoji="👑">
                             <div style="font-size: 40px; text-align: center;">👑</div>
                         </div>
-                        <div class="avatar-option" onclick="selectAvatar(this, '🛡️')">
+                        <div class="avatar-option" data-emoji="🛡️">
                             <div style="font-size: 40px; text-align: center;">🛡️</div>
                         </div>
-                        <div class="avatar-option" onclick="selectAvatar(this, '⚡')">
+                        <div class="avatar-option" data-emoji="⚡">
                             <div style="font-size: 40px; text-align: center;">⚡</div>
                         </div>
-                        <div class="avatar-option" onclick="selectAvatar(this, '🔑')">
+                        <div class="avatar-option" data-emoji="🔑">
                             <div style="font-size: 40px; text-align: center;">🔑</div>
                         </div>
-                        <div class="avatar-option" onclick="selectAvatar(this, '🚀')">
+                        <div class="avatar-option" data-emoji="🚀">
                             <div style="font-size: 40px; text-align: center;">🚀</div>
                         </div>
-                        <div class="avatar-option" onclick="selectAvatar(this, '💻')">
+                        <div class="avatar-option" data-emoji="💻">
                             <div style="font-size: 40px; text-align: center;">💻</div>
                         </div>
                     </div>
                     
-                    <button class="btn btn-primary" onclick="saveAvatar()">
+                    <button class="btn btn-primary" id="saveAvatarBtn">
                         <i class="fas fa-save"></i> Enregistrer l'avatar
                     </button>
                 </div>
@@ -1136,7 +1137,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="fas fa-key"></i> Gestion des Clés API</h3>
-                <button class="modal-close" onclick="document.getElementById('apiKeysModal').style.display='none'">&times;</button>
+                <button class="modal-close" id="closeApiKeysModal">&times;</button>
             </div>
             <div class="modal-body">
                 <div style="margin-bottom: 20px;">
@@ -1146,13 +1147,13 @@
                                 <div style="font-weight: 600; color: white;">Clé API Supabase</div>
                                 <div style="font-size: 12px; color: var(--text-muted);">Utilisée pour la base de données</div>
                             </div>
-                            <button class="btn btn-sm btn-secondary" onclick="regenerateSupabaseKey()">
+                            <button class="btn btn-sm btn-secondary" id="regenerateSupabaseBtn">
                                 <i class="fas fa-redo"></i> Régénérer
                             </button>
                         </div>
                         <div style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; word-break: break-all; font-size: 12px; color: var(--text-muted);">
                             <span id="supabaseKey">••••••••••••••••••••••••••••••</span>
-                            <button class="btn btn-sm" onclick="toggleKeyVisibility('supabaseKey')" style="margin-left: 10px;">
+                            <button class="btn btn-sm" id="toggleSupabaseKey">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
@@ -1166,13 +1167,13 @@
                                 <div style="font-weight: 600; color: white;">Clé API Resend</div>
                                 <div style="font-size: 12px; color: var(--text-muted);">Utilisée pour l'envoi d'emails</div>
                             </div>
-                            <button class="btn btn-sm btn-secondary" onclick="regenerateResendKey()">
+                            <button class="btn btn-sm btn-secondary" id="regenerateResendBtn">
                                 <i class="fas fa-redo"></i> Régénérer
                             </button>
                         </div>
                         <div style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; word-break: break-all; font-size: 12px; color: var(--text-muted);">
                             <span id="resendKey">••••••••••••••••••••••••••••••</span>
-                            <button class="btn btn-sm" onclick="toggleKeyVisibility('resendKey')" style="margin-left: 10px;">
+                            <button class="btn btn-sm" id="toggleResendKey">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
@@ -1180,7 +1181,7 @@
                 </div>
                 
                 <div style="text-align: center; margin-top: 30px;">
-                    <button class="btn btn-danger" onclick="confirmRegenerateAllKeys()">
+                    <button class="btn btn-danger" id="regenerateAllKeysBtn">
                         <i class="fas fa-redo-alt"></i> Régénérer toutes les clés
                     </button>
                 </div>
@@ -1585,42 +1586,13 @@
             document.getElementById('avatarModal').style.display = 'flex';
         }
 
-        function selectAvatar(element, emoji) {
-            selectedAvatar = emoji;
-            document.getElementById('modalAvatar').innerHTML = `<span style="font-size: 48px;">${emoji}</span>`;
-            
-            // Ajouter un effet de sélection
-            document.querySelectorAll('.avatar-option').forEach(option => {
-                option.style.border = '2px solid transparent';
-                option.style.borderRadius = '10px';
-            });
-            element.style.border = `2px solid #00d4ff`;
-            element.style.borderRadius = '10px';
-        }
-
-        function saveAvatar() {
-            if (!selectedAvatar) {
-                showNotification('Veuillez sélectionner un avatar', 'warning');
-                return;
-            }
-
-            // Ici, vous pourriez sauvegarder l'avatar dans la base de données
-            // Pour l'instant, on met juste à jour l'interface
-            document.getElementById('profileAvatar').innerHTML = `<span style="font-size: 48px;">${selectedAvatar}</span>`;
-            document.getElementById('sidebarAvatar').textContent = selectedAvatar;
-            
-            document.getElementById('avatarModal').style.display = 'none';
-            showNotification('Avatar mis à jour avec succès', 'success');
-        }
-
         // Gestion des clés API
         function showApiKeys() {
             document.getElementById('apiKeysModal').style.display = 'flex';
         }
 
-        function toggleKeyVisibility(keyId) {
+        function toggleKeyVisibility(keyId, button) {
             const keyElement = document.getElementById(keyId);
-            const button = event.target.closest('button');
             
             if (keyElement.textContent.includes('•••')) {
                 // Remplacer par la vraie clé (simulée pour l'exemple)
@@ -1630,25 +1602,6 @@
                 // Masquer la clé
                 keyElement.textContent = '••••••••••••••••••••••••••••••';
                 button.innerHTML = '<i class="fas fa-eye"></i>';
-            }
-        }
-
-        function regenerateSupabaseKey() {
-            if (confirm('Êtes-vous sûr de vouloir régénérer la clé API Supabase ? Cette action est irréversible.')) {
-                showNotification('Clé API Supabase régénérée avec succès', 'success');
-            }
-        }
-
-        function regenerateResendKey() {
-            if (confirm('Êtes-vous sûr de vouloir régénérer la clé API Resend ? Cette action est irréversible.')) {
-                showNotification('Clé API Resend régénérée avec succès', 'success');
-            }
-        }
-
-        function confirmRegenerateAllKeys() {
-            if (confirm('Êtes-vous sûr de vouloir régénérer toutes les clés API ? Cette action est irréversible et nécessitera une mise à jour du fichier .env.')) {
-                showNotification('Toutes les clés API ont été régénérées', 'success');
-                document.getElementById('apiKeysModal').style.display = 'none';
             }
         }
 
@@ -1681,77 +1634,131 @@
             }
         }
 
-        // Confirmer la suppression du compte
-        function confirmDeleteAccount() {
-            const modalHtml = `
-                <div class="modal" id="confirmDeleteAccountModal" style="display: flex;">
-                    <div class="modal-content" style="max-width: 500px;">
-                        <div class="modal-header">
-                            <h3><i class="fas fa-exclamation-triangle" style="color: #ff4757;"></i> Confirmer la suppression</h3>
-                            <button class="modal-close" onclick="document.getElementById('confirmDeleteAccountModal').style.display='none'">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <div style="text-align: center; padding: 20px;">
-                                <i class="fas fa-user-slash" style="font-size: 60px; color: #ff4757; margin-bottom: 20px;"></i>
-                                <h3 style="color: white; margin-bottom: 15px;">Supprimer votre compte administrateur ?</h3>
-                                <p style="color: #a0a0c0; line-height: 1.6; margin-bottom: 25px;">
-                                    Cette action est irréversible. Toutes vos données seront supprimées.<br>
-                                    <strong>Attention :</strong> Vous devez transférer vos privilèges d'administration à un autre utilisateur avant de supprimer votre compte.
-                                </p>
-                                <div style="display: flex; gap: 15px; justify-content: center;">
-                                    <button class="btn btn-secondary" onclick="document.getElementById('confirmDeleteAccountModal').style.display='none'">
-                                        <i class="fas fa-times"></i> Annuler
-                                    </button>
-                                    <button class="btn btn-danger" onclick="deleteAccount()">
-                                        <i class="fas fa-trash"></i> Supprimer définitivement
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        // Supprimer le compte
+        async function deleteAccount() {
+            if (confirm('⚠️ ATTENTION : Cette action est IRRÉVERSIBLE !\n\nToutes vos données seront définitivement supprimées.\n\nConfirmez-vous la suppression de votre compte ?')) {
+                try {
+                    const token = localStorage.getItem('token');
+                    
+                    const response = await fetch('/api/user/account', {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        showNotification('Compte supprimé avec succès', 'success');
+                        setTimeout(() => window.location.href = '/', 1500);
+                    } else {
+                        throw new Error(data.error || 'Erreur lors de la suppression du compte');
+                    }
+                } catch (error) {
+                    console.error('Erreur suppression compte:', error);
+                    showNotification(error.message, 'error');
+                }
+            }
         }
 
-        async function deleteAccount() {
-            try {
-                const token = localStorage.getItem('token');
-                
-                const response = await fetch('/api/user/account', {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+        // Initialisation des événements
+        function initEventListeners() {
+            // Bouton changement mot de passe
+            document.getElementById('changePasswordBtn').addEventListener('click', changePassword);
+            
+            // Bouton déconnecter toutes les sessions
+            document.getElementById('logoutAllBtn').addEventListener('click', logoutAllSessions);
+            
+            // Bouton supprimer compte
+            document.getElementById('deleteAccountBtn').addEventListener('click', deleteAccount);
+            
+            // Bouton clés API
+            document.getElementById('apiKeysBtn').addEventListener('click', showApiKeys);
+            
+            // Fermeture modale avatar
+            document.getElementById('closeAvatarModal').addEventListener('click', () => {
+                document.getElementById('avatarModal').style.display = 'none';
+            });
+            
+            // Fermeture modale clés API
+            document.getElementById('closeApiKeysModal').addEventListener('click', () => {
+                document.getElementById('apiKeysModal').style.display = 'none';
+            });
+            
+            // Gestion avatar options
+            document.querySelectorAll('.avatar-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    selectedAvatar = this.getAttribute('data-emoji');
+                    document.getElementById('modalAvatar').innerHTML = `<span style="font-size: 48px;">${selectedAvatar}</span>`;
+                    
+                    // Effet de sélection
+                    document.querySelectorAll('.avatar-option').forEach(opt => {
+                        opt.style.border = '2px solid transparent';
+                        opt.style.borderRadius = '10px';
+                    });
+                    this.style.border = '2px solid #00d4ff';
+                    this.style.borderRadius = '10px';
                 });
-
-                const data = await response.json();
-                
-                if (response.ok) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    showNotification('Compte supprimé avec succès', 'success');
-                    setTimeout(() => window.location.href = '/', 1500);
-                } else {
-                    throw new Error(data.error || 'Erreur lors de la suppression du compte');
+            });
+            
+            // Sauvegarde avatar
+            document.getElementById('saveAvatarBtn').addEventListener('click', function() {
+                if (!selectedAvatar) {
+                    showNotification('Veuillez sélectionner un avatar', 'warning');
+                    return;
                 }
-            } catch (error) {
-                console.error('Erreur suppression compte:', error);
-                showNotification(error.message, 'error');
-            }
+
+                document.getElementById('profileAvatar').innerHTML = `<span style="font-size: 48px;">${selectedAvatar}</span>`;
+                document.getElementById('sidebarAvatar').textContent = selectedAvatar;
+                
+                document.getElementById('avatarModal').style.display = 'none';
+                showNotification('Avatar mis à jour avec succès', 'success');
+            });
+            
+            // Boutons clés API
+            document.getElementById('toggleSupabaseKey').addEventListener('click', function() {
+                toggleKeyVisibility('supabaseKey', this);
+            });
+            
+            document.getElementById('toggleResendKey').addEventListener('click', function() {
+                toggleKeyVisibility('resendKey', this);
+            });
+            
+            document.getElementById('regenerateSupabaseBtn').addEventListener('click', function() {
+                if (confirm('Êtes-vous sûr de vouloir régénérer la clé API Supabase ?')) {
+                    showNotification('Clé API Supabase régénérée', 'success');
+                }
+            });
+            
+            document.getElementById('regenerateResendBtn').addEventListener('click', function() {
+                if (confirm('Êtes-vous sûr de vouloir régénérer la clé API Resend ?')) {
+                    showNotification('Clé API Resend régénérée', 'success');
+                }
+            });
+            
+            document.getElementById('regenerateAllKeysBtn').addEventListener('click', function() {
+                if (confirm('Êtes-vous sûr de vouloir régénérer toutes les clés API ?')) {
+                    showNotification('Toutes les clés API ont été régénérées', 'success');
+                    document.getElementById('apiKeysModal').style.display = 'none';
+                }
+            });
         }
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
-            // Vérifier l'authentification et les droits admin
+            // Vérifier l'authentification
             const token = localStorage.getItem('token');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
             
             if (!token) {
                 window.location.href = '/login';
                 return;
             }
+            
+            // Initialiser les événements
+            initEventListeners();
             
             // Charger les données du profil
             loadProfileData();
@@ -1764,9 +1771,6 @@
                     }
                     if (document.getElementById('apiKeysModal').style.display === 'flex') {
                         document.getElementById('apiKeysModal').style.display = 'none';
-                    }
-                    if (document.getElementById('confirmDeleteAccountModal')) {
-                        document.getElementById('confirmDeleteAccountModal').style.display = 'none';
                     }
                     if (sidebar.classList.contains('active')) {
                         sidebar.classList.remove('active');
