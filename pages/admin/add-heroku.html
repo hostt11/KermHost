@@ -6,6 +6,7 @@
     <title>Gérer les Comptes Heroku - KermHost Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* [TOUT LE CSS RESTE IDENTIQUE] */
         :root {
             --primary-color: #8a2be2;
             --secondary-color: #4a00e0;
@@ -1018,7 +1019,7 @@
 
                             <div class="form-group" style="margin-top: 30px;">
                                 <div style="display: flex; gap: 15px;">
-                                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                                    <button type="submit" class="btn btn-primary" id="saveEditBtn" style="flex: 1;">
                                         <i class="fas fa-save"></i> Enregistrer
                                     </button>
                                     <button type="button" class="btn btn-danger" id="deleteAccountBtn" style="flex: 1;">
@@ -1045,57 +1046,16 @@
             sidebar.classList.toggle('active');
         });
 
-        // Gestion des modals
-        const addAccountBtn = document.getElementById('addAccountBtn');
-        const addAccountModal = document.getElementById('addAccountModal');
-        const closeAddModal = document.getElementById('closeAddModal');
-        const editAccountModal = document.getElementById('editAccountModal');
-        const closeEditModal = document.getElementById('closeEditModal');
-
-        addAccountBtn.addEventListener('click', () => {
-            addAccountModal.style.display = 'flex';
-            resetAddForm();
-        });
-
-        closeAddModal.addEventListener('click', () => {
-            addAccountModal.style.display = 'none';
-        });
-
-        closeEditModal.addEventListener('click', () => {
-            editAccountModal.style.display = 'none';
-        });
-
-        // Fermer les modals en cliquant à l'extérieur
-        window.addEventListener('click', (e) => {
-            if (e.target === addAccountModal) {
-                addAccountModal.style.display = 'none';
-            }
-            if (e.target === editAccountModal) {
-                editAccountModal.style.display = 'none';
-            }
-        });
-
-        // Toggle switch pour le statut
-        const accountActive = document.getElementById('accountActive');
-        const statusLabel = document.getElementById('statusLabel');
-        const editAccountActive = document.getElementById('editAccountActive');
-        const editStatusLabel = document.getElementById('editStatusLabel');
-
-        accountActive.addEventListener('change', function() {
-            statusLabel.textContent = this.checked ? 'Actif' : 'Inactif';
-        });
-
-        editAccountActive.addEventListener('change', function() {
-            editStatusLabel.textContent = this.checked ? 'Actif' : 'Inactif';
-        });
-
         // Fonction pour afficher les notifications
         function showNotification(message, type = 'success') {
             const container = document.getElementById('notificationContainer');
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
             
-            const icon = type === 'success' ? '✓' : '✗';
+            const icon = type === 'success' ? '✓' : 
+                        type === 'error' ? '✗' : 
+                        type === 'warning' ? '⚠' : 'ℹ';
+            
             notification.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <div style="font-size: 24px; font-weight: bold;">${icon}</div>
@@ -1115,6 +1075,53 @@
                     container.removeChild(notification);
                 }, 400);
             }, 4000);
+        }
+
+        // Fonction pour charger les informations utilisateur
+        async function loadUserInfo() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Essayer d'abord de récupérer depuis localStorage
+                const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                
+                if (userData && userData.email) {
+                    updateUserUI(userData);
+                } else {
+                    // Sinon récupérer depuis l'API
+                    const response = await fetch('/api/user/profile', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const user = data.profile || data.user;
+                        localStorage.setItem('user', JSON.stringify(user));
+                        updateUserUI(user);
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur chargement info utilisateur:', error);
+                // Utiliser les valeurs par défaut si erreur
+                updateUserUI({
+                    username: 'Admin',
+                    email: 'admin@kermhost.com'
+                });
+            }
+        }
+
+        // Mettre à jour l'interface utilisateur
+        function updateUserUI(user) {
+            const avatarChar = (user.username || user.email.charAt(0)).toUpperCase();
+            document.getElementById('userAvatar').textContent = avatarChar;
+            document.getElementById('userName').textContent = user.username || 'Admin';
+            document.getElementById('userEmail').textContent = user.email;
         }
 
         // Charger les comptes Heroku
@@ -1152,17 +1159,19 @@
                             <i class="fas fa-server"></i>
                             <h3>Aucun compte Heroku configuré</h3>
                             <p>Ajoutez votre premier compte Heroku pour commencer à déployer des bots !</p>
-                            <button class="btn btn-primary" onclick="addAccountModal.style.display='flex'">
+                            <button class="btn btn-primary" id="emptyStateAddBtn">
                                 <i class="fas fa-plus"></i> Ajouter un Compte
                             </button>
                         </div>
                     `;
                     
+                    // Ajouter l'événement au bouton
+                    document.getElementById('emptyStateAddBtn').addEventListener('click', () => {
+                        addAccountModal.style.display = 'flex';
+                    });
+                    
                     // Mettre à jour les stats
-                    document.getElementById('totalAccounts').textContent = '0';
-                    document.getElementById('totalApps').textContent = '0';
-                    document.getElementById('totalCapacity').textContent = '0';
-                    document.getElementById('availableCapacity').textContent = '0';
+                    updateStats(0, 0, 0, 0);
                 } else {
                     let html = '<div class="accounts-grid">';
                     
@@ -1239,26 +1248,10 @@
                     accountsList.innerHTML = html;
                     
                     // Mettre à jour les stats
-                    document.getElementById('totalAccounts').textContent = totalAccounts;
-                    document.getElementById('totalApps').textContent = totalApps;
-                    document.getElementById('totalCapacity').textContent = totalCapacity;
-                    document.getElementById('availableCapacity').textContent = availableCapacity;
+                    updateStats(totalAccounts, totalApps, totalCapacity, availableCapacity);
                     
                     // Ajouter les écouteurs d'événements
-                    document.querySelectorAll('.edit-account-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const accountId = e.target.closest('.edit-account-btn').dataset.id;
-                            editAccount(accountId);
-                        });
-                    });
-                    
-                    document.querySelectorAll('.toggle-account-btn').forEach(btn => {
-                        btn.addEventListener('click', async (e) => {
-                            const accountId = e.target.closest('.toggle-account-btn').dataset.id;
-                            const isActive = e.target.closest('.toggle-account-btn').dataset.active === 'true';
-                            await toggleAccountStatus(accountId, !isActive);
-                        });
-                    });
+                    attachEventListeners();
                 }
                 
             } catch (error) {
@@ -1266,6 +1259,78 @@
                 showNotification('Erreur lors du chargement des comptes', 'error');
             }
         }
+
+        // Mettre à jour les statistiques
+        function updateStats(totalAccounts, totalApps, totalCapacity, availableCapacity) {
+            document.getElementById('totalAccounts').textContent = totalAccounts;
+            document.getElementById('totalApps').textContent = totalApps;
+            document.getElementById('totalCapacity').textContent = totalCapacity;
+            document.getElementById('availableCapacity').textContent = availableCapacity;
+        }
+
+        // Attacher les écouteurs d'événements
+        function attachEventListeners() {
+            // Boutons d'édition
+            document.querySelectorAll('.edit-account-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const accountId = e.target.closest('.edit-account-btn').dataset.id;
+                    editAccount(accountId);
+                });
+            });
+            
+            // Boutons de basculement
+            document.querySelectorAll('.toggle-account-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const accountId = e.target.closest('.toggle-account-btn').dataset.id;
+                    const isActive = e.target.closest('.toggle-account-btn').dataset.active === 'true';
+                    await toggleAccountStatus(accountId, !isActive);
+                });
+            });
+        }
+
+        // Gestion des modales
+        const addAccountBtn = document.getElementById('addAccountBtn');
+        const addAccountModal = document.getElementById('addAccountModal');
+        const closeAddModal = document.getElementById('closeAddModal');
+        const editAccountModal = document.getElementById('editAccountModal');
+        const closeEditModal = document.getElementById('closeEditModal');
+
+        addAccountBtn.addEventListener('click', () => {
+            addAccountModal.style.display = 'flex';
+            resetAddForm();
+        });
+
+        closeAddModal.addEventListener('click', () => {
+            addAccountModal.style.display = 'none';
+        });
+
+        closeEditModal.addEventListener('click', () => {
+            editAccountModal.style.display = 'none';
+        });
+
+        // Fermer les modales en cliquant à l'extérieur
+        window.addEventListener('click', (e) => {
+            if (e.target === addAccountModal) {
+                addAccountModal.style.display = 'none';
+            }
+            if (e.target === editAccountModal) {
+                editAccountModal.style.display = 'none';
+            }
+        });
+
+        // Toggle switch pour le statut
+        const accountActive = document.getElementById('accountActive');
+        const statusLabel = document.getElementById('statusLabel');
+        const editAccountActive = document.getElementById('editAccountActive');
+        const editStatusLabel = document.getElementById('editStatusLabel');
+
+        accountActive.addEventListener('change', function() {
+            statusLabel.textContent = this.checked ? 'Actif' : 'Inactif';
+        });
+
+        editAccountActive.addEventListener('change', function() {
+            editStatusLabel.textContent = this.checked ? 'Actif' : 'Inactif';
+        });
 
         // Valider la clé API
         document.getElementById('validateApiKeyBtn').addEventListener('click', async () => {
@@ -1517,30 +1582,27 @@
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
-            // Vérifier l'authentification et les droits admin
+            // Vérifier l'authentification
             const token = localStorage.getItem('token');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
             
             if (!token) {
                 window.location.href = '/login';
                 return;
             }
             
+            // Charger les informations utilisateur
+            loadUserInfo();
+            
+            // Charger les comptes
+            loadHerokuAccounts();
+            
+            // Vérifier les droits admin
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (user.role !== 'admin') {
                 showNotification('Accès administrateur requis', 'error');
                 setTimeout(() => window.location.href = '/dashboard', 2000);
                 return;
             }
-            
-            // Mettre à jour les infos utilisateur
-            if (user.email) {
-                document.getElementById('userEmail').textContent = user.email;
-                document.getElementById('userName').textContent = user.username || 'Admin';
-                document.getElementById('userAvatar').textContent = (user.username || 'A').charAt(0).toUpperCase();
-            }
-            
-            // Charger les comptes
-            loadHerokuAccounts();
             
             // Raccourcis clavier
             document.addEventListener('keydown', (e) => {
