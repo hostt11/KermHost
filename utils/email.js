@@ -39,6 +39,65 @@ class EmailService {
     }
   }
 
+  // NOUVELLE MÉTHODE POUR LES CODES À 6 CHIFFRES
+  static async sendPasswordResetCodeEmail(email, resetCode) {
+    try {
+      console.log(`📧 Envoi email code à ${email}: ${resetCode}`);
+      
+      const { data, error } = await resend.emails.send({
+        from: `${process.env.EMAIL_NAME} <${process.env.EMAIL_FROM}>`,
+        to: [email],
+        subject: 'Code de réinitialisation KermHost',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
+              <h1 style="color: white; margin: 0;">KermHost</h1>
+            </div>
+            <div style="padding: 20px;">
+              <h2>Réinitialisation de votre mot de passe</h2>
+              <p>Vous avez demandé à réinitialiser votre mot de passe KermHost.</p>
+              <p>Utilisez le code suivant :</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <div style="display: inline-block; background: #f0f0f0; padding: 20px 40px; border-radius: 10px; border: 2px dashed #667eea;">
+                  <div style="font-size: 36px; font-weight: bold; letter-spacing: 10px; color: #333; font-family: monospace;">
+                    ${resetCode}
+                  </div>
+                </div>
+              </div>
+              
+              <p style="color: #666; font-size: 14px;">
+                Ce code est valable pendant <strong>1 heure</strong>.<br>
+                Si vous n'avez pas fait cette demande, ignorez cet email.
+              </p>
+              
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                <p style="margin: 0; font-size: 14px; color: #666;">
+                  <strong>⚠️ Sécurité :</strong> Ne partagez jamais ce code avec personne.
+                </p>
+              </div>
+            </div>
+            <div style="background: #f8f9fa; padding: 20px; text-align: center; color: #666;">
+              <p>&copy; 2025 KermHost. Tous droits réservés.</p>
+            </div>
+          </div>
+        `
+      });
+      
+      if (error) {
+        console.error('Erreur Resend:', error);
+        throw error;
+      }
+      
+      console.log(`✅ Email envoyé à ${email}`);
+      return data;
+    } catch (error) {
+      console.error('Erreur d\'envoi d\'email code:', error);
+      throw error;
+    }
+  }
+
+  // ANCIENNE MÉTHODE (gardée pour compatibilité)
   static async sendPasswordResetEmail(email, resetToken) {
     try {
       const resetUrl = `${process.env.APP_URL}/reset-password?token=${resetToken}`;
@@ -112,7 +171,6 @@ class EmailService {
     }
   }
 
-  // Email de confirmation de vérification manuelle
   static async sendVerificationSuccessEmail(email) {
     try {
       const { data, error } = await resend.emails.send({
@@ -152,7 +210,6 @@ class EmailService {
     }
   }
 
-  // Email d'approbation de bot
   static async sendBotApprovalEmail(email, botName) {
     try {
       const { data, error } = await resend.emails.send({
@@ -193,7 +250,6 @@ class EmailService {
     }
   }
 
-  // Email de rejet de bot
   static async sendBotRejectionEmail(email, botName, reason) {
     try {
       const { data, error } = await resend.emails.send({
@@ -240,7 +296,6 @@ class EmailService {
     }
   }
 
-  // Email de notification de maintenance
   static async sendMaintenanceEmail(email, message, endTime) {
     try {
       const { data, error } = await resend.emails.send({
@@ -281,7 +336,6 @@ class EmailService {
     }
   }
 
-  // Email de bienvenue pour les nouveaux utilisateurs
   static async sendWelcomeEmail(email, username, referralCode) {
     try {
       const referralLink = `${process.env.APP_URL}/signup?ref=${referralCode}`;
