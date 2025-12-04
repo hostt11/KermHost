@@ -247,7 +247,7 @@ router.post('/resend-verification', async (req, res) => {
   }
 });
 
-// Dans auth.js - modifier la route POST /forgot-password
+// Dans auth.js - Remplacer la fonction forgot-password existante
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -262,24 +262,25 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    // Générer un code à 6 chiffres au lieu d'un token JWT
+    // Générer un code à 6 chiffres
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // Mettre à jour l'utilisateur avec le code
     await supabase
       .from('users')
       .update({
-        reset_code: resetCode, // Nouveau champ à ajouter dans votre table users
+        reset_code: resetCode,
         reset_expires: new Date(Date.now() + 60 * 60 * 1000) // 1 heure
       })
       .eq('id', user.id);
 
-    // Envoyer l'email avec le code (modifier EmailService)
+    // Envoyer l'email avec le code
     await EmailService.sendPasswordResetCodeEmail(email, resetCode);
 
     res.json({ 
       message: 'Code de réinitialisation envoyé',
-      // Ne pas renvoyer le code en production, c'est juste pour le debug
-      code: process.env.NODE_ENV === 'development' ? resetCode : undefined
+      // Pour le développement seulement
+      ...(process.env.NODE_ENV === 'development' && { debug_code: resetCode })
     });
   } catch (error) {
     console.error('Erreur mot de passe oublié:', error);
@@ -287,10 +288,19 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-// Dans auth.js - modifier la route POST /reset-password
+// Dans auth.js - Remplacer la fonction reset-password existante
 router.post('/reset-password', async (req, res) => {
   try {
-    const { email, code, password } = req.body; // Ajouter email et code
+    const { email, code, password } = req.body;
+
+    // Validation
+    if (!email || !code || !password) {
+      return res.status(400).json({ error: 'Email, code et mot de passe requis' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 6 caractères' });
+    }
 
     // Trouver l'utilisateur avec ce code
     const { data: user, error } = await supabase
@@ -304,6 +314,7 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Code ou email invalide' });
     }
 
+    // Vérifier l'expiration
     if (new Date() > new Date(user.reset_expires)) {
       return res.status(400).json({ error: 'Code expiré' });
     }
@@ -318,7 +329,8 @@ router.post('/reset-password', async (req, res) => {
       .update({
         password_hash: passwordHash,
         reset_code: null,
-        reset_expires: null
+        reset_expires: null,
+        updated_at: new Date()
       })
       .eq('id', user.id);
 
