@@ -256,6 +256,7 @@
 
         .checkbox-group input {
             margin-top: 5px;
+            transform: scale(1.2);
         }
 
         .checkbox-group label {
@@ -412,6 +413,7 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 10px;
+            cursor: pointer;
         }
 
         .referral-section h4 {
@@ -522,10 +524,29 @@
             color: var(--text-muted);
             cursor: pointer;
             transition: var(--transition);
+            padding: 5px;
+            z-index: 2;
         }
 
         .password-toggle:hover {
             color: var(--accent-color);
+        }
+
+        /* Message de validation */
+        .validation-message {
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .validation-message.valid {
+            color: var(--success-color);
+            display: block;
+        }
+
+        .validation-message.invalid {
+            color: var(--danger-color);
+            display: block;
         }
     </style>
 </head>
@@ -561,6 +582,7 @@
                         <input type="email" class="form-control" id="email" 
                                placeholder="votre@email.com" required>
                     </div>
+                    <div class="validation-message" id="emailValidation"></div>
                 </div>
 
                 <div class="form-group">
@@ -607,24 +629,25 @@
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
-                    <div class="error-text" id="passwordMatchError" style="color: var(--danger-color); font-size: 14px; margin-top: 5px; display: none;">
+                    <div class="validation-message" id="passwordMatchError">
                         Les mots de passe ne correspondent pas
                     </div>
                 </div>
 
                 <!-- Section de parrainage -->
                 <div class="referral-section" id="referralSection">
-                    <div class="header" onclick="toggleReferralInput()">
+                    <div class="header" onclick="toggleReferralSection()">
                         <h4><i class="fas fa-user-friends"></i> Code de parrainage (optionnel)</h4>
                         <i class="fas fa-chevron-down" id="referralChevron"></i>
                     </div>
                     <p>Entrez le code d'un ami pour recevoir 10 coins supplémentaires à l'inscription !</p>
-                    <div class="referral-input">
+                    <div class="referral-input" id="referralInput">
                         <div class="input-with-icon" style="margin-top: 10px;">
                             <i class="fas fa-gift"></i>
                             <input type="text" class="form-control" id="referralCode" 
                                    placeholder="Code de parrainage (ex: ABC123)">
                         </div>
+                        <div class="validation-message" id="referralValidation"></div>
                     </div>
                 </div>
 
@@ -665,13 +688,25 @@
     <div id="notificationContainer"></div>
 
     <script>
-        // Récupérer le code de parrainage depuis l'URL
-        function getReferralFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('ref');
+        // Fonctions globales
+        function toggleReferralSection() {
+            const section = document.getElementById('referralSection');
+            const chevron = document.getElementById('referralChevron');
+            const input = document.getElementById('referralInput');
+            
+            if (section.classList.contains('active')) {
+                section.classList.remove('active');
+                chevron.style.transform = 'rotate(0deg)';
+            } else {
+                section.classList.add('active');
+                chevron.style.transform = 'rotate(180deg)';
+                // Focus sur le champ de parrainage quand il s'ouvre
+                setTimeout(() => {
+                    document.getElementById('referralCode').focus();
+                }, 300);
+            }
         }
 
-        // Afficher la notification de parrainage
         function showReferralNotice(referrerName) {
             const notice = document.getElementById('referralNotice');
             const message = document.getElementById('referralMessage');
@@ -685,18 +720,20 @@
             }
         }
 
-        // Basculer l'affichage du champ de parrainage
-        function toggleReferralInput() {
-            const section = document.getElementById('referralSection');
-            const chevron = document.getElementById('referralChevron');
+        function togglePasswordVisibility(inputId, toggleId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleButton = document.getElementById(toggleId);
+            const icon = toggleButton.querySelector('i');
             
-            section.classList.toggle('active');
-            chevron.style.transform = section.classList.contains('active') 
-                ? 'rotate(180deg)' 
-                : 'rotate(0deg)';
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
         }
 
-        // Vérifier la force du mot de passe
         function checkPasswordStrength(password) {
             let strength = 0;
             const strengthBar = document.getElementById('passwordStrength');
@@ -733,37 +770,30 @@
             }
         }
 
-        // Vérifier la correspondance des mots de passe
         function checkPasswordMatch() {
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             const errorElement = document.getElementById('passwordMatchError');
             
-            if (password && confirmPassword && password !== confirmPassword) {
-                errorElement.style.display = 'block';
+            if (confirmPassword && password !== confirmPassword) {
+                errorElement.textContent = 'Les mots de passe ne correspondent pas';
+                errorElement.className = 'validation-message invalid';
                 return false;
+            } else if (confirmPassword && password === confirmPassword) {
+                errorElement.textContent = 'Les mots de passe correspondent';
+                errorElement.className = 'validation-message valid';
+                return true;
             } else {
-                errorElement.style.display = 'none';
+                errorElement.className = 'validation-message';
                 return true;
             }
         }
 
-        // Basculer la visibilité du mot de passe
-        function togglePasswordVisibility(inputId, toggleId) {
-            const passwordInput = document.getElementById(inputId);
-            const toggleButton = document.getElementById(toggleId);
-            const icon = toggleButton.querySelector('i');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                icon.className = 'fas fa-eye-slash';
-            } else {
-                passwordInput.type = 'password';
-                icon.className = 'fas fa-eye';
-            }
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
         }
 
-        // Fonction de notification
         function showNotification(message, type = 'success') {
             const container = document.getElementById('notificationContainer');
             const notification = document.createElement('div');
@@ -791,133 +821,206 @@
             }, 4000);
         }
 
-        // Soumission du formulaire
-        document.getElementById('signupForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const referralCode = document.getElementById('referralCode').value;
-            const terms = document.getElementById('terms').checked;
-            
-            const errorMessage = document.getElementById('errorMessage');
-            const successMessage = document.getElementById('successMessage');
-            const loading = document.getElementById('loading');
-            
-            // Réinitialiser les messages
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
-            
-            // Validation
-            if (!terms) {
-                errorMessage.textContent = 'Vous devez accepter les conditions d\'utilisation';
-                errorMessage.style.display = 'block';
-                return;
-            }
-            
-            if (!checkPasswordMatch()) {
-                errorMessage.textContent = 'Les mots de passe ne correspondent pas';
-                errorMessage.style.display = 'block';
-                return;
-            }
-            
-            if (password.length < 6) {
-                errorMessage.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
-                errorMessage.style.display = 'block';
-                return;
-            }
-            
-            // Afficher le chargement
-            loading.style.display = 'block';
+        // Récupérer le code de parrainage depuis l'URL
+        function getReferralFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('ref');
+        }
+
+        // Vérifier le code de parrainage côté serveur
+        async function checkReferralCode(code) {
+            if (!code) return null;
             
             try {
-                const response = await fetch('/api/auth/signup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email,
-                        username: username || null,
-                        password,
-                        referralCode: referralCode || null
-                    })
-                });
-                
-                const data = await response.json();
-                
+                const response = await fetch(`/api/auth/check-referral?code=${encodeURIComponent(code)}`);
                 if (response.ok) {
-                    // Succès
-                    successMessage.textContent = data.message;
-                    successMessage.style.display = 'block';
-                    
-                    // Redirection vers la page de vérification après 2 secondes
-                    setTimeout(() => {
-                        window.location.href = `/verify-mail?email=${encodeURIComponent(email)}`;
-                    }, 2000);
-                    
-                    showNotification('Compte créé avec succès ! Vérifiez votre email.', 'success');
-                } else {
-                    // Erreur
-                    throw new Error(data.error || 'Erreur lors de l\'inscription');
+                    const data = await response.json();
+                    return data.referrer;
                 }
+                return null;
             } catch (error) {
-                console.error('Erreur inscription:', error);
-                errorMessage.textContent = error.message;
-                errorMessage.style.display = 'block';
-                showNotification(error.message, 'error');
-            } finally {
-                loading.style.display = 'none';
+                console.error('Erreur vérification parrainage:', error);
+                return null;
             }
-        });
-
-        // Écouteurs d'événements
-        document.getElementById('password').addEventListener('input', function() {
-            checkPasswordStrength(this.value);
-            checkPasswordMatch();
-        });
-
-        document.getElementById('confirmPassword').addEventListener('input', checkPasswordMatch);
-
-        document.getElementById('togglePassword').addEventListener('click', () => {
-            togglePasswordVisibility('password', 'togglePassword');
-        });
-
-        document.getElementById('toggleConfirmPassword').addEventListener('click', () => {
-            togglePasswordVisibility('confirmPassword', 'toggleConfirmPassword');
-        });
+        }
 
         // Initialisation
-        document.addEventListener('DOMContentLoaded', () => {
-            // Vérifier si l'utilisateur est déjà connecté
-            const token = localStorage.getItem('token');
-            if (token) {
-                window.location.href = '/dashboard';
-                return;
-            }
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Récupérer le code de parrainage depuis l'URL
+            const referralCodeFromURL = getReferralFromURL();
             
-            // Récupérer et afficher le code de parrainage
-            const referralCode = getReferralFromURL();
-            if (referralCode) {
-                document.getElementById('referralCode').value = referralCode;
+            if (referralCodeFromURL) {
+                document.getElementById('referralCode').value = referralCodeFromURL;
                 document.getElementById('referralSection').classList.add('active');
                 document.getElementById('referralChevron').style.transform = 'rotate(180deg)';
                 
-                // Essayer de récupérer le nom du parrain
-                fetch(`/api/auth/get-referrer?code=${referralCode}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.referrer) {
-                            showReferralNotice(data.referrer.username || data.referrer.email);
-                        }
-                    })
-                    .catch(() => {
-                        // Silencieux en cas d'erreur
-                    });
+                // Vérifier le code de parrainage
+                const referrer = await checkReferralCode(referralCodeFromURL);
+                if (referrer) {
+                    showReferralNotice(referrer.username || referrer.email);
+                }
             }
-            
+
+            // Écouteurs d'événements
+            document.getElementById('password').addEventListener('input', function() {
+                checkPasswordStrength(this.value);
+                checkPasswordMatch();
+            });
+
+            document.getElementById('confirmPassword').addEventListener('input', checkPasswordMatch);
+
+            document.getElementById('togglePassword').addEventListener('click', function() {
+                togglePasswordVisibility('password', 'togglePassword');
+            });
+
+            document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+                togglePasswordVisibility('confirmPassword', 'toggleConfirmPassword');
+            });
+
+            // Vérification de l'email en temps réel
+            document.getElementById('email').addEventListener('blur', async function() {
+                const email = this.value.trim();
+                const validationElement = document.getElementById('emailValidation');
+                
+                if (!email) return;
+                
+                if (!validateEmail(email)) {
+                    validationElement.textContent = 'Format d\'email invalide';
+                    validationElement.className = 'validation-message invalid';
+                    return;
+                }
+                
+                // Vérifier si l'email existe déjà
+                try {
+                    const response = await fetch(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+                    if (response.status === 409) {
+                        validationElement.textContent = 'Cet email est déjà utilisé';
+                        validationElement.className = 'validation-message invalid';
+                    } else if (response.ok) {
+                        validationElement.textContent = 'Email disponible';
+                        validationElement.className = 'validation-message valid';
+                    }
+                } catch (error) {
+                    // Ignorer les erreurs de vérification
+                }
+            });
+
+            // Soumission du formulaire - CORRIGÉ
+            document.getElementById('signupForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value.trim();
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const referralCode = document.getElementById('referralCode').value.trim();
+                const terms = document.getElementById('terms').checked;
+                
+                const errorMessage = document.getElementById('errorMessage');
+                const successMessage = document.getElementById('successMessage');
+                const loading = document.getElementById('loading');
+                
+                // Réinitialiser les messages
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+                
+                // Validation
+                if (!terms) {
+                    errorMessage.textContent = 'Vous devez accepter les conditions d\'utilisation';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                
+                if (!email) {
+                    errorMessage.textContent = 'Veuillez entrer une adresse email';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                
+                if (!validateEmail(email)) {
+                    errorMessage.textContent = 'Format d\'email invalide';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    errorMessage.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    errorMessage.textContent = 'Les mots de passe ne correspondent pas';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                
+                // Afficher le chargement
+                loading.style.display = 'block';
+                
+                try {
+                    console.log('📤 Envoi inscription:', { email, username, referralCode });
+                    
+                    const response = await fetch('/api/auth/signup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email,
+                            username: username || undefined,
+                            password,
+                            referralCode: referralCode || undefined
+                        })
+                    });
+                    
+                    console.log('📥 Réponse inscription:', response.status);
+                    
+                    let data;
+                    try {
+                        data = await response.json();
+                        console.log('📦 Données réponse:', data);
+                    } catch (parseError) {
+                        console.error('Erreur parsing JSON:', parseError);
+                        data = { error: 'Réponse invalide du serveur' };
+                    }
+                    
+                    if (response.ok) {
+                        // Succès
+                        successMessage.textContent = data.message || 'Compte créé avec succès !';
+                        successMessage.style.display = 'block';
+                        
+                        showNotification('Compte créé avec succès ! Vérifiez votre email.', 'success');
+                        
+                        // Redirection vers la page de vérification après 2 secondes
+                        setTimeout(() => {
+                            window.location.href = `/verify-mail?email=${encodeURIComponent(email)}`;
+                        }, 2000);
+                        
+                    } else {
+                        // Erreur - AFFICHER LE MESSAGE D'ERREUR DÉTAILLÉ
+                        const errorMsg = data.error || data.message || `Erreur ${response.status}`;
+                        errorMessage.textContent = errorMsg;
+                        errorMessage.style.display = 'block';
+                        showNotification(errorMsg, 'error');
+                        
+                        console.error('❌ Erreur inscription:', {
+                            status: response.status,
+                            data: data,
+                            message: errorMsg
+                        });
+                    }
+                } catch (error) {
+                    console.error('❌ Erreur réseau inscription:', error);
+                    errorMessage.textContent = 'Erreur réseau. Veuillez réessayer.';
+                    errorMessage.style.display = 'block';
+                    showNotification('Erreur réseau. Veuillez réessayer.', 'error');
+                } finally {
+                    loading.style.display = 'none';
+                }
+            });
+
             // Raccourci clavier
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && e.ctrlKey) {
