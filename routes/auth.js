@@ -341,6 +341,33 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// À ajouter dans auth.js
+router.post('/verify-reset-code', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .eq('reset_code', code)
+      .single();
+
+    if (error || !user) {
+      return res.status(400).json({ error: 'Code ou email invalide' });
+    }
+
+    if (new Date() > new Date(user.reset_expires)) {
+      return res.status(400).json({ error: 'Code expiré' });
+    }
+
+    res.json({ valid: true, message: 'Code valide' });
+  } catch (error) {
+    console.error('Erreur vérification code:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // Vérifier le token JWT (check)
 router.get('/check', async (req, res) => {
   try {
