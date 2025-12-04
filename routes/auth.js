@@ -6,57 +6,44 @@ const { v4: uuidv4 } = require('uuid');
 const supabase = require('../utils/database');
 const EmailService = require('../utils/email');
 
-// Inscription - CORRIGÉE
+// Inscription
 router.post('/signup', async (req, res) => {
   try {
-    console.log('📥 Requête signup reçue:', req.body);
     const { email, password, username, referralCode } = req.body;
     
-    // Validation basique
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email et mot de passe requis' });
-    }
-
     // Vérifier si l'utilisateur existe déjà
-    const { data: existingUser, error: checkError } = await supabase
+    const { data: existingUser } = await supabase
       .from('users')
       .select('*')
-      .eq('email', email.toLowerCase().trim())
-      .maybeSingle();
-
-    if (checkError) {
-      console.error('❌ Erreur vérification email:', checkError);
-      return res.status(500).json({ error: 'Erreur serveur' });
-    }
+      .eq('email', email)
+      .single();
 
     if (existingUser) {
       return res.status(400).json({ error: 'Cet email est déjà utilisé' });
     }
 
     // Hasher le mot de passe
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS));
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Générer un code de vérification
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const referral_code = uuidv4().substring(0, 8).toUpperCase();
+    const referral_code = uuidv4().substring(0, 8);
     
     let referred_by = null;
-    let initialCoins = 10;
+    let initialCoins = 10; // Coins de bienvenue
 
     // Vérifier le code de parrainage
     if (referralCode) {
-      console.log('🔍 Vérification code parrainage:', referralCode);
       const { data: referrer } = await supabase
         .from('users')
         .select('id')
-        .eq('referral_code', referralCode.toUpperCase())
+        .eq('referral_code', referralCode)
         .single();
 
       if (referrer) {
         referred_by = referrer.id;
-        initialCoins = 20;
-        console.log('✅ Code parrainage valide, referrer:', referrer.id);
+        initialCoins = 20; // 10 + 10 de parrainage
       }
     }
 
@@ -64,90 +51,62 @@ router.post('/signup', async (req, res) => {
     const { data: user, error } = await supabase
       .from('users')
       .insert([{
-        email: email.toLowerCase().trim(),
+        email,
         password_hash: passwordHash,
-        username: username || email.split('@')[0],
+        username,
         coins: initialCoins,
         referral_code: referral_code,
         referred_by,
         verification_code: verificationCode,
-        verification_expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        is_verified: false,
-        role: 'user',
-        created_at: new Date(),
-        updated_at: new Date()
+        verification_expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
       }])
       .select()
       .single();
 
-    if (error) {
-      console.error('❌ Erreur création utilisateur:', error);
-      return res.status(500).json({ error: 'Erreur lors de la création du compte' });
-    }
+    if (error) throw error;
 
-    console.log('✅ Utilisateur créé:', user.id);
+    // Envoyer l'email de vérification
+    await EmailService.sendVerificationEmail(email, verificationCode);
 
     // Si parrainage, créer l'entrée et donner les coins
     if (referred_by) {
-      try {
-        // Ajouter l'entrée de référence
-        await supabase
-          .from('referrals')
-          .insert([{
-            referrer_id: referred_by,
-            referred_id: user.id,
-            created_at: new Date()
-          }]);
+      // Ajouter l'entrée de référence
+      await supabase
+        .from('referrals')
+        .insert([{
+          referrer_id: referred_by,
+          referred_id: user.id
+        }]);
 
-        // Donner les coins au parrain
-        await supabase
-          .from('coin_transactions')
-          .insert([{
-            sender_id: null,
-            receiver_id: referred_by,
-            amount: 10,
-            type: 'referral',
-            description: `Parrainage de ${email}`,
-            created_at: new Date()
-          }]);
+      // Donner les coins au parrain
+      await supabase
+        .from('coin_transactions')
+        .insert([{
+          sender_id: null,
+          receiver_id: referred_by,
+          amount: parseInt(process.env.COIN_REFERRAL_REWARD),
+          type: 'referral',
+          description: `Parrainage de ${email}`
+        }]);
 
-        // Mettre à jour les coins du parrain
-        await supabase
-          .from('users')
-          .update({ 
-            coins: supabase.raw('coins + 10'),
-            updated_at: new Date()
-          })
-          .eq('id', referred_by);
-
-        console.log('✅ Parrainage enregistré');
-      } catch (referralError) {
-        console.error('❌ Erreur parrainage:', referralError);
-        // Continuer même en cas d'erreur de parrainage
-      }
-    }
-
-    // Envoyer l'email de vérification
-    try {
-      await EmailService.sendVerificationEmail(email, verificationCode);
-      console.log('📧 Email de vérification envoyé à:', email);
-    } catch (emailError) {
-      console.error('❌ Erreur envoi email:', emailError);
-      // Ne pas échouer l'inscription si l'email échoue
+      // Mettre à jour les coins du parrain
+      await supabase.rpc('increment_coins', {
+        user_id: referred_by,
+        amount: parseInt(process.env.COIN_REFERRAL_REWARD)
+      });
     }
 
     res.status(201).json({ 
       message: 'Compte créé avec succès. Vérifiez votre email.',
       userId: user.id 
     });
-
   } catch (error) {
-    console.error('❌ Erreur inscription complète:', error);
+    console.error('Erreur inscription:', error);
     res.status(500).json({ error: 'Erreur lors de l\'inscription' });
   }
 });
 
-// Connexion - SIMPLIFIÉE
+// Connexion
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -156,7 +115,7 @@ router.post('/login', async (req, res) => {
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('email', email.toLowerCase().trim())
+      .eq('email', email)
       .single();
 
     if (error || !user) {
@@ -169,12 +128,23 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Identifiants incorrects' });
     }
 
+    // Vérifier si le compte est vérifié
+    if (!user.is_verified) {
+      return res.status(403).json({ error: 'Veuillez vérifier votre email' });
+    }
+
     // Générer le token JWT
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'votre-secret-jwt',
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    // Mettre à jour la dernière connexion
+    await supabase
+      .from('users')
+      .update({ updated_at: new Date() })
+      .eq('id', user.id);
 
     res.json({
       token,
@@ -184,8 +154,7 @@ router.post('/login', async (req, res) => {
         username: user.username,
         role: user.role,
         coins: user.coins,
-        referral_code: user.referral_code,
-        is_verified: user.is_verified
+        referral_code: user.referral_code
       }
     });
   } catch (error) {
@@ -194,7 +163,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Vérification d'email - SIMPLIFIÉE
+// Vérification d'email
 router.post('/verify', async (req, res) => {
   try {
     const { email, code } = req.body;
@@ -202,7 +171,7 @@ router.post('/verify', async (req, res) => {
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('email', email.toLowerCase().trim())
+      .eq('email', email)
       .single();
 
     if (error || !user) {
@@ -217,20 +186,19 @@ router.post('/verify', async (req, res) => {
       return res.status(400).json({ error: 'Code de vérification incorrect' });
     }
 
+    if (new Date() > new Date(user.verification_expires)) {
+      return res.status(400).json({ error: 'Code de vérification expiré' });
+    }
+
     // Marquer comme vérifié
-    const { error: updateError } = await supabase
+    await supabase
       .from('users')
       .update({
         is_verified: true,
         verification_code: null,
-        verification_expires: null,
-        updated_at: new Date()
+        verification_expires: null
       })
       .eq('id', user.id);
-
-    if (updateError) {
-      throw updateError;
-    }
 
     res.json({ message: 'Compte vérifié avec succès' });
   } catch (error) {
@@ -239,7 +207,7 @@ router.post('/verify', async (req, res) => {
   }
 });
 
-// Renvoyer le code de vérification - SIMPLIFIÉ
+// Renvoyer le code de vérification
 router.post('/resend-verification', async (req, res) => {
   try {
     const { email } = req.body;
@@ -247,11 +215,15 @@ router.post('/resend-verification', async (req, res) => {
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('email', email.toLowerCase().trim())
+      .eq('email', email)
       .single();
 
     if (error || !user) {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    if (user.is_verified) {
+      return res.status(400).json({ error: 'Compte déjà vérifié' });
     }
 
     // Générer un nouveau code
@@ -261,17 +233,12 @@ router.post('/resend-verification', async (req, res) => {
       .from('users')
       .update({
         verification_code: verificationCode,
-        verification_expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        updated_at: new Date()
+        verification_expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
       })
       .eq('id', user.id);
 
     // Envoyer l'email
-    try {
-      await EmailService.sendVerificationEmail(email, verificationCode);
-    } catch (emailError) {
-      console.error('Erreur envoi email:', emailError);
-    }
+    await EmailService.sendVerificationEmail(email, verificationCode);
 
     res.json({ message: 'Code de vérification renvoyé' });
   } catch (error) {
