@@ -247,44 +247,60 @@ router.post('/resend-verification', async (req, res) => {
   }
 });
 
-// Dans auth.js - route POST /forgot-password
+// POST /api/auth/forgot-password
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
 
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
-
-    if (error || !user) {
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    // Validation basique de l'email
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ error: 'Veuillez entrer un email valide' });
     }
 
-    // Générer un code à 6 chiffres
-    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Mettre à jour l'utilisateur avec le code
-    await supabase
+    // On cherche l'utilisateur sans déclencher d'erreur s'il n'existe pas
+    const { data: user } = await supabase
       .from('users')
-      .update({
-        reset_code: resetCode,
-        reset_expires: new Date(Date.now() + 60 * 60 * 1000) // 1 heure
-      })
-      .eq('id', user.id);
+      .select('id, email')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle(); // très important : pas d'erreur si rien trouvé
 
-    // Envoyer l'email avec le code
-    await EmailService.sendPasswordResetCodeEmail(email, resetCode);
+    // Si l'utilisateur existe → on génère et envoie le code
+    if (user) {
+      const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    res.json({ 
-      message: 'Code de réinitialisation envoyé',
-      // Pour le debug seulement
-      ...(process.env.NODE_ENV !== 'production' && { debug_code: resetCode })
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          reset_code: resetCode,
+          reset_expires: new Date(Date.now() + 60 * 60 * 1000) // 1 heure
+        })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Erreur mise à jour reset_code:', updateError);
+        // On ne plante pas → on cache l'erreur pour la sécurité
+      } else {
+        try {
+          await EmailService.sendPasswordResetCodeEmail(email, resetCode);
+          console.log(`Code de réinitialisation envoyé à ${email} : ${resetCode}`);
+        } catch (emailError) {
+          console.error('Échec envoi email (mais on cache):', emailError);
+          // On ne dit rien → sécurité
+        }
+      }
+    }
+
+    // TOUJOURS la même réponse, même si l'email n'existe pas ou si l'envoi a échoué
+    return res.json({
+      message: 'Si cet email est associé à un compte, un code de réinitialisation a été envoyé.'
     });
+
   } catch (error) {
-    console.error('Erreur mot de passe oublié:', error);
-    res.status(500).json({ error: 'Erreur lors de la demande' });
+    console.error('Erreur inattendue forgot-password:', error);
+    // Même en cas d'erreur serveur → même message neutre
+    return res.json({
+      message: 'Si cet email est associé à un compte, un code de réinitialisation a été envoyé.'
+    });
   }
 });
 
