@@ -532,12 +532,6 @@
         <div class="signup-card">
             <h2><i class="fas fa-user-plus"></i> Créer un compte</h2>
 
-            <!-- Notification de parrainage -->
-            <div class="referral-notice" id="referralNotice">
-                <i class="fas fa-gift"></i>
-                <span id="referralMessage"></span>
-            </div>
-
             <!-- Messages d'erreur/succès -->
             <div class="error-message" id="errorMessage"></div>
             <div class="success-message" id="successMessage"></div>
@@ -553,19 +547,21 @@
                         <input type="email" class="form-control" id="email" 
                                placeholder="votre@email.com" required>
                     </div>
-                    <div class="validation-message" id="emailValidation"></div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">
                         <i class="fas fa-user"></i>
-                        Nom d'utilisateur (optionnel)
+                        Nom d'utilisateur
                     </label>
                     <div class="input-with-icon">
                         <i class="fas fa-user"></i>
                         <input type="text" class="form-control" id="username" 
                                placeholder="Votre pseudo">
                     </div>
+                    <small style="color: var(--text-muted); display: block; margin-top: 5px;">
+                        Optionnel - sera généré automatiquement si vide
+                    </small>
                 </div>
 
                 <div class="form-group">
@@ -576,7 +572,7 @@
                     <div class="input-with-icon">
                         <i class="fas fa-lock"></i>
                         <input type="password" class="form-control" id="password" 
-                               placeholder="Votre mot de passe" required>
+                               placeholder="Votre mot de passe" required minlength="6">
                         <button type="button" class="password-toggle" id="togglePassword">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -653,11 +649,10 @@
     </div>
 
     <script>
-        // Fonction pour basculer la section parrainage - CORRIGÉE
+        // Fonction pour basculer la section parrainage
         function toggleReferralSection() {
             const section = document.getElementById('referralSection');
             const chevron = document.getElementById('referralChevron');
-            const input = document.getElementById('referralInput');
             
             if (section.classList.contains('active')) {
                 section.classList.remove('active');
@@ -665,7 +660,6 @@
             } else {
                 section.classList.add('active');
                 chevron.style.transform = 'rotate(180deg)';
-                // Focus sur le champ de parrainage quand il s'ouvre
                 setTimeout(() => {
                     document.getElementById('referralCode').focus();
                 }, 300);
@@ -770,7 +764,6 @@
             
             if (referralCodeFromURL) {
                 document.getElementById('referralCode').value = referralCodeFromURL;
-                // Ouvrir automatiquement la section parrainage
                 const section = document.getElementById('referralSection');
                 const chevron = document.getElementById('referralChevron');
                 section.classList.add('active');
@@ -799,7 +792,7 @@
                 togglePasswordVisibility('confirmPassword', 'toggleConfirmPassword');
             });
 
-            // Soumission du formulaire - SIMPLIFIÉE
+            // Soumission du formulaire
             document.getElementById('signupForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
@@ -853,6 +846,8 @@
                 loading.style.display = 'block';
                 
                 try {
+                    console.log('📤 Envoi inscription vers /api/auth/signup');
+                    
                     const response = await fetch('/api/auth/signup', {
                         method: 'POST',
                         headers: {
@@ -867,10 +862,14 @@
                         })
                     });
                     
+                    console.log('📥 Réponse reçue, status:', response.status);
+                    
                     let data;
                     try {
                         data = await response.json();
+                        console.log('📦 Données réponse:', data);
                     } catch (parseError) {
+                        console.error('❌ Erreur parsing JSON:', parseError);
                         data = { error: 'Réponse invalide du serveur' };
                     }
                     
@@ -879,7 +878,7 @@
                         successMessage.textContent = data.message || 'Compte créé avec succès !';
                         successMessage.style.display = 'block';
                         
-                        // Redirection vers la page de vérification après 2 secondes
+                        // Redirection vers la page de vérification
                         setTimeout(() => {
                             window.location.href = `/verify-mail?email=${encodeURIComponent(email)}`;
                         }, 2000);
@@ -889,8 +888,14 @@
                         const errorMsg = data.error || data.message || `Erreur ${response.status}`;
                         errorMessage.textContent = errorMsg;
                         errorMessage.style.display = 'block';
+                        
+                        console.error('❌ Erreur détaillée:', {
+                            status: response.status,
+                            data: data
+                        });
                     }
                 } catch (error) {
+                    console.error('❌ Erreur réseau:', error);
                     errorMessage.textContent = 'Erreur réseau. Veuillez réessayer.';
                     errorMessage.style.display = 'block';
                 } finally {
