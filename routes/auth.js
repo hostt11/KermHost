@@ -247,7 +247,7 @@ router.post('/resend-verification', async (req, res) => {
   }
 });
 
-// Dans auth.js - Remplacer la fonction forgot-password existante
+// Dans auth.js - route POST /forgot-password
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -279,8 +279,8 @@ router.post('/forgot-password', async (req, res) => {
 
     res.json({ 
       message: 'Code de réinitialisation envoyé',
-      // Pour le développement seulement
-      ...(process.env.NODE_ENV === 'development' && { debug_code: resetCode })
+      // Pour le debug seulement
+      ...(process.env.NODE_ENV !== 'production' && { debug_code: resetCode })
     });
   } catch (error) {
     console.error('Erreur mot de passe oublié:', error);
