@@ -247,7 +247,7 @@ router.post('/resend-verification', async (req, res) => {
   }
 });
 
-// Mot de passe oublié
+// Dans auth.js - modifier la route POST /forgot-password
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -262,68 +262,62 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    // Générer un token de réinitialisation
-    const resetToken = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET + user.password_hash,
-      { expiresIn: '1h' }
-    );
+    // Générer un code à 6 chiffres au lieu d'un token JWT
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     await supabase
       .from('users')
       .update({
-        reset_token: resetToken,
-        reset_expires: new Date(Date.now() + 60 * 60 * 1000)
+        reset_code: resetCode, // Nouveau champ à ajouter dans votre table users
+        reset_expires: new Date(Date.now() + 60 * 60 * 1000) // 1 heure
       })
       .eq('id', user.id);
 
-    // Envoyer l'email de réinitialisation
-    await EmailService.sendPasswordResetEmail(email, resetToken);
+    // Envoyer l'email avec le code (modifier EmailService)
+    await EmailService.sendPasswordResetCodeEmail(email, resetCode);
 
-    res.json({ message: 'Email de réinitialisation envoyé' });
+    res.json({ 
+      message: 'Code de réinitialisation envoyé',
+      // Ne pas renvoyer le code en production, c'est juste pour le debug
+      code: process.env.NODE_ENV === 'development' ? resetCode : undefined
+    });
   } catch (error) {
     console.error('Erreur mot de passe oublié:', error);
     res.status(500).json({ error: 'Erreur lors de la demande' });
   }
 });
 
-// Réinitialisation du mot de passe
+// Dans auth.js - modifier la route POST /reset-password
 router.post('/reset-password', async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const { email, code, password } = req.body; // Ajouter email et code
 
-    // Trouver l'utilisateur avec ce token
+    // Trouver l'utilisateur avec ce code
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('reset_token', token)
+      .eq('email', email)
+      .eq('reset_code', code)
       .single();
 
     if (error || !user) {
-      return res.status(400).json({ error: 'Token invalide' });
+      return res.status(400).json({ error: 'Code ou email invalide' });
     }
 
     if (new Date() > new Date(user.reset_expires)) {
-      return res.status(400).json({ error: 'Token expiré' });
-    }
-
-    // Vérifier le token
-    try {
-      jwt.verify(token, process.env.JWT_SECRET + user.password_hash);
-    } catch (jwtError) {
-      return res.status(400).json({ error: 'Token invalide' });
+      return res.status(400).json({ error: 'Code expiré' });
     }
 
     // Hasher le nouveau mot de passe
     const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS));
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // Mettre à jour le mot de passe
+    // Mettre à jour le mot de passe et effacer le code
     await supabase
       .from('users')
       .update({
         password_hash: passwordHash,
-        reset_token: null,
+        reset_code: null,
         reset_expires: null
       })
       .eq('id', user.id);
