@@ -555,4 +555,46 @@ router.get('/profile', async (req, res) => {
   }
 });
 
+// Route pour vérifier si un email existe déjà
+router.get('/check-email', async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (user) {
+      return res.status(409).json({ error: 'Email déjà utilisé' });
+    }
+    
+    res.json({ available: true });
+  } catch (error) {
+    res.json({ available: true }); // Par défaut disponible
+  }
+});
+
+// Route pour vérifier un code de parrainage
+router.get('/check-referral', async (req, res) => {
+  try {
+    const { code } = req.query;
+    
+    const { data: referrer, error } = await supabase
+      .from('users')
+      .select('id, email, username')
+      .eq('referral_code', code)
+      .single();
+
+    if (error || !referrer) {
+      return res.status(404).json({ error: 'Code de parrainage invalide' });
+    }
+    
+    res.json({ referrer });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 module.exports = router;
