@@ -659,16 +659,12 @@
             const chevron = document.getElementById('referralChevron');
             const input = document.getElementById('referralInput');
             
-            console.log('🔍 Toggle referral section called');
-            
             if (section.classList.contains('active')) {
                 section.classList.remove('active');
                 chevron.style.transform = 'rotate(0deg)';
-                console.log('📂 Section parrainage fermée');
             } else {
                 section.classList.add('active');
                 chevron.style.transform = 'rotate(180deg)';
-                console.log('📂 Section parrainage ouverte');
                 // Focus sur le champ de parrainage quand il s'ouvre
                 setTimeout(() => {
                     document.getElementById('referralCode').focus();
@@ -762,19 +758,15 @@
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Page inscription chargée');
-            
             // Vérifier si l'utilisateur est déjà connecté
             const token = localStorage.getItem('token');
             if (token) {
-                console.log('🔑 Utilisateur déjà connecté, redirection vers dashboard');
                 window.location.href = '/dashboard';
                 return;
             }
             
             // Récupérer le code de parrainage depuis l'URL
             const referralCodeFromURL = getReferralFromURL();
-            console.log('🔗 Code parrainage URL:', referralCodeFromURL);
             
             if (referralCodeFromURL) {
                 document.getElementById('referralCode').value = referralCodeFromURL;
@@ -783,12 +775,10 @@
                 const chevron = document.getElementById('referralChevron');
                 section.classList.add('active');
                 chevron.style.transform = 'rotate(180deg)';
-                console.log('📂 Section parrainage ouverte automatiquement');
             }
             
-            // Écouteur pour ouvrir/fermer la section parrainage - CORRIGÉ
+            // Écouteur pour ouvrir/fermer la section parrainage
             document.getElementById('referralHeader').addEventListener('click', function(e) {
-                console.log('🎯 Clic sur header parrainage');
                 toggleReferralSection();
             });
             
@@ -809,7 +799,7 @@
                 togglePasswordVisibility('confirmPassword', 'toggleConfirmPassword');
             });
 
-            // Soumission du formulaire - AVEC SOLUTION POUR RESEND
+            // Soumission du formulaire - SIMPLIFIÉE
             document.getElementById('signupForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
@@ -859,43 +849,10 @@
                     return;
                 }
                 
-                // SOLUTION TEMPORAIRE POUR RESEND : Utiliser un compte de test
-                // Si c'est une adresse qui n'est pas la vôtre, envoyer un email de test
-                const isTestEmail = email === 'emmanuelmoukodi6@gmail.com' || 
-                                   email.includes('@example.com') || 
-                                   email.includes('@test.com');
-                
-                if (!isTestEmail) {
-                    console.log('⚠️ ATTENTION : Resend ne permet que les emails de test');
-                    console.log('💡 Solution 1 : Utilisez votre email personnel pour les tests');
-                    console.log('💡 Solution 2 : Vérifiez un domaine sur resend.com/domains');
-                    
-                    // Continuer quand même mais avertir l'utilisateur
-                    errorMessage.innerHTML = `
-                        <strong>Mode test Resend activé</strong><br>
-                        Pour les tests, veuillez utiliser :<br>
-                        • Votre email personnel<br>
-                        • Une adresse @example.com ou @test.com<br>
-                        <br>
-                        <small>En production, vérifiez un domaine sur resend.com</small>
-                    `;
-                    errorMessage.style.display = 'block';
-                    
-                    // Optionnel : permet de continuer quand même
-                    // return; // Décommentez pour bloquer les emails non-test
-                }
-                
                 // Afficher le chargement
                 loading.style.display = 'block';
                 
                 try {
-                    console.log('📤 Envoi inscription:', { 
-                        email, 
-                        username: username || 'non défini',
-                        hasReferralCode: !!referralCode,
-                        isTestEmail 
-                    });
-                    
                     const response = await fetch('/api/auth/signup', {
                         method: 'POST',
                         headers: {
@@ -910,14 +867,10 @@
                         })
                     });
                     
-                    console.log('📥 Réponse inscription:', response.status);
-                    
                     let data;
                     try {
                         data = await response.json();
-                        console.log('📦 Données réponse:', data);
                     } catch (parseError) {
-                        console.error('Erreur parsing JSON:', parseError);
                         data = { error: 'Réponse invalide du serveur' };
                     }
                     
@@ -936,15 +889,8 @@
                         const errorMsg = data.error || data.message || `Erreur ${response.status}`;
                         errorMessage.textContent = errorMsg;
                         errorMessage.style.display = 'block';
-                        
-                        console.error('❌ Erreur inscription:', {
-                            status: response.status,
-                            data: data,
-                            message: errorMsg
-                        });
                     }
                 } catch (error) {
-                    console.error('❌ Erreur réseau inscription:', error);
                     errorMessage.textContent = 'Erreur réseau. Veuillez réessayer.';
                     errorMessage.style.display = 'block';
                 } finally {
