@@ -2,28 +2,28 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inscription - KermHost</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #8a2be2;
-            --secondary-color: #4a00e0;
-            --accent-color: #00d4ff;
-            --accent-glow: rgba(0, 212, 255, 0.3);
-            --dark-color: #0f0f23;
-            --light-color: #1a1a2e;
-            --text-color: #ffffff;
-            --text-muted: #a0a0c0;
-            --success-color: #00ff9d;
-            --warning-color: #ffcc00;
-            --danger-color: #ff4757;
-            --border-radius: 15px;
-            --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            --glow-shadow: 0 0 20px var(--accent-glow);
+            --primary: #8B5CF6;
+            --primary-dark: #7C3AED;
+            --secondary: #10B981;
+            --accent: #00D4FF;
+            --dark: #0F172A;
+            --darker: #0D1524;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text: #F1F5F9;
+            --text-muted: #94A3B8;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --radius: 16px;
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            --glow: 0 0 30px rgba(139, 92, 246, 0.3);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         * {
@@ -33,104 +33,159 @@
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--dark-color);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(74, 0, 224, 0.1) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.1) 0%, transparent 20%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            color: var(--text-color);
+            color: var(--text);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
         }
 
         .container {
             width: 100%;
-            max-width: 480px;
+            max-width: 460px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-header {
+            text-align: center;
+            margin-bottom: 40px;
         }
 
         .logo {
-            text-align: center;
-            margin-bottom: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+            color: white;
+            margin-bottom: 25px;
         }
 
-        .logo img {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--accent-color);
-            box-shadow: var(--glow-shadow);
-            margin-bottom: 20px;
-            transition: var(--transition);
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: var(--glow);
+            animation: float 3s ease-in-out infinite;
         }
 
-        .logo img:hover {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 0 40px var(--accent-color);
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
-        .logo h1 {
-            font-size: 36px;
-            font-weight: 700;
-            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+        .logo-text {
+            text-align: left;
+        }
+
+        .logo-text h1 {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            margin: 0;
         }
 
-        .logo p {
+        .logo-text p {
+            font-size: 14px;
             color: var(--text-muted);
-            margin-top: 10px;
-            font-size: 16px;
+            margin-top: 4px;
+            font-weight: 500;
         }
 
         .signup-card {
-            background: var(--glass-bg);
+            background: var(--card-bg);
             backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
             padding: 40px;
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--shadow);
             transition: var(--transition);
         }
 
         .signup-card:hover {
-            border-color: var(--accent-color);
-            box-shadow: var(--glow-shadow);
+            border-color: var(--primary);
+            box-shadow: var(--glow);
+            transform: translateY(-5px);
         }
 
-        .signup-card h2 {
+        .signup-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 35px;
+        }
+
+        .signup-header h2 {
             font-size: 28px;
-            font-weight: 600;
-            color: white;
+            font-weight: 700;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 12px;
         }
 
-        .signup-card h2 i {
-            color: var(--accent-color);
+        .signup-header h2 i {
+            color: var(--primary);
         }
 
-        .referral-notice {
-            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
-            border: 1px solid var(--glass-border);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 25px;
-            text-align: center;
+        .signup-header p {
+            color: var(--text-muted);
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* Messages */
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
             display: none;
-        }
-
-        .referral-notice.active {
-            display: block;
-            animation: slideDown 0.5s ease;
+            animation: slideDown 0.3s ease;
+            border: 1px solid transparent;
         }
 
         @keyframes slideDown {
@@ -144,155 +199,281 @@
             }
         }
 
-        .referral-notice i {
-            color: var(--accent-color);
-            font-size: 20px;
-            margin-right: 10px;
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger);
+            color: var(--danger);
         }
 
-        .referral-notice strong {
-            color: var(--accent-color);
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--success);
         }
 
+        .alert-info {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Form */
         .form-group {
             margin-bottom: 25px;
         }
 
         .form-label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: var(--text-color);
-            font-size: 16px;
             display: flex;
             align-items: center;
             gap: 10px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text);
         }
 
         .form-label i {
-            color: var(--accent-color);
+            color: var(--primary);
             width: 20px;
         }
 
-        .input-with-icon {
+        .input-container {
             position: relative;
         }
 
-        .input-with-icon i {
+        .input-icon {
             position: absolute;
-            left: 20px;
+            left: 18px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
             transition: var(--transition);
+            pointer-events: none;
         }
 
         .form-control {
             width: 100%;
-            padding: 18px 20px 18px 55px;
+            padding: 17px 20px 17px 55px;
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
+            border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            color: var(--text-color);
+            color: var(--text);
             font-size: 16px;
             transition: var(--transition);
+            font-family: inherit;
         }
 
         .form-control:focus {
             outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px var(--accent-glow);
+            border-color: var(--primary);
             background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
         }
 
-        .form-control:focus + i {
-            color: var(--accent-color);
+        .form-control:focus + .input-icon {
+            color: var(--primary);
         }
 
         .form-control::placeholder {
             color: var(--text-muted);
         }
 
+        .password-toggle {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+
+        .password-toggle:hover {
+            color: var(--primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Password Strength */
         .password-strength {
-            height: 4px;
+            margin-top: 12px;
+        }
+
+        .strength-meter {
+            height: 6px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            margin-top: 10px;
+            border-radius: 3px;
             overflow: hidden;
+            margin-bottom: 8px;
         }
 
         .strength-bar {
             height: 100%;
             width: 0%;
+            border-radius: 3px;
             transition: width 0.3s ease;
-            border-radius: 2px;
-        }
-
-        .strength-weak {
-            background: var(--danger-color);
-        }
-
-        .strength-medium {
-            background: var(--warning-color);
-        }
-
-        .strength-strong {
-            background: var(--success-color);
         }
 
         .strength-text {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 5px;
+            font-size: 13px;
             text-align: right;
+            font-weight: 600;
         }
 
+        .strength-0 { background: var(--danger); }
+        .strength-1 { background: var(--danger); }
+        .strength-2 { background: var(--warning); }
+        .strength-3 { background: var(--success); }
+        .strength-4 { background: var(--success); }
+
+        /* Referral Section */
+        .referral-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .referral-section:hover {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .referral-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .referral-header-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .referral-header h4 {
+            color: var(--text);
+            font-size: 15px;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .referral-header i {
+            color: var(--primary);
+        }
+
+        .referral-chevron {
+            transition: transform 0.3s ease;
+        }
+
+        .referral-section.active .referral-chevron {
+            transform: rotate(180deg);
+        }
+
+        .referral-content {
+            margin-top: 15px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .referral-section.active .referral-content {
+            display: block;
+        }
+
+        .referral-hint {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        .referral-hint strong {
+            color: var(--primary);
+        }
+
+        /* Checkbox */
         .checkbox-group {
             display: flex;
             align-items: flex-start;
             gap: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: var(--transition);
+        }
+
+        .checkbox-group:hover {
+            background: rgba(255, 255, 255, 0.05);
         }
 
         .checkbox-group input {
-            margin-top: 5px;
+            margin-top: 2px;
             transform: scale(1.2);
+            accent-color: var(--primary);
         }
 
         .checkbox-group label {
             font-size: 14px;
-            line-height: 1.5;
+            line-height: 1.6;
             color: var(--text-muted);
         }
 
         .checkbox-group a {
-            color: var(--accent-color);
+            color: var(--primary);
             text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
         }
 
         .checkbox-group a:hover {
+            color: var(--accent);
             text-decoration: underline;
         }
 
+        /* Button */
         .btn {
             width: 100%;
             padding: 18px;
             border-radius: 12px;
-            text-decoration: none;
+            border: none;
+            font-size: 16px;
             font-weight: 600;
-            display: inline-flex;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
-            transition: var(--transition);
-            cursor: pointer;
-            border: none;
-            font-size: 16px;
             position: relative;
             overflow: hidden;
         }
 
-        .btn::before {
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary::before {
             content: '';
             position: absolute;
             top: 0;
@@ -303,42 +484,20 @@
             transition: left 0.6s;
         }
 
-        .btn:hover::before {
+        .btn-primary:hover::before {
             left: 100%;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            box-shadow: 0 6px 20px rgba(138, 43, 226, 0.4);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(138, 43, 226, 0.6);
-        }
-
-        .btn-secondary {
-            background: var(--glass-bg);
-            color: var(--text-color);
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(10px);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--accent-color);
-        }
-
+        /* Loading */
         .loading {
-            display: none;
             text-align: center;
-            margin: 15px 0;
+            padding: 20px;
+            display: none;
         }
 
         .loading i {
-            font-size: 20px;
-            color: var(--accent-color);
+            font-size: 24px;
+            color: var(--primary);
             animation: spin 1s linear infinite;
         }
 
@@ -347,117 +506,68 @@
             to { transform: rotate(360deg); }
         }
 
-        .error-message {
-            background: rgba(245, 101, 101, 0.1);
-            border: 1px solid var(--danger-color);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            color: var(--danger-color);
-            display: none;
-            animation: shake 0.5s ease;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        .success-message {
-            background: rgba(0, 255, 157, 0.1);
-            border: 1px solid var(--success-color);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            color: var(--success-color);
-            display: none;
-        }
-
+        /* Links */
         .links {
             text-align: center;
-            margin-top: 25px;
-            padding-top: 25px;
-            border-top: 1px solid var(--glass-border);
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .links a {
-            color: var(--accent-color);
+            color: var(--primary);
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             transition: var(--transition);
         }
 
         .links a:hover {
-            text-decoration: underline;
-            color: white;
+            color: var(--accent);
         }
 
-        .referral-section {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px dashed var(--glass-border);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            transition: var(--transition);
-        }
-
-        .referral-section:hover {
-            border-color: var(--accent-color);
-            background: rgba(0, 212, 255, 0.05);
-        }
-
-        .referral-section .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            cursor: pointer;
-        }
-
-        .referral-section h4 {
-            color: var(--text-color);
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 0;
-        }
-
-        .referral-section i {
-            color: var(--accent-color);
-        }
-
-        .referral-section p {
+        .links p {
+            margin-bottom: 15px;
             color: var(--text-muted);
+        }
+
+        .links p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Bonus */
+        .bonus-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: 10px 16px;
+            border-radius: 12px;
             font-size: 14px;
-            line-height: 1.5;
-            margin: 0;
-        }
-
-        .referral-input {
-            display: none;
-            margin-top: 15px;
-            animation: slideDown 0.3s ease;
-        }
-
-        .referral-section.active .referral-input {
-            display: block;
+            font-weight: 600;
+            margin-top: 25px;
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 640px) {
             .signup-card {
-                padding: 30px 25px;
+                padding: 30px;
             }
-
-            .logo h1 {
+            
+            .logo-header {
+                margin-bottom: 30px;
+            }
+            
+            .logo-text h1 {
                 font-size: 28px;
             }
-
-            .logo img {
-                width: 80px;
-                height: 80px;
+            
+            .signup-header h2 {
+                font-size: 24px;
             }
         }
 
@@ -465,450 +575,457 @@
             body {
                 padding: 15px;
             }
-
+            
             .signup-card {
                 padding: 25px 20px;
             }
-
-            .logo h1 {
-                font-size: 24px;
+            
+            .logo {
+                flex-direction: column;
+                text-align: center;
             }
-
-            .signup-card h2 {
-                font-size: 22px;
-            }
-
-            .form-control {
-                padding: 16px 15px 16px 50px;
-                font-size: 15px;
+            
+            .logo-text {
+                text-align: center;
             }
         }
 
-        /* Password toggle */
-        .password-toggle {
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: var(--transition);
-            padding: 5px;
-            z-index: 2;
-        }
-
-        .password-toggle:hover {
-            color: var(--accent-color);
-        }
-
-        /* Message de validation */
+        /* Validation */
         .validation-message {
-            font-size: 12px;
-            margin-top: 5px;
+            font-size: 13px;
+            margin-top: 6px;
             display: none;
         }
 
         .validation-message.valid {
-            color: var(--success-color);
+            color: var(--success);
             display: block;
         }
 
         .validation-message.invalid {
-            color: var(--danger-color);
+            color: var(--danger);
             display: block;
         }
     </style>
 </head>
 <body>
+    <!-- Particules animées -->
+    <div class="particles"></div>
+
     <div class="container">
-        <div class="logo">
-            <img src="https://files.catbox.moe/uqw1b5.jpeg" alt="KermHost Logo">
-            <h1>KermHost</h1>
-            <p>Créez votre compte pour commencer à déployer des bots</p>
+        <!-- Logo et en-tête -->
+        <div class="logo-header">
+            <a href="/" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>KermHost</h1>
+                    <p>Hébergement de bots Discord professionnel</p>
+                </div>
+            </a>
         </div>
 
+        <!-- Carte d'inscription -->
         <div class="signup-card">
-            <h2><i class="fas fa-user-plus"></i> Créer un compte</h2>
+            <!-- En-tête -->
+            <div class="signup-header">
+                <h2>
+                    <i class="fas fa-user-plus"></i>
+                    Créer un compte
+                </h2>
+                <p>Rejoignez notre communauté et déployez vos bots gratuitement</p>
+            </div>
 
-            <!-- Messages d'erreur/succès -->
-            <div class="error-message" id="errorMessage"></div>
-            <div class="success-message" id="successMessage"></div>
+            <!-- Messages -->
+            <div class="alert alert-danger" id="errorMessage"></div>
+            <div class="alert alert-success" id="successMessage"></div>
 
+            <!-- Formulaire -->
             <form id="signupForm">
+                <!-- Email -->
                 <div class="form-group">
                     <label class="form-label">
                         <i class="fas fa-envelope"></i>
                         Adresse Email
                     </label>
-                    <div class="input-with-icon">
-                        <i class="fas fa-envelope"></i>
-                        <input type="email" class="form-control" id="email" 
-                               placeholder="votre@email.com" required>
+                    <div class="input-container">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               placeholder="exemple@email.com"
+                               required
+                               autocomplete="email">
                     </div>
                 </div>
 
+                <!-- Username -->
                 <div class="form-group">
                     <label class="form-label">
                         <i class="fas fa-user"></i>
                         Nom d'utilisateur
+                        <span style="color: var(--text-muted); font-weight: normal; margin-left: auto; font-size: 13px;">
+                            Optionnel
+                        </span>
                     </label>
-                    <div class="input-with-icon">
-                        <i class="fas fa-user"></i>
-                        <input type="text" class="form-control" id="username" 
-                               placeholder="Votre pseudo">
+                    <div class="input-container">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" 
+                               class="form-control" 
+                               id="username" 
+                               placeholder="Choisissez un pseudo"
+                               autocomplete="username">
                     </div>
-                    <small style="color: var(--text-muted); display: block; margin-top: 5px;">
-                        Optionnel - sera généré automatiquement si vide
-                    </small>
                 </div>
 
+                <!-- Password -->
                 <div class="form-group">
                     <label class="form-label">
                         <i class="fas fa-lock"></i>
                         Mot de passe
                     </label>
-                    <div class="input-with-icon">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" class="form-control" id="password" 
-                               placeholder="Votre mot de passe" required minlength="6">
+                    <div class="input-container">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" 
+                               class="form-control" 
+                               id="password" 
+                               placeholder="Minimum 6 caractères"
+                               required
+                               minlength="6"
+                               autocomplete="new-password">
                         <button type="button" class="password-toggle" id="togglePassword">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                     <div class="password-strength">
-                        <div class="strength-bar" id="passwordStrength"></div>
+                        <div class="strength-meter">
+                            <div class="strength-bar" id="passwordStrength"></div>
+                        </div>
+                        <div class="strength-text" id="strengthText">Entrez un mot de passe</div>
                     </div>
-                    <div class="strength-text" id="strengthText">Faible</div>
                 </div>
 
+                <!-- Confirm Password -->
                 <div class="form-group">
                     <label class="form-label">
                         <i class="fas fa-lock"></i>
                         Confirmer le mot de passe
                     </label>
-                    <div class="input-with-icon">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" class="form-control" id="confirmPassword" 
-                               placeholder="Confirmez votre mot de passe" required>
+                    <div class="input-container">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" 
+                               class="form-control" 
+                               id="confirmPassword" 
+                               placeholder="Retapez votre mot de passe"
+                               required
+                               autocomplete="new-password">
                         <button type="button" class="password-toggle" id="toggleConfirmPassword">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
-                    <div class="validation-message" id="passwordMatchError"></div>
+                    <div class="validation-message" id="passwordMatchMessage"></div>
                 </div>
 
-                <!-- Section de parrainage -->
+                <!-- Referral Section -->
                 <div class="referral-section" id="referralSection">
-                    <div class="header" id="referralHeader">
-                        <h4><i class="fas fa-user-friends"></i> Code de parrainage (optionnel)</h4>
-                        <i class="fas fa-chevron-down" id="referralChevron"></i>
-                    </div>
-                    <p>Entrez le code d'un ami pour recevoir 10 coins supplémentaires à l'inscription !</p>
-                    <div class="referral-input" id="referralInput">
-                        <div class="input-with-icon" style="margin-top: 10px;">
-                            <i class="fas fa-gift"></i>
-                            <input type="text" class="form-control" id="referralCode" 
-                                   placeholder="Code de parrainage (ex: ABC123)">
+                    <div class="referral-header" id="referralHeader">
+                        <div class="referral-header-content">
+                            <i class="fas fa-user-friends"></i>
+                            <h4>Code de parrainage (optionnel)</h4>
                         </div>
+                        <i class="fas fa-chevron-down referral-chevron"></i>
+                    </div>
+                    <div class="referral-content" id="referralContent">
+                        <div class="input-container">
+                            <i class="fas fa-gift input-icon"></i>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="referralCode" 
+                                   placeholder="Code de votre ami">
+                        </div>
+                        <p class="referral-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>+10 coins bonus !</strong> Recevez 10 coins supplémentaires en utilisant un code de parrainage.
+                        </p>
                     </div>
                 </div>
 
+                <!-- Terms -->
                 <div class="checkbox-group">
                     <input type="checkbox" id="terms" required>
                     <label for="terms">
-                        J'accepte les <a href="/terms" target="_blank">Conditions d'utilisation</a> 
-                        et la <a href="/privacy" target="_blank">Politique de confidentialité</a>
+                        J'accepte les 
+                        <a href="/terms" target="_blank">Conditions d'utilisation</a> 
+                        et la 
+                        <a href="/privacy" target="_blank">Politique de confidentialité</a>
                     </label>
                 </div>
 
+                <!-- Loading -->
                 <div class="loading" id="loading">
                     <i class="fas fa-spinner"></i>
-                    <span style="margin-left: 10px;">Création du compte...</span>
                 </div>
 
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-user-plus"></i> Créer mon compte
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="fas fa-user-plus"></i>
+                    Créer mon compte
                 </button>
             </form>
 
+            <!-- Links -->
             <div class="links">
-                <p>Déjà un compte ? <a href="/login">Connectez-vous</a></p>
-                <p style="margin-top: 10px;">
-                    <a href="/">
-                        <i class="fas fa-arrow-left"></i> Retour à l'accueil
-                    </a>
-                </p>
+                <p>Déjà un compte ? <a href="/login"><i class="fas fa-sign-in-alt"></i> Se connecter</a></p>
+                <p>Retour à <a href="/"><i class="fas fa-home"></i> l'accueil</a></p>
             </div>
         </div>
 
-        <div style="text-align: center; margin-top: 30px; color: var(--text-muted); font-size: 14px;">
-            <p>En vous inscrivant, vous recevez automatiquement 10 coins gratuits !</p>
+        <!-- Bonus -->
+        <div style="text-align: center; margin-top: 25px;">
+            <div class="bonus-badge">
+                <i class="fas fa-coins"></i>
+                <span>10 coins offerts à l'inscription !</span>
+            </div>
         </div>
     </div>
 
     <script>
-        // Fonction pour basculer la section parrainage
-        function toggleReferralSection() {
-            const section = document.getElementById('referralSection');
-            const chevron = document.getElementById('referralChevron');
-            
-            if (section.classList.contains('active')) {
-                section.classList.remove('active');
-                chevron.style.transform = 'rotate(0deg)';
-            } else {
-                section.classList.add('active');
-                chevron.style.transform = 'rotate(180deg)';
-                setTimeout(() => {
-                    document.getElementById('referralCode').focus();
-                }, 300);
-            }
-        }
-
-        // Vérifier la force du mot de passe
-        function checkPasswordStrength(password) {
-            let strength = 0;
-            const strengthBar = document.getElementById('passwordStrength');
-            const strengthText = document.getElementById('strengthText');
-            
-            if (password.length >= 8) strength++;
-            if (/[A-Z]/.test(password)) strength++;
-            if (/[0-9]/.test(password)) strength++;
-            if (/[^A-Za-z0-9]/.test(password)) strength++;
-            
-            strengthBar.className = 'strength-bar';
-            strengthBar.style.width = `${strength * 25}%`;
-            
-            if (strength === 0) {
-                strengthBar.classList.add('strength-weak');
-                strengthText.textContent = 'Très faible';
-                strengthText.style.color = 'var(--danger-color)';
-            } else if (strength === 1) {
-                strengthBar.classList.add('strength-weak');
-                strengthText.textContent = 'Faible';
-                strengthText.style.color = 'var(--danger-color)';
-            } else if (strength === 2) {
-                strengthBar.classList.add('strength-medium');
-                strengthText.textContent = 'Moyen';
-                strengthText.style.color = 'var(--warning-color)';
-            } else if (strength === 3) {
-                strengthBar.classList.add('strength-strong');
-                strengthText.textContent = 'Fort';
-                strengthText.style.color = 'var(--success-color)';
-            } else {
-                strengthBar.classList.add('strength-strong');
-                strengthText.textContent = 'Très fort';
-                strengthText.style.color = 'var(--success-color)';
-            }
-        }
-
-        // Vérifier la correspondance des mots de passe
-        function checkPasswordMatch() {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const errorElement = document.getElementById('passwordMatchError');
-            
-            if (confirmPassword && password !== confirmPassword) {
-                errorElement.textContent = 'Les mots de passe ne correspondent pas';
-                errorElement.className = 'validation-message invalid';
-                return false;
-            } else if (confirmPassword && password === confirmPassword) {
-                errorElement.textContent = 'Les mots de passe correspondent';
-                errorElement.className = 'validation-message valid';
-                return true;
-            } else {
-                errorElement.className = 'validation-message';
-                return true;
-            }
-        }
-
-        // Basculer la visibilité du mot de passe
-        function togglePasswordVisibility(inputId, toggleId) {
-            const passwordInput = document.getElementById(inputId);
-            const toggleButton = document.getElementById(toggleId);
-            const icon = toggleButton.querySelector('i');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                icon.className = 'fas fa-eye-slash';
-            } else {
-                passwordInput.type = 'password';
-                icon.className = 'fas fa-eye';
-            }
-        }
-
-        // Validation d'email
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-
-        // Récupérer le code de parrainage depuis l'URL
-        function getReferralFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('ref');
-        }
-
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
             // Vérifier si l'utilisateur est déjà connecté
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('kermToken');
             if (token) {
                 window.location.href = '/dashboard';
                 return;
             }
-            
+
             // Récupérer le code de parrainage depuis l'URL
-            const referralCodeFromURL = getReferralFromURL();
-            
-            if (referralCodeFromURL) {
-                document.getElementById('referralCode').value = referralCodeFromURL;
-                const section = document.getElementById('referralSection');
-                const chevron = document.getElementById('referralChevron');
-                section.classList.add('active');
-                chevron.style.transform = 'rotate(180deg)';
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = urlParams.get('ref');
+            if (refCode) {
+                document.getElementById('referralCode').value = refCode;
+                document.getElementById('referralSection').classList.add('active');
             }
-            
-            // Écouteur pour ouvrir/fermer la section parrainage
-            document.getElementById('referralHeader').addEventListener('click', function(e) {
-                toggleReferralSection();
-            });
-            
-            // Écouteurs pour les mots de passe
-            document.getElementById('password').addEventListener('input', function() {
-                checkPasswordStrength(this.value);
-                checkPasswordMatch();
-            });
 
-            document.getElementById('confirmPassword').addEventListener('input', checkPasswordMatch);
+            // Références aux éléments
+            const form = document.getElementById('signupForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const strengthBar = document.getElementById('passwordStrength');
+            const strengthText = document.getElementById('strengthText');
+            const matchMessage = document.getElementById('passwordMatchMessage');
+            const togglePasswordBtn = document.getElementById('togglePassword');
+            const toggleConfirmPasswordBtn = document.getElementById('toggleConfirmPassword');
+            const referralSection = document.getElementById('referralSection');
+            const referralHeader = document.getElementById('referralHeader');
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
 
-            // Écouteurs pour basculer la visibilité des mots de passe
-            document.getElementById('togglePassword').addEventListener('click', function() {
-                togglePasswordVisibility('password', 'togglePassword');
-            });
+            // Basculer la visibilité du mot de passe
+            function togglePasswordVisibility(input, button) {
+                const icon = button.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.className = 'fas fa-eye-slash';
+                } else {
+                    input.type = 'password';
+                    icon.className = 'fas fa-eye';
+                }
+            }
 
-            document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
-                togglePasswordVisibility('confirmPassword', 'toggleConfirmPassword');
-            });
+            // Vérifier la force du mot de passe
+            function checkPasswordStrength(password) {
+                let strength = 0;
+                
+                // Longueur
+                if (password.length >= 8) strength++;
+                if (password.length >= 12) strength++;
+                
+                // Complexité
+                if (/[A-Z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+                
+                // Limiter à 4 niveaux
+                strength = Math.min(strength, 4);
+                
+                // Mettre à jour l'interface
+                const width = (strength / 4) * 100;
+                strengthBar.className = `strength-bar strength-${strength}`;
+                strengthBar.style.width = `${width}%`;
+                
+                // Texte
+                const texts = ['Très faible', 'Faible', 'Moyen', 'Fort', 'Très fort'];
+                const colors = [var('--danger'), var('--danger'), var('--warning'), var('--success'), var('--success')];
+                strengthText.textContent = texts[strength];
+                strengthText.style.color = colors[strength];
+            }
 
-            // Soumission du formulaire
-            document.getElementById('signupForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
+            // Vérifier la correspondance des mots de passe
+            function checkPasswordMatch() {
+                const password = passwordInput.value;
+                const confirm = confirmPasswordInput.value;
                 
-                const email = document.getElementById('email').value.trim();
-                const username = document.getElementById('username').value.trim();
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                const referralCode = document.getElementById('referralCode').value.trim();
-                const terms = document.getElementById('terms').checked;
-                
-                const errorMessage = document.getElementById('errorMessage');
-                const successMessage = document.getElementById('successMessage');
-                const loading = document.getElementById('loading');
-                
-                // Réinitialiser les messages
-                errorMessage.style.display = 'none';
-                successMessage.style.display = 'none';
-                
-                // Validation
-                if (!terms) {
-                    errorMessage.textContent = 'Vous devez accepter les conditions d\'utilisation';
-                    errorMessage.style.display = 'block';
-                    return;
+                if (!confirm) {
+                    matchMessage.className = 'validation-message';
+                    return false;
                 }
                 
-                if (!email) {
-                    errorMessage.textContent = 'Veuillez entrer une adresse email';
-                    errorMessage.style.display = 'block';
-                    return;
+                if (password === confirm) {
+                    matchMessage.textContent = '✓ Les mots de passe correspondent';
+                    matchMessage.className = 'validation-message valid';
+                    return true;
+                } else {
+                    matchMessage.textContent = '✗ Les mots de passe ne correspondent pas';
+                    matchMessage.className = 'validation-message invalid';
+                    return false;
                 }
-                
-                if (!validateEmail(email)) {
-                    errorMessage.textContent = 'Format d\'email invalide';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-                
-                if (password.length < 6) {
-                    errorMessage.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-                
-                if (password !== confirmPassword) {
-                    errorMessage.textContent = 'Les mots de passe ne correspondent pas';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-                
-                // Afficher le chargement
-                loading.style.display = 'block';
-                
+            }
+
+            // Vérifier l'email
+            function validateEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            }
+
+            // Envoyer le formulaire
+            async function submitForm(formData) {
                 try {
-                    console.log('📤 Envoi inscription vers /api/auth/signup');
+                    loading.style.display = 'block';
+                    submitBtn.disabled = true;
                     
                     const response = await fetch('/api/auth/signup', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Accept': 'application/json'
                         },
-                        body: JSON.stringify({
-                            email,
-                            username: username || undefined,
-                            password,
-                            referralCode: referralCode || undefined
-                        })
+                        body: JSON.stringify(formData)
                     });
-                    
-                    console.log('📥 Réponse reçue, status:', response.status);
-                    
-                    let data;
-                    try {
-                        data = await response.json();
-                        console.log('📦 Données réponse:', data);
-                    } catch (parseError) {
-                        console.error('❌ Erreur parsing JSON:', parseError);
-                        data = { error: 'Réponse invalide du serveur' };
-                    }
-                    
+
+                    const data = await response.json();
+
                     if (response.ok) {
                         // Succès
                         successMessage.textContent = data.message || 'Compte créé avec succès !';
                         successMessage.style.display = 'block';
-                        
-                        // Redirection vers la page de vérification
+                        errorMessage.style.display = 'none';
+
+                        // Stocker le token si fourni
+                        if (data.token) {
+                            localStorage.setItem('kermToken', data.token);
+                        }
+
+                        // Redirection
                         setTimeout(() => {
-                            window.location.href = `/verify-mail?email=${encodeURIComponent(email)}`;
+                            if (data.verified) {
+                                window.location.href = '/dashboard';
+                            } else {
+                                window.location.href = `/verify-mail?email=${encodeURIComponent(formData.email)}`;
+                            }
                         }, 2000);
-                        
+
                     } else {
                         // Erreur
-                        const errorMsg = data.error || data.message || `Erreur ${response.status}`;
-                        errorMessage.textContent = errorMsg;
-                        errorMessage.style.display = 'block';
-                        
-                        console.error('❌ Erreur détaillée:', {
-                            status: response.status,
-                            data: data
-                        });
+                        throw new Error(data.error || data.message || 'Erreur lors de l\'inscription');
                     }
                 } catch (error) {
-                    console.error('❌ Erreur réseau:', error);
-                    errorMessage.textContent = 'Erreur réseau. Veuillez réessayer.';
+                    console.error('Erreur:', error);
+                    errorMessage.textContent = error.message || 'Une erreur est survenue. Veuillez réessayer.';
                     errorMessage.style.display = 'block';
+                    successMessage.style.display = 'none';
                 } finally {
                     loading.style.display = 'none';
+                    submitBtn.disabled = false;
                 }
+            }
+
+            // Événements
+            togglePasswordBtn.addEventListener('click', () => 
+                togglePasswordVisibility(passwordInput, togglePasswordBtn));
+            
+            toggleConfirmPasswordBtn.addEventListener('click', () => 
+                togglePasswordVisibility(confirmPasswordInput, toggleConfirmPasswordBtn));
+            
+            passwordInput.addEventListener('input', function() {
+                checkPasswordStrength(this.value);
+                checkPasswordMatch();
+            });
+            
+            confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+            
+            referralHeader.addEventListener('click', function() {
+                referralSection.classList.toggle('active');
             });
 
-            // Raccourci clavier
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && e.ctrlKey) {
-                    document.getElementById('signupForm').dispatchEvent(new Event('submit'));
+            // Soumission du formulaire
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Récupérer les données
+                const formData = {
+                    email: emailInput.value.trim(),
+                    username: document.getElementById('username').value.trim() || undefined,
+                    password: passwordInput.value,
+                    referralCode: document.getElementById('referralCode').value.trim() || undefined
+                };
+
+                // Validation
+                if (!formData.email) {
+                    errorMessage.textContent = 'Veuillez entrer une adresse email';
+                    errorMessage.style.display = 'block';
+                    return;
                 }
+
+                if (!validateEmail(formData.email)) {
+                    errorMessage.textContent = 'Format d\'email invalide';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+
+                if (formData.password.length < 6) {
+                    errorMessage.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+
+                if (!checkPasswordMatch()) {
+                    errorMessage.textContent = 'Les mots de passe ne correspondent pas';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+
+                if (!document.getElementById('terms').checked) {
+                    errorMessage.textContent = 'Veuillez accepter les conditions d\'utilisation';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+
+                // Envoyer les données
+                await submitForm(formData);
             });
+
+            // Créer des particules
+            function createParticles() {
+                const particlesContainer = document.querySelector('.particles');
+                for (let i = 0; i < 50; i++) {
+                    const particle = document.createElement('div');
+                    particle.style.position = 'absolute';
+                    particle.style.width = `${Math.random() * 3 + 1}px`;
+                    particle.style.height = particle.style.width;
+                    particle.style.background = 'rgba(139, 92, 246, 0.2)';
+                    particle.style.borderRadius = '50%';
+                    particle.style.left = `${Math.random() * 100}%`;
+                    particle.style.top = `${Math.random() * 100}%`;
+                    particle.style.animation = `float ${Math.random() * 10 + 10}s linear infinite`;
+                    particlesContainer.appendChild(particle);
+                }
+            }
+
+            createParticles();
         });
     </script>
 </body>
