@@ -76,25 +76,27 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 // ========================================
 // CORRECTION ICI : on supprime tout le bloc compliqué et on utilise directement la bonne instance
 // ========================================
+// Session configuration - CORRIGÉ UNE BONNE FOIS POUR TOUTES
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback-secret-tres-long-et-aleatoire',
   resave: false,
   saveUninitialized: false,
-  store: new MemoryStore({                     // ← On utilise directement la MemoryStore du haut
-    checkPeriod: 86400000 // 24h en ms, nettoie les sessions expirées
+  store: new MemoryStore({                   // ← On utilise la MemoryStore définie en haut du fichier
+    checkPeriod: 86400000                    // Nettoie les sessions expirées toutes les 24h
   }),
   cookie: {
-    maxAge: 24 * 60 * 60 * 1000, // 24h
-    secure: process.env.NODE_ENV === 'production', // HTTPS en prod
+    maxAge: 24 * 60 * 60 * 1000,
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: 'lax'
   }
 }));
 
-// Warning en production (on garde ton message exactement comme tu l’avais)
+// Warning en prod (tu l’avais déjà, je le garde à l’identique)
 if (process.env.NODE_ENV === 'production') {
   console.log('Utilisation de MemoryStore - Pour production réelle, utilisez Redis');
 }
+
 
 // Middleware d'authentification global
 app.use(authMiddleware);
