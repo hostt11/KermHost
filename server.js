@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const MemoryStore = require('memorystore')(session);
+const MemoryStore = require('memorystore')(session);   // ← Cette ligne reste en haut (c’était déjà bon)
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
@@ -19,7 +19,7 @@ const { authMiddleware, requireAuth, requireAdmin } = require('./middleware/auth
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limite chaque IP à 100 requêtes par fenêtre
-  message: 'Trop de requêtes depuis cette IP, veuillez réessayer dans 15 minutes😙 - Powered by KermHost.',
+  message: 'Trop de requêtes depuis cette IP, veuillez réessayer dans 15 minutes - Powered by KermHost.',
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, // Ne pas compter les requêtes réussies
@@ -73,25 +73,14 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Session configuration
-let sessionStore;
-if (process.env.NODE_ENV === 'production') {
-  // Pour production, utiliser MemoryStore temporairement
-  const MemoryStore = require('memorystore')(session);
-  sessionStore = new MemoryStore({
-    checkPeriod: 86400000 // Nettoyer les entrées expirées chaque jour
-  });
-  console.log('⚠️  Utilisation de MemoryStore - Pour production réelle, utilisez Redis');
-} else {
-  const MemoryStore = session.MemoryStore;
-  sessionStore = new MemoryStore();
-}
-
+// ========================================
+// CORRECTION ICI : on supprime tout le bloc compliqué et on utilise directement la bonne instance
+// ========================================
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback-secret-tres-long-et-aleatoire',
   resave: false,
   saveUninitialized: false,
-  store: new MemoryStore({
+  store: new MemoryStore({                     // ← On utilise directement la MemoryStore du haut
     checkPeriod: 86400000 // 24h en ms, nettoie les sessions expirées
   }),
   cookie: {
@@ -101,6 +90,11 @@ app.use(session({
     sameSite: 'lax'
   }
 }));
+
+// Warning en production (on garde ton message exactement comme tu l’avais)
+if (process.env.NODE_ENV === 'production') {
+  console.log('Utilisation de MemoryStore - Pour production réelle, utilisez Redis');
+}
 
 // Middleware d'authentification global
 app.use(authMiddleware);
@@ -281,7 +275,7 @@ app.use((req, res, next) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('🔴 Erreur globale:', {
+  console.error('Erreur globale:', {
     message: err.message,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     path: req.path,
@@ -333,14 +327,12 @@ const gracefulShutdown = (signal) => {
   console.log(`\n${signal} reçu. Arrêt propre du serveur...`);
   
   server.close(() => {
-    console.log('✅ Serveur arrêté proprement');
-    // Fermer les connexions à la base de données ici si nécessaire
+    console.log('Serveur arrêté proprement');
     process.exit(0);
   });
 
-  // Force shutdown après 10 secondes
   setTimeout(() => {
-    console.error('⏰ Arrêt forcé après timeout');
+    console.error('Arrêt forcé après timeout');
     process.exit(1);
   }, 10000);
 };
@@ -351,42 +343,41 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 // Démarrer le serveur
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`
-  🚀 KermHost v2.0 - Serveur démarré avec succès !
+  KermHost v2.0 - Serveur démarré avec succès !
   
-  📍 Environnement: ${process.env.NODE_ENV || 'development'}
-  🌐 Port: ${PORT}
-  📡 URL: ${process.env.APP_URL || `http://localhost:${PORT}`}
-  👤 Session Store: ${process.env.NODE_ENV === 'production' ? 'MemoryStore' : 'MemoryStore (dev)'}
+  Environnement: ${process.env.NODE_ENV || 'development'}
+  Port: ${PORT}
+  URL: ${process.env.APP_URL || `http://localhost:${PORT}`}
+  Session Store: ${process.env.NODE_ENV === 'production' ? 'MemoryStore' : 'MemoryStore (dev)'}
   
-  📊 Points de terminaison actifs:
-    • 🌍 Public: /, /login, /signup
-    • 🔐 Dashboard: /dashboard/*
-    • ⚡ Admin: /admin/*
-    • 🛠️  API: /api/*
-    • ❤️  Santé: /health
+  Points de terminaison actifs:
+    • Public: /, /login, /signup
+    • Dashboard: /dashboard/*
+    • Admin: /admin/*
+    • API: /api/*
+    • Santé: /health
   
-  🔧 Configuration requise:
-    ${!process.env.SESSION_SECRET ? '⚠️  SESSION_SECRET non défini' : '✅ SESSION_SECRET configuré'}
-    ${!process.env.SUPABASE_URL ? '⚠️  SUPABASE_URL non défini' : '✅ SUPABASE configuré'}
-    ${!process.env.JWT_SECRET ? '⚠️  JWT_SECRET non défini' : '✅ JWT configuré'}
+  Configuration requise:
+    ${!process.env.SESSION_SECRET ? 'SESSION_SECRET non défini' : 'SESSION_SECRET configuré'}
+    ${!process.env.SUPABASE_URL ? 'SUPABASE_URL non défini' : 'SUPABASE configuré'}
+    ${!process.env.JWT_SECRET ? 'JWT_SECRET non défini' : 'JWT configuré'}
   
-  📝 Notes:
+  Notes:
     • Pages HTML: ${fs.readdirSync(path.join(__dirname, 'pages')).length} fichiers
     • Routes API: ${fs.readdirSync(path.join(__dirname, 'routes')).length} fichiers
-    • Maintenance mode: ${process.env.MAINTENANCE_MODE === 'true' ? 'ACTIF ⚠️' : 'INACTIF ✅'}
+    • Maintenance mode: ${process.env.MAINTENANCE_MODE === 'true' ? 'ACTIF' : 'INACTIF'}
   
-  ✅ Prêt à recevoir des requêtes...
+  Prêt à recevoir des requêtes...
   `);
 });
 
 // Gestion des erreurs non capturées
 process.on('uncaughtException', (error) => {
-  console.error('🔴 EXCEPTION NON CAPTURÉE:', error);
-  // Ne pas quitter immédiatement, laisser le serveur gérer
+  console.error('EXCEPTION NON CAPTURÉE:', error);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('🔴 REJET NON GÉRÉ:', reason);
+  console.error('REJET NON GÉRÉ:', reason);
 });
 
 // Export pour les tests
