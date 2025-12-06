@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const MemoryStore = require('memorystore')(session); // ← LA SEULE DÉCLARATION VALABLE
+const MemoryStore = require('memorystore')(session); // LA SEULE ET UNIQUE BONNE DÉCLARATION
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
@@ -73,13 +73,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// SESSION - VERSION CORRIGÉE ET DÉFINITIVE
+// SESSION - VERSION CORRIGÉE ET FONCTIONNELLE SUR RENDER
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback-secret-tres-long-et-aleatoire',
   resave: false,
   saveUninitialized: false,
-  store: new MemoryStore({                  // ← Utilise LA bonne MemoryStore du haut
-    checkPeriod: 86400000                   // Nettoie toutes les 24h
+  store: new MemoryStore({
+    checkPeriod: 86400000 // Nettoie les sessions expirées toutes les 24h
   }),
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,
@@ -89,7 +89,7 @@ app.use(session({
   }
 }));
 
-// Message d'avertissement en prod (tu l'aimais bien, je le garde)
+// Avertissement en production (tu l'adores, il reste)
 if (process.env.NODE_ENV === 'production') {
   console.log('Utilisation de MemoryStore - Pour production réelle, utilisez Redis');
 }
@@ -97,10 +97,10 @@ if (process.env.NODE_ENV === 'production') {
 // Middleware d'authentification global
 app.use(authMiddleware);
 
-// Apply rate limiting to API requests only
+// Rate limiting uniquement sur les routes API
 app.use('/api/', limiter);
 
-// Health check endpoint
+// Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy', 
@@ -115,13 +115,9 @@ app.get('/health', (req, res) => {
 
 // Maintenance middleware
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/api') || 
-      req.path === '/health' || 
-      req.path === '/maintenance' ||
-      req.path === '/favicon.ico') {
+  if (req.path.startsWith('/api') || req.path === '/health' || req.path === '/maintenance' || req.path === '/favicon.ico') {
     return next();
   }
-  
   try {
     const isMaintenance = process.env.MAINTENANCE_MODE === 'true';
     if (isMaintenance && !req.path.includes('maintenance')) {
@@ -130,7 +126,6 @@ app.use(async (req, res, next) => {
   } catch (error) {
     console.error('Erreur vérification maintenance:', error);
   }
-  
   next();
 });
 
@@ -150,228 +145,69 @@ app.use('/api/user', requireAuth, userRoutes);
 app.use('/api/deploy', requireAuth, deployRoutes);
 
 // Favicon
-app.get('/favicon.ico', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
-});
+app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'public', 'favicon.ico')));
 
-// Public pages (no auth required)
-app.get('/', (req, res) => {
-  if (req.user) {
-    return res.redirect('/dashboard');
-  }
-  res.sendFile(path.join(__dirname, 'pages', 'index.html'));
-});
+// Pages publiques
+app.get('/', (req, res) => req.user ? res.redirect('/dashboard') : res.sendFile(path.join(__dirname, 'pages', 'index.html')));
+app.get('/login', (req, res) => req.user ? res.redirect('/dashboard') : res.sendFile(path.join(__dirname, 'pages', 'login.html')));
+app.get('/signup', (req, res) => req.user ? res.redirect('/dashboard') : res.sendFile(path.join(__dirname, 'pages', 'signup.html')));
+app.get('/verify-mail', (req, res) => res.sendFile(path.join(__dirname, 'pages', 'verify-mail.html')));
+app.get('/forgot-password', (req, res) => req.user ? res.redirect('/dashboard') : res.sendFile(path.join(__dirname, 'pages', 'forgot-password.html')));
+app.get('/reset-password', (req, res) => req.user ? res.redirect('/dashboard') : res.sendFile(path.join(__dirname, 'pages', 'reset-password.html')));
 
-app.get('/login', (req, res) => {
-  if (req.user) {
-    return res.redirect('/dashboard');
-  }
-  res.sendFile(path.join(__dirname, 'pages', 'login.html'));
-});
+// Dashboard (protégé)
+app.get('/dashboard', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'index.html')));
+app.get('/dashboard/bots', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'bots.html')));
+app.get('/dashboard/coins', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'coins.html')));
+app.get('/dashboard/invite', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'invite.html')));
+app.get('/dashboard/profile', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'profile.html')));
+app.get('/dashboard/request', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'request.html')));
 
-app.get('/signup', (req, res) => {
-  if (req.user) {
-    return res.redirect('/dashboard');
-  }
-  res.sendFile(path.join(__dirname, 'pages', 'signup.html'));
-});
+// Admin (protégé)
+app.get('/admin', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'index.html')));
+app.get('/admin/users', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'users.html')));
+app.get('/admin/bot-request', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'bot-request.html')));
+app.get('/admin/add-heroku', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'add-heroku.html')));
+app.get('/admin/database', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'database.html')));
+app.get('/admin/profile', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'profile.html')));
+app.get('/admin/maintenance', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'maintenance.html')));
 
-app.get('/verify-mail', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'verify-mail.html'));
-});
+// Page de maintenance
+app.get('/maintenance', (req, res) => res.sendFile(path.join(__dirname, 'pages', 'maintenance.html')));
 
-app.get('/forgot-password', (req, res) => {
-  if (req.user) {
-    return res.redirect('/dashboard');
-  }
-  res.sendFile(path.join(__dirname, 'pages', 'forgot-password.html'));
-});
-
-app.get('/reset-password', (req, res) => {
-  if (req.user) {
-    return res.redirect('/dashboard');
-  }
-  res.sendFile(path.join(__dirname, 'pages', 'reset-password.html'));
-});
-
-// Protected dashboard routes
-app.get('/dashboard', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'index.html'));
-});
-
-app.get('/dashboard/bots', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'bots.html'));
-});
-
-app.get('/dashboard/coins', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'coins.html'));
-});
-
-app.get('/dashboard/invite', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'invite.html'));
-});
-
-app.get('/dashboard/profile', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'profile.html'));
-});
-
-app.get('/dashboard/request', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'request.html'));
-});
-
-// Protected admin routes
-app.get('/admin', requireAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'admin', 'index.html'));
-});
-
-app.get('/admin/users', requireAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'admin', 'users.html'));
-});
-
-app.get('/admin/bot-request', requireAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'admin', 'bot-request.html'));
-});
-
-app.get('/admin/add-heroku', requireAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'admin', 'add-heroku.html'));
-});
-
-app.get('/admin/database', requireAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'admin', 'database.html'));
-});
-
-app.get('/admin/profile', requireAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'admin', 'profile.html'));
-});
-
-app.get('/admin/maintenance', requireAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'admin', 'maintenance.html'));
-});
-
-// Page de maintenance publique
-app.get('/maintenance', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'maintenance.html'));
-});
-
-// 404 route avec cache control
-app.use((req, res, next) => {
+// 404
+app.use((req, res) => {
   if (req.accepts('html')) {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.status(404).sendFile(path.join(__dirname, 'pages', '404.html'));
   } else if (req.accepts('json')) {
-    res.status(404).json({ 
-      error: 'Ressource non trouvée',
-      path: req.path,
-      timestamp: new Date().toISOString()
-    });
+    res.status(404).json({ error: 'Ressource non trouvée', path: req.path });
   } else {
     res.status(404).type('txt').send('404 - Ressource non trouvée');
   }
 });
 
-// Global error handler
+// Error handler
 app.use((err, req, res, next) => {
-  console.error('Erreur globale:', {
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-    path: req.path,
-    method: req.method,
-    user: req.user ? req.user.id : 'non authentifié',
-    timestamp: new Date().toISOString()
-  });
-
-  const isDev = process.env.NODE_ENV !== 'production';
-  
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({ 
-      error: 'Erreur de validation', 
-      details: isDev ? err.errors : undefined 
-    });
-  }
-  
-  if (err.name === 'UnauthorizedError') {
-    return req.accepts('html') 
-      ? res.redirect('/login')
-      : res.status(401).json({ error: 'Non autorisé' });
-  }
-  
-  if (err.name === 'ForbiddenError') {
-    return req.accepts('html')
-      ? res.status(403).sendFile(path.join(__dirname, 'pages', '403.html'))
-      : res.status(403).json({ error: 'Accès interdit' });
-  }
-  
-  if (err.code === 'LIMIT_FILE_SIZE') {
-    return res.status(413).json({ error: 'Fichier trop volumineux (max 10MB)' });
-  }
-
-  if (req.accepts('html')) {
-    res.status(500).sendFile(path.join(__dirname, 'pages', '500.html'));
-  } else {
-    res.status(500).json({ 
-      error: 'Une erreur interne est survenue',
-      requestId: req.headers['x-request-id'] || Date.now().toString(36),
-      ...(isDev && { message: err.message })
-    });
-  }
+  console.error('Erreur globale:', err);
+  if (err.name === 'UnauthorizedError') return req.accepts('html') ? res.redirect('/login') : res.status(401).json({ error: 'Non autorisé' });
+  if (err.name === 'ForbiddenError') return req.accepts('html') ? res.status(403).sendFile(path.join(__dirname, 'pages', '403.html')) : res.status(403).json({ error: 'Accès interdit' });
+  req.accepts('html') ? res.status(500).sendFile(path.join(__dirname, 'pages', '500.html')) : res.status(500).json({ error: 'Erreur interne' });
 });
 
-// Gestion des signaux pour un arrêt propre
-const gracefulShutdown = (signal) => {
-  console.log(`\n${signal} reçu. Arrêt propre du serveur...`);
-  
-  server.close(() => {
-    console.log('Serveur arrêté proprement');
-    process.exit(0);
-  });
-
-  setTimeout(() => {
-    console.error('Arrêt forcé après timeout');
-    process.exit(1);
-  }, 10000);
-};
-
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-// Démarrer le serveur
+// Démarrage du serveur
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`
   KermHost v2.0 - Serveur démarré avec succès !
-  
   Environnement: ${process.env.NODE_ENV || 'development'}
   Port: ${PORT}
   URL: ${process.env.APP_URL || `http://localhost:${PORT}`}
-  Session Store: ${process.env.NODE_ENV === 'production' ? 'MemoryStore' : 'MemoryStore (dev)'}
-  
-  Points de terminaison actifs:
-    • Public: /, /login, /signup
-    • Dashboard: /dashboard/*
-    • Admin: /admin/*
-    • API: /api/*
-    • Santé: /health
-  
-  Configuration requise:
-    ${!process.env.SESSION_SECRET ? 'SESSION_SECRET non défini' : 'SESSION_SECRET configuré'}
-    ${!process.env.SUPABASE_URL ? 'SUPABASE_URL non défini' : 'SUPABASE configuré'}
-    ${!process.env.JWT_SECRET ? 'JWT_SECRET non défini' : 'JWT configuré'}
-  
-  Notes:
-    • Pages HTML: ${fs.readdirSync(path.join(__dirname, 'pages')).length} fichiers
-    • Routes API: ${fs.readdirSync(path.join(__dirname, 'routes')).length} fichiers
-    • Maintenance mode: ${process.env.MAINTENANCE_MODE === 'true' ? 'ACTIF' : 'INACTIF'}
-  
+  Session Store: MemoryStore
   Prêt à recevoir des requêtes...
   `);
 });
 
-// Gestion des erreurs non capturées
-process.on('uncaughtException', (error) => {
-  console.error('EXCEPTION NON CAPTURÉE:', error);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('REJET NON GÉRÉ:', reason);
-});
+process.on('SIGTERM', () => server.close(() => process.exit(0)));
+process.on('SIGINT', () => server.close(() => process.exit(0)));
 
 module.exports = { app, server };
