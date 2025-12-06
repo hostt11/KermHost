@@ -1,5 +1,6 @@
 const express = require('express');
 const session = require('express-session');
+const MemoryStore = require('memorystore')(session);
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
@@ -87,18 +88,18 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.use(session({
-  store: sessionStore,
-  secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production-please-use-32-chars-minimum-here',
+  secret: process.env.SESSION_SECRET || 'fallback-secret-tres-long-et-aleatoire',
   resave: false,
   saveUninitialized: false,
+  store: new MemoryStore({
+    checkPeriod: 86400000 // 24h en ms, nettoie les sessions expirées
+  }),
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000, // 24h
+    secure: process.env.NODE_ENV === 'production', // HTTPS en prod
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 heures
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-    domain: process.env.COOKIE_DOMAIN || 'localhost'
-  },
-  name: 'kermhost.sid'
+    sameSite: 'lax'
+  }
 }));
 
 // Middleware d'authentification global
