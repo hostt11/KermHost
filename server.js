@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const MemoryStore = require('memorystore')(session); // LA SEULE ET UNIQUE BONNE DÉCLARATION
+const MemoryStore = require('memorystore')(session); // LA LIGNE MAGIQUE QUI MANQUAIT
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware personnalisés
 const { authMiddleware, requireAuth, requireAdmin } = require('./middleware/auth');
 
-// Configuration de rate limiting
+// Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -25,10 +25,8 @@ const limiter = rateLimit({
   skipSuccessfulRequests: true,
 });
 
-// Middleware de compression
 app.use(compression());
 
-// Middleware Helmet pour la sécurité
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -48,7 +46,6 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS configuration
 app.use(cors({
   origin: function(origin, callback) {
     const allowedOrigins = [
@@ -56,30 +53,23 @@ app.use(cors({
       `http://localhost:${PORT}`,
       `http://127.0.0.1:${PORT}`
     ].filter(Boolean);
-    
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
   },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token']
+  credentials: true
 }));
 
-// Parser middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// SESSION - VERSION CORRIGÉE ET FONCTIONNELLE SUR RENDER
+// SESSION – VERSION FINALE QUI MARCHE À TOUS LES COUPS
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'fallback-secret-tres-long-et-aleatoire',
+  secret: process.env.SESSION_SECRET || 'fallback-secret-ultra-long-et-securise-123456789',
   resave: false,
   saveUninitialized: false,
   store: new MemoryStore({
-    checkPeriod: 86400000 // Nettoie les sessions expirées toutes les 24h
+    checkPeriod: 86400000
   }),
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,
@@ -89,120 +79,83 @@ app.use(session({
   }
 }));
 
-// Avertissement en production (tu l'adores, il reste)
 if (process.env.NODE_ENV === 'production') {
   console.log('Utilisation de MemoryStore - Pour production réelle, utilisez Redis');
 }
 
-// Middleware d'authentification global
 app.use(authMiddleware);
-
-// Rate limiting uniquement sur les routes API
 app.use('/api/', limiter);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    service: 'KermHost',
-    version: '2.0.0',
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Maintenance middleware
+// Maintenance
 app.use(async (req, res, next) => {
-  if (req.path.startsWith('/api') || req.path === '/health' || req.path === '/maintenance' || req.path === '/favicon.ico') {
-    return next();
-  }
-  try {
-    const isMaintenance = process.env.MAINTENANCE_MODE === 'true';
-    if (isMaintenance && !req.path.includes('maintenance')) {
-      return res.redirect('/maintenance');
-    }
-  } catch (error) {
-    console.error('Erreur vérification maintenance:', error);
+  if (req.path.startsWith('/api') || ['/health', '/maintenance', '/favicon.ico'].includes(req.path)) return next();
+  if (process.env.MAINTENANCE_MODE === 'true' && !req.path.includes('maintenance')) {
+    return res.redirect('/maintenance');
   }
   next();
 });
 
 // Routes API
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
-const botRoutes = require('./routes/bot');
-const coinRoutes = require('./routes/coin');
-const userRoutes = require('./routes/user');
-const deployRoutes = require('./routes/deploy');
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/admin', requireAdmin, require('./routes/admin'));
+app.use('/api/bot', requireAuth, require('./routes/bot'));
+app.use('/api/coin', requireAuth, require('./routes/coin'));
+app.use('/api/user', requireAuth, require('./routes/user'));
+app.use('/api/deploy', requireAuth, require('./routes/deploy'));
 
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', requireAdmin, adminRoutes);
-app.use('/api/bot', requireAuth, botRoutes);
-app.use('/api/coin', requireAuth, coinRoutes);
-app.use('/api/user', requireAuth, userRoutes);
-app.use('/api/deploy', requireAuth, deployRoutes);
-
-// Favicon
+// Favicon & pages publiques
 app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'public', 'favicon.ico')));
-
-// Pages publiques
 app.get('/', (req, res) => req.user ? res.redirect('/dashboard') : res.sendFile(path.join(__dirname, 'pages', 'index.html')));
 app.get('/login', (req, res) => req.user ? res.redirect('/dashboard') : res.sendFile(path.join(__dirname, 'pages', 'login.html')));
 app.get('/signup', (req, res) => req.user ? res.redirect('/dashboard') : res.sendFile(path.join(__dirname, 'pages', 'signup.html')));
-app.get('/verify-mail', (req, res) => res.sendFile(path.join(__dirname, 'pages', 'verify-mail.html')));
+app.get('/verify-mail', (_, res) => res.sendFile(path.join(__dirname, 'pages', 'verify-mail.html')));
 app.get('/forgot-password', (req, res) => req.user ? res.redirect('/dashboard') : res.sendFile(path.join(__dirname, 'pages', 'forgot-password.html')));
 app.get('/reset-password', (req, res) => req.user ? res.redirect('/dashboard') : res.sendFile(path.join(__dirname, 'pages', 'reset-password.html')));
 
-// Dashboard (protégé)
-app.get('/dashboard', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'index.html')));
-app.get('/dashboard/bots', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'bots.html')));
-app.get('/dashboard/coins', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'coins.html')));
-app.get('/dashboard/invite', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'invite.html')));
-app.get('/dashboard/profile', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'profile.html')));
-app.get('/dashboard/request', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'request.html')));
+// Dashboard & Admin
+const sendDashboard = (file) => (req, res) => res.sendFile(path.join(__dirname, 'pages', 'dashboard', file));
+const sendAdmin = (file) => (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', file));
 
-// Admin (protégé)
-app.get('/admin', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'index.html')));
-app.get('/admin/users', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'users.html')));
-app.get('/admin/bot-request', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'bot-request.html')));
-app.get('/admin/add-heroku', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'add-heroku.html')));
-app.get('/admin/database', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'database.html')));
-app.get('/admin/profile', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'profile.html')));
-app.get('/admin/maintenance', requireAdmin, (req, res) => res.sendFile(path.join(__dirname, 'pages', 'admin', 'maintenance.html')));
+app.get('/dashboard', requireAuth, sendDashboard('index.html'));
+app.get('/dashboard/bots', requireAuth, sendDashboard('bots.html'));
+app.get('/dashboard/coins', requireAuth, sendDashboard('coins.html'));
+app.get('/dashboard/invite', requireAuth, sendDashboard('invite.html'));
+app.get('/dashboard/profile', requireAuth, sendDashboard('profile.html'));
+app.get('/dashboard/request', requireAuth, sendDashboard('request.html'));
 
-// Page de maintenance
-app.get('/maintenance', (req, res) => res.sendFile(path.join(__dirname, 'pages', 'maintenance.html')));
+app.get('/admin', requireAdmin, sendAdmin('index.html'));
+app.get('/admin/users', requireAdmin, sendAdmin('users.html'));
+app.get('/admin/bot-request', requireAdmin, sendAdmin('bot-request.html'));
+app.get('/admin/add-heroku', requireAdmin, sendAdmin('add-heroku.html'));
+app.get('/admin/database', requireAdmin, sendAdmin('database.html'));
+app.get('/admin/profile', requireAdmin, sendAdmin('profile.html'));
+app.get('/admin/maintenance', requireAdmin, sendAdmin('maintenance.html'));
 
-// 404
+app.get('/maintenance', (_, res) => res.sendFile(path.join(__dirname, 'pages', 'maintenance.html')));
+
+// 404 & erreurs
 app.use((req, res) => {
-  if (req.accepts('html')) {
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.status(404).sendFile(path.join(__dirname, 'pages', '404.html'));
-  } else if (req.accepts('json')) {
-    res.status(404).json({ error: 'Ressource non trouvée', path: req.path });
-  } else {
-    res.status(404).type('txt').send('404 - Ressource non trouvée');
-  }
+  res.status(404).sendFile(path.join(__dirname, 'pages', '404.html'));
 });
 
-// Error handler
 app.use((err, req, res, next) => {
-  console.error('Erreur globale:', err);
-  if (err.name === 'UnauthorizedError') return req.accepts('html') ? res.redirect('/login') : res.status(401).json({ error: 'Non autorisé' });
-  if (err.name === 'ForbiddenError') return req.accepts('html') ? res.status(403).sendFile(path.join(__dirname, 'pages', '403.html')) : res.status(403).json({ error: 'Accès interdit' });
-  req.accepts('html') ? res.status(500).sendFile(path.join(__dirname, 'pages', '500.html')) : res.status(500).json({ error: 'Erreur interne' });
+  console.error('Erreur:', err);
+  if (err.name === 'UnauthorizedError') return res.redirect('/login');
+  if (err.name === 'ForbiddenError') return res.status(403).sendFile(path.join(__dirname, 'pages', '403.html'));
+  res.status(500).sendFile(path.join(__dirname, 'pages', '500.html'));
 });
 
-// Démarrage du serveur
+// Démarrage
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`
-  KermHost v2.0 - Serveur démarré avec succès !
-  Environnement: ${process.env.NODE_ENV || 'development'}
-  Port: ${PORT}
+  KermHost v2.0 démarré avec succès !
+  Port: ${PORT} | Env: ${process.env.NODE_ENV || 'development'}
   URL: ${process.env.APP_URL || `http://localhost:${PORT}`}
-  Session Store: MemoryStore
   Prêt à recevoir des requêtes...
   `);
 });
