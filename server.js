@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const MemoryStore = require('memorystore')(session);   // ← Cette ligne reste en haut (c’était déjà bon)
+const MemoryStore = require('memorystore')(session); // ← LA SEULE DÉCLARATION VALABLE
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
@@ -17,12 +17,12 @@ const { authMiddleware, requireAuth, requireAdmin } = require('./middleware/auth
 
 // Configuration de rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limite chaque IP à 100 requêtes par fenêtre
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: 'Trop de requêtes depuis cette IP, veuillez réessayer dans 15 minutes - Powered by KermHost.',
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: true, // Ne pas compter les requêtes réussies
+  skipSuccessfulRequests: true,
 });
 
 // Middleware de compression
@@ -73,16 +73,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// ========================================
-// CORRECTION ICI : on supprime tout le bloc compliqué et on utilise directement la bonne instance
-// ========================================
-// Session configuration - CORRIGÉ UNE BONNE FOIS POUR TOUTES
+// SESSION - VERSION CORRIGÉE ET DÉFINITIVE
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback-secret-tres-long-et-aleatoire',
   resave: false,
   saveUninitialized: false,
-  store: new MemoryStore({                   // ← On utilise la MemoryStore définie en haut du fichier
-    checkPeriod: 86400000                    // Nettoie les sessions expirées toutes les 24h
+  store: new MemoryStore({                  // ← Utilise LA bonne MemoryStore du haut
+    checkPeriod: 86400000                   // Nettoie toutes les 24h
   }),
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,
@@ -92,11 +89,10 @@ app.use(session({
   }
 }));
 
-// Warning en prod (tu l’avais déjà, je le garde à l’identique)
+// Message d'avertissement en prod (tu l'aimais bien, je le garde)
 if (process.env.NODE_ENV === 'production') {
   console.log('Utilisation de MemoryStore - Pour production réelle, utilisez Redis');
 }
-
 
 // Middleware d'authentification global
 app.use(authMiddleware);
@@ -119,7 +115,6 @@ app.get('/health', (req, res) => {
 
 // Maintenance middleware
 app.use(async (req, res, next) => {
-  // Sauter les routes d'API, de santé et de maintenance
   if (req.path.startsWith('/api') || 
       req.path === '/health' || 
       req.path === '/maintenance' ||
@@ -127,7 +122,6 @@ app.use(async (req, res, next) => {
     return next();
   }
   
-  // Vérifier si le site est en maintenance
   try {
     const isMaintenance = process.env.MAINTENANCE_MODE === 'true';
     if (isMaintenance && !req.path.includes('maintenance')) {
@@ -288,7 +282,6 @@ app.use((err, req, res, next) => {
 
   const isDev = process.env.NODE_ENV !== 'production';
   
-  // Types d'erreurs spécifiques
   if (err.name === 'ValidationError') {
     return res.status(400).json({ 
       error: 'Erreur de validation', 
@@ -312,7 +305,6 @@ app.use((err, req, res, next) => {
     return res.status(413).json({ error: 'Fichier trop volumineux (max 10MB)' });
   }
 
-  // Erreur serveur générique
   if (req.accepts('html')) {
     res.status(500).sendFile(path.join(__dirname, 'pages', '500.html'));
   } else {
@@ -382,5 +374,4 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('REJET NON GÉRÉ:', reason);
 });
 
-// Export pour les tests
 module.exports = { app, server };
