@@ -5,18 +5,23 @@ const cors = require('cors');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware personnalisés
+const { authMiddleware, requireAuth, requireAdmin } = require('./middleware/auth');
+
 // Configuration de rate limiting
 const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limite chaque IP à 100 requêtes par fenêtre
-  message: 'Trop de requêtes depuis cette IP, veuillez réessayer dans 1 minute😙 - Powered by Kerm.',
+  message: 'Trop de requêtes depuis cette IP, veuillez réessayer dans 15 minutes😙 - Powered by KermHost.',
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true, // Ne pas compter les requêtes réussies
 });
 
 // Middleware de compression
@@ -28,10 +33,10 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net"],
-      fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:", "https://files.catbox.moe", "https://cdnjs.cloudflare.com", "https://*.githubusercontent.com"],
-      connectSrc: ["'self'", "https://api.supabase.co", "https://api.heroku.com", "https://api.resend.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://unpkg.com"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "http:", "blob:"],
+      connectSrc: ["'self'", "https://api.supabase.co", "https://api.heroku.com", "https://api.resend.com", "ws:", "wss:"],
       frameSrc: ["'self'"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -44,54 +49,98 @@ app.use(helmet({
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || true,
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      process.env.CORS_ORIGIN,
+      `http://localhost:${PORT}`,
+      `http://127.0.0.1:${PORT}`
+    ].filter(Boolean);
+    
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token']
 }));
 
 // Parser middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Session configuration - IMPORTANT: En production, utilise un store externe
+// Session configuration
 let sessionStore;
 if (process.env.NODE_ENV === 'production') {
-  // Pour production, on utilise MemoryStore temporairement
-  // IMPORTANT: Change pour Redis ou PostgreSQL en production réelle
+  // Pour production, utiliser MemoryStore temporairement
+  const MemoryStore = require('memorystore')(session);
+  sessionStore = new MemoryStore({
+    checkPeriod: 86400000 // Nettoyer les entrées expirées chaque jour
+  });
+  console.log('⚠️  Utilisation de MemoryStore - Pour production réelle, utilisez Redis');
+} else {
   const MemoryStore = session.MemoryStore;
   sessionStore = new MemoryStore();
-  console.log('⚠️  ATTENTION: MemoryStore utilisé en production - Change pour Redis/PostgreSQL');
-} else {
-  sessionStore = new session.MemoryStore();
 }
 
 app.use(session({
   store: sessionStore,
-  secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production-32-chars-minimum',
+  secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production-please-use-32-chars-minimum-here',
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 heures
-    sameSite: 'strict'
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    domain: process.env.COOKIE_DOMAIN || 'localhost'
   },
   name: 'kermhost.sid'
 }));
 
-// Apply rate limiting to all requests
-app.use(limiter);
+// Middleware d'authentification global
+app.use(authMiddleware);
+
+// Apply rate limiting to API requests only
+app.use('/api/', limiter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
-    status: 'ok', 
+    status: 'healthy', 
     timestamp: new Date().toISOString(),
-    service: 'KermHost API',
-    version: '1.0.0'
+    service: 'KermHost',
+    version: '2.0.0',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    environment: process.env.NODE_ENV || 'development'
   });
+});
+
+// Maintenance middleware
+app.use(async (req, res, next) => {
+  // Sauter les routes d'API, de santé et de maintenance
+  if (req.path.startsWith('/api') || 
+      req.path === '/health' || 
+      req.path === '/maintenance' ||
+      req.path === '/favicon.ico') {
+    return next();
+  }
+  
+  // Vérifier si le site est en maintenance
+  try {
+    const isMaintenance = process.env.MAINTENANCE_MODE === 'true';
+    if (isMaintenance && !req.path.includes('maintenance')) {
+      return res.redirect('/maintenance');
+    }
+  } catch (error) {
+    console.error('Erreur vérification maintenance:', error);
+  }
+  
+  next();
 });
 
 // Routes API
@@ -103,47 +152,36 @@ const userRoutes = require('./routes/user');
 const deployRoutes = require('./routes/deploy');
 
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/bot', botRoutes);
-app.use('/api/coin', coinRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/deploy', deployRoutes);
+app.use('/api/admin', requireAdmin, adminRoutes);
+app.use('/api/bot', requireAuth, botRoutes);
+app.use('/api/coin', requireAuth, coinRoutes);
+app.use('/api/user', requireAuth, userRoutes);
+app.use('/api/deploy', requireAuth, deployRoutes);
 
-// Maintenance middleware
-app.use(async (req, res, next) => {
-  // Sauter les routes d'API et de santé
-  if (req.path.startsWith('/api') || req.path === '/health') {
-    return next();
-  }
-  
-  // Vérifier si le site est en maintenance
-  // Cette vérification devrait être en cache pour la performance
-  try {
-    // En production, vérifier depuis la base de données
-    // Pour l'instant, on utilise une variable d'environnement
-    const isMaintenance = process.env.MAINTENANCE_MODE === 'true';
-    
-    if (isMaintenance && req.path !== '/maintenance') {
-      return res.sendFile(path.join(__dirname, 'pages', 'maintenance.html'));
-    }
-  } catch (error) {
-    console.error('Erreur vérification maintenance:', error);
-    // Continuer même en cas d'erreur
-  }
-  
-  next();
+// Favicon
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
 });
 
-// Pages routes - avec vérification d'authentification
+// Public pages (no auth required)
 app.get('/', (req, res) => {
+  if (req.user) {
+    return res.redirect('/dashboard');
+  }
   res.sendFile(path.join(__dirname, 'pages', 'index.html'));
 });
 
 app.get('/login', (req, res) => {
+  if (req.user) {
+    return res.redirect('/dashboard');
+  }
   res.sendFile(path.join(__dirname, 'pages', 'login.html'));
 });
 
 app.get('/signup', (req, res) => {
+  if (req.user) {
+    return res.redirect('/dashboard');
+  }
   res.sendFile(path.join(__dirname, 'pages', 'signup.html'));
 });
 
@@ -152,96 +190,108 @@ app.get('/verify-mail', (req, res) => {
 });
 
 app.get('/forgot-password', (req, res) => {
+  if (req.user) {
+    return res.redirect('/dashboard');
+  }
   res.sendFile(path.join(__dirname, 'pages', 'forgot-password.html'));
 });
 
 app.get('/reset-password', (req, res) => {
+  if (req.user) {
+    return res.redirect('/dashboard');
+  }
   res.sendFile(path.join(__dirname, 'pages', 'reset-password.html'));
 });
 
-// Routes dashboard - protection basique
-app.get('/dashboard', (req, res) => {
+// Protected dashboard routes
+app.get('/dashboard', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'index.html'));
 });
 
-app.get('/dashboard/bots', (req, res) => {
+app.get('/dashboard/bots', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'bots.html'));
 });
 
-app.get('/dashboard/coins', (req, res) => {
+app.get('/dashboard/coins', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'coins.html'));
 });
 
-app.get('/dashboard/invite', (req, res) => {
+app.get('/dashboard/invite', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'invite.html'));
 });
 
-app.get('/dashboard/profile', (req, res) => {
+app.get('/dashboard/profile', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'profile.html'));
 });
 
-app.get('/dashboard/request', (req, res) => {
+app.get('/dashboard/request', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'dashboard', 'request.html'));
 });
 
-// Routes admin - protection basique
-app.get('/admin', (req, res) => {
+// Protected admin routes
+app.get('/admin', requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'admin', 'index.html'));
 });
 
-app.get('/admin/users', (req, res) => {
+app.get('/admin/users', requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'admin', 'users.html'));
 });
 
-app.get('/admin/bot-request', (req, res) => {
+app.get('/admin/bot-request', requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'admin', 'bot-request.html'));
 });
 
-app.get('/admin/add-heroku', (req, res) => {
+app.get('/admin/add-heroku', requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'admin', 'add-heroku.html'));
 });
 
-app.get('/admin/database', (req, res) => {
+app.get('/admin/database', requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'admin', 'database.html'));
 });
 
-app.get('/admin/profile', (req, res) => {
+app.get('/admin/profile', requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'admin', 'profile.html'));
 });
 
-app.get('/admin/maintenance', (req, res) => {
+app.get('/admin/maintenance', requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'admin', 'maintenance.html'));
 });
 
-// Page de maintenance
+// Page de maintenance publique
 app.get('/maintenance', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'maintenance.html'));
 });
 
-// 404 route
-app.use((req, res) => {
+// 404 route avec cache control
+app.use((req, res, next) => {
   if (req.accepts('html')) {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.status(404).sendFile(path.join(__dirname, 'pages', '404.html'));
   } else if (req.accepts('json')) {
-    res.status(404).json({ error: 'Ressource non trouvée' });
+    res.status(404).json({ 
+      error: 'Ressource non trouvée',
+      path: req.path,
+      timestamp: new Date().toISOString()
+    });
   } else {
-    res.status(404).type('txt').send('Ressource non trouvée');
+    res.status(404).type('txt').send('404 - Ressource non trouvée');
   }
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Erreur globale:', {
+  console.error('🔴 Erreur globale:', {
     message: err.message,
-    stack: err.stack,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     path: req.path,
     method: req.method,
+    user: req.user ? req.user.id : 'non authentifié',
     timestamp: new Date().toISOString()
   });
 
-  // Déterminer le type d'erreur
   const isDev = process.env.NODE_ENV !== 'production';
   
+  // Types d'erreurs spécifiques
   if (err.name === 'ValidationError') {
     return res.status(400).json({ 
       error: 'Erreur de validation', 
@@ -250,61 +300,79 @@ app.use((err, req, res, next) => {
   }
   
   if (err.name === 'UnauthorizedError') {
-    return res.status(401).json({ error: 'Non autorisé' });
+    return req.accepts('html') 
+      ? res.redirect('/login')
+      : res.status(401).json({ error: 'Non autorisé' });
   }
   
   if (err.name === 'ForbiddenError') {
-    return res.status(403).json({ error: 'Accès interdit' });
+    return req.accepts('html')
+      ? res.status(403).sendFile(path.join(__dirname, 'pages', '403.html'))
+      : res.status(403).json({ error: 'Accès interdit' });
   }
   
   if (err.code === 'LIMIT_FILE_SIZE') {
-    return res.status(413).json({ error: 'Fichier trop volumineux' });
+    return res.status(413).json({ error: 'Fichier trop volumineux (max 10MB)' });
   }
 
   // Erreur serveur générique
-  res.status(500).json({ 
-    error: 'Une erreur est survenue',
-    ...(isDev && { details: err.message, stack: err.stack })
-  });
+  if (req.accepts('html')) {
+    res.status(500).sendFile(path.join(__dirname, 'pages', '500.html'));
+  } else {
+    res.status(500).json({ 
+      error: 'Une erreur interne est survenue',
+      requestId: req.headers['x-request-id'] || Date.now().toString(36),
+      ...(isDev && { message: err.message })
+    });
+  }
 });
 
 // Gestion des signaux pour un arrêt propre
-process.on('SIGTERM', () => {
-  console.log('SIGTERM reçu. Arrêt propre du serveur...');
+const gracefulShutdown = (signal) => {
+  console.log(`\n${signal} reçu. Arrêt propre du serveur...`);
+  
   server.close(() => {
-    console.log('Serveur arrêté proprement');
+    console.log('✅ Serveur arrêté proprement');
+    // Fermer les connexions à la base de données ici si nécessaire
     process.exit(0);
   });
-});
 
-process.on('SIGINT', () => {
-  console.log('SIGINT reçu. Arrêt du serveur...');
-  server.close(() => {
-    console.log('Serveur arrêté');
-    process.exit(0);
-  });
-});
+  // Force shutdown après 10 secondes
+  setTimeout(() => {
+    console.error('⏰ Arrêt forcé après timeout');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Démarrer le serveur
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`
-  🚀 Serveur KermHost démarré !
+  🚀 KermHost v2.0 - Serveur démarré avec succès !
   
   📍 Environnement: ${process.env.NODE_ENV || 'development'}
   🌐 Port: ${PORT}
   📡 URL: ${process.env.APP_URL || `http://localhost:${PORT}`}
+  👤 Session Store: ${process.env.NODE_ENV === 'production' ? 'MemoryStore' : 'MemoryStore (dev)'}
   
-  📊 Points de terminaison:
-    • API: /api/*
-    • Dashboard: /dashboard
-    • Admin: /admin
-    • Santé: /health
+  📊 Points de terminaison actifs:
+    • 🌍 Public: /, /login, /signup
+    • 🔐 Dashboard: /dashboard/*
+    • ⚡ Admin: /admin/*
+    • 🛠️  API: /api/*
+    • ❤️  Santé: /health
   
-  ⚠️  NOTES IMPORTANTES:
-    • MemoryStore utilisé pour les sessions - Change en production
-    • Configure SUPABASE_URL et SUPABASE_ANON_KEY
-    • Configure RESEND_API_KEY pour les emails
-    • Configure HEROKU_API_KEY pour les déploiements
+  🔧 Configuration requise:
+    ${!process.env.SESSION_SECRET ? '⚠️  SESSION_SECRET non défini' : '✅ SESSION_SECRET configuré'}
+    ${!process.env.SUPABASE_URL ? '⚠️  SUPABASE_URL non défini' : '✅ SUPABASE configuré'}
+    ${!process.env.JWT_SECRET ? '⚠️  JWT_SECRET non défini' : '✅ JWT configuré'}
+  
+  📝 Notes:
+    • Pages HTML: ${fs.readdirSync(path.join(__dirname, 'pages')).length} fichiers
+    • Routes API: ${fs.readdirSync(path.join(__dirname, 'routes')).length} fichiers
+    • Maintenance mode: ${process.env.MAINTENANCE_MODE === 'true' ? 'ACTIF ⚠️' : 'INACTIF ✅'}
   
   ✅ Prêt à recevoir des requêtes...
   `);
@@ -312,10 +380,13 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 
 // Gestion des erreurs non capturées
 process.on('uncaughtException', (error) => {
-  console.error('Exception non capturée:', error);
-  process.exit(1);
+  console.error('🔴 EXCEPTION NON CAPTURÉE:', error);
+  // Ne pas quitter immédiatement, laisser le serveur gérer
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Rejet non géré:', reason);
+  console.error('🔴 REJET NON GÉRÉ:', reason);
 });
+
+// Export pour les tests
+module.exports = { app, server };
