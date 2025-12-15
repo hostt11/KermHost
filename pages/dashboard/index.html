@@ -66,7 +66,7 @@
 
         .sidebar {
             width: var(--sidebar-width);
-            background: rgba(26, 26, 46, 0.8);
+            background: rgba(26, 26, 46, 0.95);
             backdrop-filter: blur(20px);
             border-right: 1px solid var(--glass-border);
             position: fixed;
@@ -75,6 +75,20 @@
             transition: var(--transition);
             z-index: 1000;
             box-shadow: var(--box-shadow);
+            left: 0;
+            top: 0;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            backdrop-filter: blur(5px);
         }
 
         .sidebar-header {
@@ -158,7 +172,7 @@
             position: absolute;
             bottom: 0;
             width: 100%;
-            background: rgba(26, 26, 46, 0.9);
+            background: rgba(26, 26, 46, 0.95);
         }
 
         .user-info {
@@ -201,6 +215,7 @@
             margin-left: var(--sidebar-width);
             padding: 30px;
             background: transparent;
+            transition: var(--transition);
         }
 
         .header {
@@ -272,6 +287,12 @@
 
         .btn-warning {
             background: linear-gradient(135deg, var(--warning-color), #ff9f43);
+            color: white;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
             color: white;
             border: none;
         }
@@ -451,6 +472,7 @@
             border-radius: 12px;
             padding: 20px;
             transition: var(--transition);
+            cursor: pointer;
         }
 
         .bot-card-small:hover {
@@ -488,6 +510,11 @@
 
         .status-pending {
             background: linear-gradient(135deg, var(--warning-color), #ff9f43);
+            color: white;
+        }
+
+        .status-stopped {
+            background: linear-gradient(135deg, #6c757d, #495057);
             color: white;
         }
 
@@ -623,6 +650,11 @@
 
             .sidebar.active {
                 transform: translateX(0);
+                box-shadow: 0 0 50px rgba(0, 212, 255, 0.2);
+            }
+
+            .sidebar-overlay.active {
+                display: block;
             }
 
             .main-content {
@@ -695,6 +727,9 @@
 </head>
 <body>
     <div class="dashboard-container">
+        <!-- Overlay pour mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -918,10 +953,16 @@
         // Gestion du menu mobile
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-        mobileMenuBtn.addEventListener('click', () => {
+        function toggleMobileMenu() {
             sidebar.classList.toggle('active');
-        });
+            sidebarOverlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        sidebarOverlay.addEventListener('click', toggleMobileMenu);
 
         // Fonction de notification
         function showNotification(message, type = 'success') {
@@ -974,34 +1015,47 @@
                     return;
                 }
 
+                if (!userResponse.ok) {
+                    throw new Error('Erreur lors du chargement du profil');
+                }
+
                 userData = await userResponse.json();
                 
                 if (userData.user) {
                     updateUserInfo(userData.user);
+                    // Mettre à jour les coins depuis les données utilisateur
+                    document.getElementById('totalCoins').textContent = userData.user.coins || 0;
                 }
 
-                // Charger les statistiques
-                const statsResponse = await fetch('/api/user/stats', {
+                // Charger les statistiques de déploiements
+                const deploymentsResponse = await fetch('/api/deploy/user-deployments', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
 
-                if (statsResponse.ok) {
-                    const statsData = await statsResponse.json();
-                    updateStats(statsData);
+                if (deploymentsResponse.ok) {
+                    const deploymentsData = await deploymentsResponse.json();
+                    const deployments = deploymentsData.deployments || [];
+                    const activeDeployments = deployments.filter(d => d.status === 'active').length;
+                    
+                    document.getElementById('activeBots').textContent = activeDeployments;
+                    document.getElementById('totalBots').textContent = deployments.length;
+                    
+                    // Mettre à jour les bots récents
+                    updateRecentBots(deployments.slice(0, 3));
                 }
 
-                // Charger les bots récents
-                const botsResponse = await fetch('/api/deploy/user-deployments?limit=3', {
+                // Charger les statistiques de parrainage
+                const referralsResponse = await fetch('/api/coin/referral-stats', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
 
-                if (botsResponse.ok) {
-                    const botsData = await botsResponse.json();
-                    updateRecentBots(botsData.deployments || []);
+                if (referralsResponse.ok) {
+                    const referralsData = await referralsResponse.json();
+                    document.getElementById('referralsCount').textContent = referralsData.stats?.total_referrals || 0;
                 }
 
                 // Vérifier si l'utilisateur peut réclamer des coins
@@ -1017,23 +1071,15 @@
         function updateUserInfo(user) {
             // Mettre à jour la barre latérale
             document.getElementById('userEmail').textContent = user.email;
-            document.getElementById('userName').textContent = user.username || user.email.split('@')[0];
-            document.getElementById('userAvatar').textContent = (user.username || user.email.charAt(0)).toUpperCase();
+            const displayName = user.username || user.email.split('@')[0];
+            document.getElementById('userName').textContent = displayName;
+            document.getElementById('userAvatar').textContent = displayName.charAt(0).toUpperCase();
             
             // Mettre à jour la bannière de bienvenue
-            document.getElementById('userGreeting').textContent = user.username || user.email.split('@')[0];
+            document.getElementById('userGreeting').textContent = displayName;
             
             // Mettre à jour le stockage local
             localStorage.setItem('user', JSON.stringify(user));
-        }
-
-        // Mettre à jour les statistiques
-        function updateStats(stats) {
-            // Statistiques principales
-            document.getElementById('totalBots').textContent = stats.totalBots || 0;
-            document.getElementById('totalCoins').textContent = stats.totalCoins || 0;
-            document.getElementById('referralsCount').textContent = stats.referralsCount || 0;
-            document.getElementById('activeBots').textContent = stats.activeBots || 0;
         }
 
         // Mettre à jour les bots récents
@@ -1056,11 +1102,20 @@
 
             let html = '<div class="bots-grid">';
             
-            deployments.slice(0, 3).forEach(deployment => {
-                const statusClass = deployment.status === 'active' ? 'status-active' : 
-                                   deployment.status === 'pending' ? 'status-pending' : 'status-pending';
-                const statusText = deployment.status === 'active' ? 'ACTIF' : 
-                                   deployment.status === 'pending' ? 'EN ATTENTE' : 'INACTIF';
+            deployments.forEach(deployment => {
+                let statusClass = 'status-pending';
+                let statusText = 'EN ATTENTE';
+                
+                if (deployment.status === 'active') {
+                    statusClass = 'status-active';
+                    statusText = 'ACTIF';
+                } else if (deployment.status === 'stopped') {
+                    statusClass = 'status-stopped';
+                    statusText = 'ARRÊTÉ';
+                } else if (deployment.status === 'failed') {
+                    statusClass = 'status-pending';
+                    statusText = 'ÉCHOUÉ';
+                }
                 
                 html += `
                     <div class="bot-card-small" onclick="window.location.href='/dashboard/bots'">
@@ -1077,7 +1132,7 @@
                             <div class="info-label">Déployé le</div>
                             <div class="info-value">${new Date(deployment.created_at).toLocaleDateString()}</div>
                             <div class="info-label">Serveur</div>
-                            <div class="info-value">${deployment.heroku_app_name || 'N/A'}</div>
+                            <div class="info-value">${deployment.heroku_app_name ? deployment.heroku_app_name.substring(0, 10) + '...' : 'N/A'}</div>
                         </div>
                     </div>
                 `;
@@ -1091,7 +1146,7 @@
         async function checkCoinClaimStatus() {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/coin/claim-status', {
+                const response = await fetch('/api/coin/balance', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -1099,7 +1154,7 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    canClaimCoins = data.canClaim || false;
+                    canClaimCoins = data.stats?.can_claim_daily || false;
                     
                     if (canClaimCoins) {
                         document.getElementById('claimCoinsBanner').style.display = 'block';
@@ -1114,10 +1169,11 @@
         async function claimDailyCoins() {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/coin/claim', {
+                const response = await fetch('/api/coin/claim-daily', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 });
 
@@ -1128,16 +1184,19 @@
                     
                     // Mettre à jour l'affichage des coins
                     if (userData && userData.user) {
-                        userData.user.coins += 10;
+                        userData.user.coins += data.coins_added || 10;
                         document.getElementById('totalCoins').textContent = userData.user.coins;
                     }
                     
                     // Cacher la bannière
                     document.getElementById('claimCoinsBanner').style.display = 'none';
                     
-                    // Désactiver le bouton pendant 24h
-                    document.getElementById('claimCoinsBtn').disabled = true;
-                    document.getElementById('claimCoinsBtn').innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
+                    // Désactiver le bouton
+                    const claimBtn = document.getElementById('claimCoinsBtn');
+                    claimBtn.disabled = true;
+                    claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
+                    claimBtn.classList.remove('btn-success');
+                    claimBtn.classList.add('btn-secondary');
                 } else {
                     throw new Error(data.error || 'Erreur lors de la réclamation');
                 }
@@ -1148,11 +1207,27 @@
         }
 
         // Déconnexion
-        document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            
             if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = '/';
+                try {
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                        await fetch('/api/auth/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Erreur déconnexion:', error);
+                } finally {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/';
+                }
             }
         });
 
@@ -1171,7 +1246,7 @@
             // Raccourcis clavier
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && sidebar.classList.contains('active')) {
-                    sidebar.classList.remove('active');
+                    toggleMobileMenu();
                 }
                 if (e.key === 'd' && e.ctrlKey) {
                     loadDashboardData();
@@ -1192,6 +1267,8 @@
         window.addEventListener('resize', () => {
             if (window.innerWidth > 992) {
                 sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.style.overflow = '';
             }
         });
     </script>
