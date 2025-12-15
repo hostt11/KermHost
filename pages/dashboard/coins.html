@@ -64,17 +64,32 @@
             min-height: 100vh;
         }
 
+        /* Sidebar corrigée */
         .sidebar {
             width: var(--sidebar-width);
-            background: rgba(26, 26, 46, 0.8);
+            background: rgba(15, 15, 35, 0.95);
             backdrop-filter: blur(20px);
             border-right: 1px solid var(--glass-border);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
-            transition: var(--transition);
             z-index: 1000;
-            box-shadow: var(--box-shadow);
+            left: 0;
+            top: 0;
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            backdrop-filter: blur(5px);
         }
 
         .sidebar-header {
@@ -130,6 +145,7 @@
             transition: var(--transition);
             font-weight: 500;
             border-radius: var(--border-radius);
+            cursor: pointer;
         }
 
         .sidebar-menu a.active {
@@ -158,7 +174,7 @@
             position: absolute;
             bottom: 0;
             width: 100%;
-            background: rgba(26, 26, 46, 0.9);
+            background: rgba(15, 15, 35, 0.95);
         }
 
         .user-info {
@@ -196,13 +212,17 @@
             color: var(--text-muted);
         }
 
+        /* Main content corrigé */
         .main-content {
             flex: 1;
             margin-left: var(--sidebar-width);
             padding: 30px;
             background: transparent;
+            transition: margin-left 0.3s ease, padding 0.3s ease;
+            min-height: 100vh;
         }
 
+        /* Header corrigé */
         .header {
             display: flex;
             justify-content: space-between;
@@ -210,6 +230,8 @@
             margin-bottom: 40px;
             padding-bottom: 25px;
             border-bottom: 1px solid var(--glass-border);
+            flex-wrap: wrap;
+            gap: 20px;
         }
 
         .header h1 {
@@ -221,8 +243,17 @@
             display: inline-flex;
             align-items: center;
             gap: 15px;
+            flex-wrap: wrap;
         }
 
+        .header .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Bouton menu mobile */
         .mobile-menu-btn {
             display: none;
             background: none;
@@ -235,8 +266,82 @@
             border-radius: 50%;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
+            align-items: center;
+            justify-content: center;
         }
 
+        /* Styles responsive corrigés */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1001;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+                box-shadow: 0 0 50px rgba(0, 212, 255, 0.2);
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+                width: 100%;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+            }
+
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .header .header-title {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .mobile-menu-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 24px;
+            }
+        }
+
+        /* ... [RESTE DU CSS IDENTIQUE] ... */
+        
         /* Coin Balance */
         .coin-balance {
             background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
@@ -748,6 +853,9 @@
 </head>
 <body>
     <div class="dashboard-container">
+        <!-- Overlay pour mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -817,9 +925,9 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Header -->
+            <!-- Header corrigé -->
             <div class="header">
-                <div>
+                <div class="header-title">
                     <button class="mobile-menu-btn" id="mobileMenuBtn">
                         <i class="fas fa-bars"></i>
                     </button>
@@ -973,12 +1081,34 @@
         let userData = null;
         let userBalance = 0;
 
-        // Gestion du menu mobile
+        // Gestion du menu mobile corrigée
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-        mobileMenuBtn.addEventListener('click', () => {
+        function toggleMobileMenu() {
             sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : 'auto';
+        }
+
+        mobileMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMobileMenu();
+        });
+
+        sidebarOverlay.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMobileMenu();
+        });
+
+        // Fermer le menu en cliquant sur un lien
+        document.querySelectorAll('.sidebar-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 992) {
+                    toggleMobileMenu();
+                }
+            });
         });
 
         // Gestion du modal
