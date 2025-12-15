@@ -959,7 +959,6 @@
     <script>
         // Variables globales
         let userData = null;
-        let canClaimCoins = false;
 
         // Gestion du menu mobile
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -1003,18 +1002,61 @@
             }, 4000);
         }
 
-        // Charger les données du dashboard
+        // DEBUG: Fonction pour tester toutes les routes API
+        async function testAllRoutes() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            console.log('🧪 TEST de toutes les routes API...');
+            
+            const routes = [
+                { name: 'user/profile', url: '/api/user/profile' },
+                { name: 'user/stats', url: '/api/user/stats' },
+                { name: 'deploy/user-deployments', url: '/api/deploy/user-deployments' },
+                { name: 'coin/balance', url: '/api/coin/balance' },
+                { name: 'coin/referral-stats', url: '/api/coin/referral-stats' },
+                { name: 'coin/claim-daily', url: '/api/coin/claim-daily', method: 'POST' }
+            ];
+
+            for (const route of routes) {
+                try {
+                    const response = await fetch(route.url, {
+                        method: route.method || 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    console.log(`📡 ${route.name}: ${response.status} ${response.statusText}`);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log(`✅ ${route.name} response:`, data);
+                    } else {
+                        const errorText = await response.text();
+                        console.error(`❌ ${route.name} error:`, errorText);
+                    }
+                } catch (error) {
+                    console.error(`💥 ${route.name} exception:`, error);
+                }
+            }
+        }
+
+        // Charger les données du dashboard - VERSION SIMPLIFIÉE
         async function loadDashboardData() {
             try {
                 const token = localStorage.getItem('token');
                 if (!token) {
+                    console.log('❌ Pas de token, redirection vers login');
                     window.location.href = '/login';
                     return;
                 }
 
-                console.log('🔍 Chargement des données du dashboard...');
+                console.log('🚀 Début du chargement des données...');
 
                 // 1. Charger les données utilisateur (cette route fonctionne)
+                console.log('📡 Appel de /api/user/profile...');
                 const userResponse = await fetch('/api/user/profile', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -1023,6 +1065,7 @@
                 });
 
                 if (userResponse.status === 401) {
+                    console.log('❌ Token invalide, déconnexion...');
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                     window.location.href = '/login';
@@ -1030,26 +1073,25 @@
                 }
 
                 if (!userResponse.ok) {
+                    console.error('❌ Erreur profil:', await userResponse.text());
                     throw new Error(`Erreur HTTP profil: ${userResponse.status}`);
                 }
 
                 userData = await userResponse.json();
-                console.log('✅ Données utilisateur:', userData);
+                console.log('✅ Données utilisateur reçues:', userData);
                 
+                // Mettre à jour l'interface avec les données de base
                 if (userData.user) {
                     updateUserInfo(userData.user);
-                    // Mettre à jour les coins depuis les données utilisateur
-                    document.getElementById('totalCoins').textContent = userData.user.coins || 0;
                     
-                    // Mettre à jour les stats utilisateur
-                    if (userData.user.stats) {
-                        document.getElementById('totalBots').textContent = userData.user.stats.active_deployments || 0;
-                        document.getElementById('activeBots').textContent = userData.user.stats.active_deployments || 0;
-                        document.getElementById('referralsCount').textContent = userData.user.stats.total_referrals || 0;
-                    }
+                    // Afficher les coins directement depuis userData.user.coins
+                    const coins = userData.user.coins || 0;
+                    console.log(`💰 Coins de l'utilisateur: ${coins}`);
+                    document.getElementById('totalCoins').textContent = coins;
                 }
 
-                // 2. Charger les déploiements
+                // 2. Charger les déploiements - ESSAYER DEUX FORMATS
+                console.log('📡 Tentative 1: /api/deploy/user-deployments');
                 try {
                     const deploymentsResponse = await fetch('/api/deploy/user-deployments', {
                         headers: {
@@ -1062,22 +1104,42 @@
                         const deploymentsData = await deploymentsResponse.json();
                         console.log('✅ Données déploiements:', deploymentsData);
                         
-                        const deployments = deploymentsData.deployments || [];
+                        // Essayer différents formats de réponse
+                        const deployments = deploymentsData.deployments || deploymentsData || [];
                         const activeDeployments = deployments.filter(d => d.status === 'active').length;
                         
+                        console.log(`🤖 ${deployments.length} déploiements trouvés, ${activeDeployments} actifs`);
                         document.getElementById('activeBots').textContent = activeDeployments;
                         document.getElementById('totalBots').textContent = deployments.length;
                         
                         // Mettre à jour les bots récents
                         updateRecentBots(deployments.slice(0, 3));
                     } else {
-                        console.warn('⚠️ Erreur déploiements:', deploymentsResponse.status, await deploymentsResponse.text());
+                        console.warn('⚠️ Erreur déploiements, tentative alternative...');
+                        // Essayer une autre route
+                        try {
+                            const altResponse = await fetch('/api/user/stats', {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (altResponse.ok) {
+                                const altData = await altResponse.json();
+                                console.log('✅ Données stats alternatives:', altData);
+                                document.getElementById('totalBots').textContent = altData.totalDeployments || 0;
+                            }
+                        } catch (altError) {
+                            console.error('❌ Erreur alternative:', altError);
+                        }
                     }
                 } catch (deployError) {
                     console.error('❌ Erreur chargement déploiements:', deployError);
                 }
 
                 // 3. Charger les statistiques de parrainage
+                console.log('📡 Chargement stats parrainage...');
                 try {
                     const referralsResponse = await fetch('/api/coin/referral-stats', {
                         headers: {
@@ -1089,27 +1151,38 @@
                     if (referralsResponse.ok) {
                         const referralsData = await referralsResponse.json();
                         console.log('✅ Données parrainage:', referralsData);
-                        document.getElementById('referralsCount').textContent = referralsData.stats?.total_referrals || 0;
-                    } else {
-                        console.warn('⚠️ Erreur parrainage:', referralsResponse.status);
+                        
+                        // Essayer différents formats
+                        const referralsCount = referralsData.stats?.total_referrals || 
+                                               referralsData.total_referrals || 
+                                               referralsData.count || 0;
+                        console.log(`👥 Parrainages: ${referralsCount}`);
+                        document.getElementById('referralsCount').textContent = referralsCount;
                     }
                 } catch (referralError) {
-                    console.error('❌ Erreur chargement parrainage:', referralError);
+                    console.error('❌ Erreur parrainage:', referralError);
                 }
 
                 // 4. Vérifier si l'utilisateur peut réclamer des coins
+                console.log('📡 Vérification des coins...');
                 await checkCoinClaimStatus();
 
                 console.log('✅ Dashboard chargé avec succès');
+                showNotification('Dashboard mis à jour', 'success');
+
+                // DEBUG: Tester toutes les routes
+                // testAllRoutes();
 
             } catch (error) {
                 console.error('❌ Erreur chargement dashboard:', error);
-                showNotification('Erreur lors du chargement des données', 'error');
+                showNotification('Erreur: ' + error.message, 'error');
             }
         }
 
         // Mettre à jour les informations utilisateur
         function updateUserInfo(user) {
+            console.log('👤 Mise à jour info utilisateur:', user);
+            
             // Mettre à jour la barre latérale
             document.getElementById('userEmail').textContent = user.email;
             const displayName = user.username || user.email.split('@')[0];
@@ -1143,7 +1216,7 @@
 
             let html = '<div class="bots-grid">';
             
-            deployments.forEach(deployment => {
+            deployments.forEach((deployment, index) => {
                 let statusClass = 'status-pending';
                 let statusText = 'EN ATTENTE';
                 
@@ -1155,11 +1228,18 @@
                     statusText = 'INACTIF';
                 }
                 
-                const botName = deployment.bot?.name || 'Bot';
+                // Essayer différents chemins pour les données
+                const botName = deployment.bot?.name || 
+                               deployment.name || 
+                               `Bot ${index + 1}`;
                 const cost = deployment.cost || 0;
-                const createdDate = deployment.created_at ? new Date(deployment.created_at).toLocaleDateString('fr-FR') : 'N/A';
+                const createdDate = deployment.created_at ? 
+                    new Date(deployment.created_at).toLocaleDateString('fr-FR') : 
+                    'N/A';
                 const appName = deployment.heroku_app_name ? 
-                    (deployment.heroku_app_name.length > 10 ? deployment.heroku_app_name.substring(0, 10) + '...' : deployment.heroku_app_name) 
+                    (deployment.heroku_app_name.length > 10 ? 
+                     deployment.heroku_app_name.substring(0, 10) + '...' : 
+                     deployment.heroku_app_name) 
                     : 'N/A';
                 
                 html += `
@@ -1191,7 +1271,7 @@
         async function checkCoinClaimStatus() {
             try {
                 const token = localStorage.getItem('token');
-                console.log('🔍 Vérification des coins...');
+                console.log('🔍 Vérification claim coins...');
                 
                 const response = await fetch('/api/coin/balance', {
                     headers: {
@@ -1202,18 +1282,26 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('✅ Données coins:', data);
-                    canClaimCoins = data.stats?.can_claim_daily || false;
+                    console.log('💰 Balance coins response:', data);
                     
-                    if (canClaimCoins) {
-                        document.getElementById('claimCoinsBanner').style.display = 'block';
-                        const claimBtn = document.getElementById('claimCoinsBtn');
+                    // Essayer différents formats de réponse
+                    const canClaim = data.stats?.can_claim_daily || 
+                                    data.can_claim_daily || 
+                                    false;
+                    
+                    console.log(`🎁 Peut réclamer des coins: ${canClaim}`);
+                    
+                    const claimBtn = document.getElementById('claimCoinsBtn');
+                    const banner = document.getElementById('claimCoinsBanner');
+                    
+                    if (canClaim) {
+                        banner.style.display = 'block';
                         claimBtn.disabled = false;
                         claimBtn.innerHTML = '<i class="fas fa-gift"></i> Réclamer les Coins';
                         claimBtn.classList.remove('btn-secondary');
                         claimBtn.classList.add('btn-success');
                     } else {
-                        const claimBtn = document.getElementById('claimCoinsBtn');
+                        banner.style.display = 'none';
                         claimBtn.disabled = true;
                         claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
                         claimBtn.classList.remove('btn-success');
@@ -1221,17 +1309,26 @@
                     }
                 } else {
                     console.warn('⚠️ Erreur balance coins:', response.status);
+                    // Même en cas d'erreur, désactiver le bouton par sécurité
+                    document.getElementById('claimCoinsBtn').disabled = true;
                 }
             } catch (error) {
                 console.error('❌ Erreur vérification coins:', error);
+                document.getElementById('claimCoinsBtn').disabled = true;
             }
         }
 
-        // Réclamer les coins quotidiens
+        // Réclamer les coins quotidiens - VERSION ROBUSTE
         async function claimDailyCoins() {
             try {
                 const token = localStorage.getItem('token');
+                if (!token) {
+                    showNotification('Vous devez être connecté', 'error');
+                    return;
+                }
+
                 const claimBtn = document.getElementById('claimCoinsBtn');
+                const originalText = claimBtn.innerHTML;
                 claimBtn.disabled = true;
                 claimBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> En cours...';
 
@@ -1245,30 +1342,43 @@
                     }
                 });
 
-                const data = await response.json();
+                const responseText = await response.text();
+                console.log('💰 Réponse brute:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('❌ Erreur parsing JSON:', e);
+                    throw new Error('Réponse invalide du serveur');
+                }
+                
                 console.log('💰 Réponse claim coins:', data);
                 
                 if (response.ok) {
-                    showNotification(data.message || 'Coins réclamés avec succès !', 'success');
+                    const message = data.message || 'Coins réclamés avec succès !';
+                    showNotification(message, 'success');
                     
                     // Mettre à jour l'affichage des coins
                     if (userData && userData.user) {
-                        userData.user.coins += data.coins_added || 10;
+                        const coinsAdded = data.coins_added || 10;
+                        userData.user.coins = (userData.user.coins || 0) + coinsAdded;
                         document.getElementById('totalCoins').textContent = userData.user.coins;
+                        console.log(`💰 Nouveau total: ${userData.user.coins} coins`);
                     }
                     
-                    // Cacher la bannière
+                    // Cacher la bannière et désactiver le bouton
                     document.getElementById('claimCoinsBanner').style.display = 'none';
-                    
-                    // Désactiver le bouton
                     claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
                     claimBtn.classList.remove('btn-success');
                     claimBtn.classList.add('btn-secondary');
                     
-                    // Recharger les données
-                    setTimeout(() => loadDashboardData(), 1000);
+                    // Recharger les données après 1 seconde
+                    setTimeout(() => {
+                        loadDashboardData();
+                    }, 1000);
                 } else {
-                    throw new Error(data.error || 'Erreur lors de la réclamation');
+                    throw new Error(data.error || data.message || 'Erreur lors de la réclamation');
                 }
             } catch (error) {
                 console.error('❌ Erreur réclamation coins:', error);
@@ -1315,7 +1425,6 @@
             
             // Vérifier l'authentification
             const token = localStorage.getItem('token');
-            const user = localStorage.getItem('user');
             
             if (!token) {
                 console.log('❌ Pas de token, redirection vers login');
@@ -1323,16 +1432,8 @@
                 return;
             }
 
-            try {
-                // Afficher les données stockées temporairement
-                if (user) {
-                    const userData = JSON.parse(user);
-                    updateUserInfo(userData);
-                }
-            } catch (e) {
-                console.error('Erreur parsing user:', e);
-            }
-
+            console.log('🔑 Token trouvé, longueur:', token.length);
+            
             // Charger les données du dashboard
             loadDashboardData();
 
@@ -1350,13 +1451,6 @@
                 });
             });
 
-            // Gérer les clics sur les cartes de bots
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.bot-card-small')) {
-                    window.location.href = '/dashboard/bots';
-                }
-            });
-
             // Raccourcis clavier
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && sidebar.classList.contains('active')) {
@@ -1369,12 +1463,13 @@
                 }
             });
 
-            // Rafraîchissement automatique toutes les 60 secondes
+            // Rafraîchissement automatique toutes les 30 secondes
             setInterval(() => {
                 if (!document.hidden) {
+                    console.log('🔄 Rafraîchissement automatique...');
                     loadDashboardData();
                 }
-            }, 60000);
+            }, 30000);
             
             console.log('✅ Dashboard initialisé');
         });
@@ -1388,17 +1483,12 @@
             }
         });
 
-        // Gérer les clics sur les liens du menu
-        document.querySelectorAll('.sidebar-menu a[href]:not([href="#"])').forEach(link => {
-            link.addEventListener('click', function(e) {
-                // Fermer le menu mobile si ouvert
-                if (window.innerWidth <= 992) {
-                    sidebar.classList.remove('active');
-                    sidebarOverlay.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            });
-        });
+        // Exporter des fonctions pour le débogage
+        window.debugDashboard = {
+            reload: loadDashboardData,
+            testRoutes: testAllRoutes,
+            showData: () => console.log('User Data:', userData)
+        };
     </script>
 </body>
 </html>
