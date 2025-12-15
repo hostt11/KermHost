@@ -712,62 +712,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Responsive */
-        @media (max-width: 992px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .main-content {
-                margin-left: 0;
-                padding: 20px;
-            }
-
-            .mobile-menu-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-
-            .actions-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .coin-balance {
-                padding: 30px 20px;
-            }
-
-            .balance-amount {
-                font-size: 48px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .transaction-item {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-            }
-
-            .transaction-icon {
-                margin-right: 0;
-            }
-
-            .transaction-details {
-                text-align: center;
-            }
-        }
-
         /* Timer */
         .timer {
             font-size: 14px;
@@ -996,7 +940,7 @@
                             Montant
                         </label>
                         <input type="number" class="form-control" id="sendAmount" 
-                               min="1" max="1000" placeholder="10" required>
+                               min="1" placeholder="10" required>
                         <div class="form-help">
                             Vous avez <span id="availableCoins">0</span> coins disponibles
                         </div>
@@ -1026,9 +970,8 @@
 
     <script>
         // Variables globales
+        let userData = null;
         let userBalance = 0;
-        let lastClaimTime = null;
-        let canClaimDaily = false;
 
         // Gestion du menu mobile
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -1087,126 +1030,127 @@
             }, 4000);
         }
 
-        // Charger les informations utilisateur
-        async function loadUserInfo() {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    window.location.href = '/login';
-                    return;
-                }
-
-                // Récupérer les informations utilisateur
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                
-                if (user.email) {
-                    document.getElementById('userEmail').textContent = user.email;
-                    document.getElementById('userName').textContent = user.username || user.email.split('@')[0];
-                    document.getElementById('userAvatar').textContent = (user.username || user.email.charAt(0)).toUpperCase();
-                    
-                    if (user.coins) {
-                        userBalance = user.coins;
-                        updateBalanceDisplay();
-                    }
-                }
-
-                // Vérifier le statut du claim quotidien
-                await checkDailyClaimStatus();
-
-                // Charger les transactions
-                await loadTransactions();
-
-            } catch (error) {
-                console.error('Erreur chargement info:', error);
+        // Vérifier l'authentification
+        async function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return false;
             }
-        }
 
-        // Mettre à jour l'affichage du solde
-        function updateBalanceDisplay() {
-            const balanceElement = document.getElementById('balanceAmount');
-            const currentBalance = parseInt(balanceElement.textContent) || 0;
-            const targetBalance = userBalance;
-            
-            // Animation de comptage
-            const duration = 1000; // 1 seconde
-            const steps = 60;
-            const increment = (targetBalance - currentBalance) / steps;
-            let currentStep = 0;
-            
-            const timer = setInterval(() => {
-                currentStep++;
-                const newBalance = Math.round(currentBalance + (increment * currentStep));
-                balanceElement.textContent = newBalance;
-                
-                if (currentStep >= steps) {
-                    balanceElement.textContent = targetBalance;
-                    clearInterval(timer);
-                }
-            }, duration / steps);
-        }
-
-        // Vérifier le statut du claim quotidien
-        async function checkDailyClaimStatus() {
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch('/api/coin/daily-status', {
+                const response = await fetch('/api/auth/check', {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    canClaimDaily = data.can_claim;
-                    lastClaimTime = data.last_claim_time;
-                    
-                    updateDailyClaimButton();
-                    updateCountdownTimer();
+                    if (data.valid && data.user) {
+                        return data.user;
+                    }
                 }
             } catch (error) {
-                console.error('Erreur vérification claim:', error);
+                console.error('Erreur vérification auth:', error);
+            }
+
+            return null;
+        }
+
+        // Charger les informations de la page coins
+        async function loadCoinsData() {
+            try {
+                console.log('🔍 Chargement des données coins...');
+
+                // Vérifier l'authentification
+                const authUser = await checkAuth();
+                if (!authUser) {
+                    return;
+                }
+
+                // Mettre à jour les informations utilisateur
+                updateUserInfo(authUser);
+
+                // Charger le solde des coins
+                await loadCoinBalance();
+
+                // Charger les transactions
+                await loadTransactions();
+
+                console.log('✅ Page coins chargée avec succès');
+
+            } catch (error) {
+                console.error('❌ Erreur chargement coins:', error);
+                showNotification('Erreur lors du chargement des données', 'error');
             }
         }
 
-        // Mettre à jour le bouton de claim quotidien
-        function updateDailyClaimButton() {
-            const claimBtn = document.getElementById('claimDailyBtn');
-            const dailyCard = document.getElementById('dailyRewardCard');
-            
-            if (canClaimDaily) {
-                claimBtn.disabled = false;
-                claimBtn.innerHTML = '<i class="fas fa-gift"></i> Claim 10 Coins';
-                dailyCard.style.borderColor = 'var(--success-color)';
-                dailyCard.style.boxShadow = '0 0 20px rgba(0, 255, 157, 0.3)';
-            } else {
-                claimBtn.disabled = true;
-                claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
-                dailyCard.style.borderColor = 'var(--glass-border)';
-                dailyCard.style.boxShadow = 'none';
+        // Charger le solde des coins
+        async function loadCoinBalance() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/coin/balance', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Données balance:', data);
+                    
+                    // Mettre à jour le solde
+                    userBalance = data.balance || 0;
+                    document.getElementById('balanceAmount').textContent = userBalance;
+                    
+                    // Mettre à jour le bouton de claim
+                    const canClaim = data.stats?.can_claim_daily || false;
+                    const claimBtn = document.getElementById('claimDailyBtn');
+                    const dailyCard = document.getElementById('dailyRewardCard');
+                    
+                    if (canClaim) {
+                        claimBtn.disabled = false;
+                        claimBtn.innerHTML = '<i class="fas fa-gift"></i> Claim 10 Coins';
+                        dailyCard.style.borderColor = 'var(--success-color)';
+                        dailyCard.style.boxShadow = '0 0 20px rgba(0, 255, 157, 0.3)';
+                    } else {
+                        claimBtn.disabled = true;
+                        claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
+                        dailyCard.style.borderColor = 'var(--glass-border)';
+                        dailyCard.style.boxShadow = 'none';
+                    }
+                    
+                    // Mettre à jour le timer
+                    updateClaimTimer(data.stats);
+                }
+            } catch (error) {
+                console.error('Erreur balance coins:', error);
             }
         }
 
-        // Mettre à jour le compte à rebours
-        function updateCountdownTimer() {
+        // Mettre à jour le timer de claim
+        function updateClaimTimer(stats) {
             const timerElement = document.getElementById('nextClaimTimer');
             
-            if (!lastClaimTime) {
-                timerElement.textContent = 'Prochain claim disponible';
+            if (!stats || !stats.last_daily_claim) {
+                timerElement.textContent = 'Claim disponible !';
                 return;
             }
 
-            const lastClaim = new Date(lastClaimTime);
-            const nextClaim = new Date(lastClaim);
-            nextClaim.setDate(nextClaim.getDate() + 1);
+            const lastClaim = new Date(stats.last_daily_claim);
+            const nextClaim = new Date(lastClaim.getTime() + (24 * 60 * 60 * 1000));
             
             function updateTimer() {
                 const now = new Date();
                 const timeLeft = nextClaim - now;
                 
                 if (timeLeft <= 0) {
-                    canClaimDaily = true;
-                    updateDailyClaimButton();
                     timerElement.textContent = 'Claim disponible !';
+                    // Recharger le solde pour activer le bouton
+                    loadCoinBalance();
                     return;
                 }
                 
@@ -1221,55 +1165,69 @@
             setInterval(updateTimer, 1000);
         }
 
+        // Mettre à jour les informations utilisateur
+        function updateUserInfo(user) {
+            // Mettre à jour la barre latérale
+            document.getElementById('userEmail').textContent = user.email;
+            const displayName = user.username || user.email.split('@')[0];
+            document.getElementById('userName').textContent = displayName;
+            document.getElementById('userAvatar').textContent = displayName.charAt(0).toUpperCase();
+            
+            // Stocker les données
+            userData = user;
+        }
+
         // Claim quotidien
         document.getElementById('claimDailyBtn').addEventListener('click', async () => {
-            if (!canClaimDaily) {
-                showNotification('Vous avez déjà réclamé votre récompense aujourd\'hui', 'warning');
-                return;
-            }
-            
             try {
                 const token = localStorage.getItem('token');
+                const claimBtn = document.getElementById('claimDailyBtn');
+                claimBtn.disabled = true;
+                claimBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> En cours...';
+
+                console.log('💰 Tentative de réclamation des coins...');
+                
                 const response = await fetch('/api/coin/claim-daily', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 });
 
                 const data = await response.json();
+                console.log('💰 Réponse claim coins:', data);
                 
                 if (response.ok) {
-                    // Mettre à jour le solde local
-                    userBalance += 10;
+                    showNotification(data.message || 'Coins réclamés avec succès !', 'success');
                     
-                    // Mettre à jour l'utilisateur dans le localStorage
-                    const user = JSON.parse(localStorage.getItem('user') || '{}');
-                    user.coins = userBalance;
-                    localStorage.setItem('user', JSON.stringify(user));
+                    // Mettre à jour l'affichage des coins
+                    userBalance = data.new_balance || userBalance + 10;
+                    document.getElementById('balanceAmount').textContent = userBalance;
                     
-                    // Mettre à jour l'affichage
-                    updateBalanceDisplay();
-                    
-                    // Mettre à jour le statut
-                    canClaimDaily = false;
-                    lastClaimTime = new Date().toISOString();
-                    updateDailyClaimButton();
-                    updateCountdownTimer();
+                    // Désactiver le bouton
+                    claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
+                    claimBtn.disabled = true;
                     
                     // Effet visuel
                     createCoinRain();
                     
-                    showNotification('🎉 10 coins réclamés avec succès !', 'success');
-                    
-                    // Recharger les transactions
-                    setTimeout(() => loadTransactions(), 1000);
+                    // Recharger les données
+                    setTimeout(() => {
+                        loadCoinBalance();
+                        loadTransactions();
+                    }, 1000);
                 } else {
-                    throw new Error(data.error || 'Erreur lors du claim');
+                    throw new Error(data.error || 'Erreur lors de la réclamation');
                 }
             } catch (error) {
-                console.error('Erreur claim:', error);
+                console.error('❌ Erreur réclamation coins:', error);
                 showNotification(error.message, 'error');
+                
+                // Réactiver le bouton en cas d'erreur
+                const claimBtn = document.getElementById('claimDailyBtn');
+                claimBtn.disabled = false;
+                claimBtn.innerHTML = '<i class="fas fa-gift"></i> Claim 10 Coins';
             }
         });
 
@@ -1298,32 +1256,32 @@
             
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/coin/transfer', {
+                const submitBtn = document.getElementById('sendCoinsSubmit');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+                
+                console.log('💸 Envoi de coins à:', recipientEmail);
+                
+                const response = await fetch('/api/coin/send', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        recipient_email: recipientEmail,
+                        receiver_email: recipientEmail,
                         amount: amount,
-                        message: message
+                        description: message || `Transfert de ${amount} coins`
                     })
                 });
 
                 const data = await response.json();
+                console.log('💸 Réponse envoi coins:', data);
                 
                 if (response.ok) {
-                    // Mettre à jour le solde local
+                    // Mettre à jour le solde
                     userBalance -= amount;
-                    
-                    // Mettre à jour l'utilisateur dans le localStorage
-                    const user = JSON.parse(localStorage.getItem('user') || '{}');
-                    user.coins = userBalance;
-                    localStorage.setItem('user', JSON.stringify(user));
-                    
-                    // Mettre à jour l'affichage
-                    updateBalanceDisplay();
+                    document.getElementById('balanceAmount').textContent = userBalance;
                     
                     // Fermer le modal
                     sendCoinsModal.style.display = 'none';
@@ -1339,8 +1297,12 @@
                     throw new Error(data.error || 'Erreur lors de l\'envoi');
                 }
             } catch (error) {
-                console.error('Erreur envoi coins:', error);
+                console.error('❌ Erreur envoi coins:', error);
                 showNotification(error.message, 'error');
+            } finally {
+                const submitBtn = document.getElementById('sendCoinsSubmit');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer les Coins';
             }
         });
 
@@ -1348,14 +1310,25 @@
         async function loadTransactions() {
             try {
                 const token = localStorage.getItem('token');
+                const transactionsList = document.getElementById('transactionsList');
+                transactionsList.innerHTML = `
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p style="margin-top: 20px; color: var(--text-muted);">Chargement des transactions...</p>
+                    </div>
+                `;
+
+                console.log('📊 Chargement des transactions...');
+                
                 const response = await fetch('/api/coin/transactions', {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 });
 
                 const data = await response.json();
-                const transactionsList = document.getElementById('transactionsList');
+                console.log('📊 Données transactions:', data);
                 
                 if (!data.transactions || data.transactions.length === 0) {
                     transactionsList.innerHTML = `
@@ -1369,36 +1342,53 @@
                     let html = '';
                     
                     data.transactions.forEach(transaction => {
-                        const isIncoming = transaction.receiver_id === user.id;
+                        // Déterminer si c'est une transaction entrante ou sortante
+                        // On va simplifier et utiliser le type de transaction
+                        const isIncoming = transaction.type === 'daily' || 
+                                          transaction.type === 'referral' || 
+                                          transaction.type === 'admin' ||
+                                          (transaction.type === 'transfer' && transaction.receiver_id === userData?.id);
+                        
                         const amountClass = isIncoming ? 'positive' : 'negative';
                         const amountPrefix = isIncoming ? '+' : '-';
-                        const iconClass = isIncoming ? 'earning' : transaction.type === 'transfer' ? 'transfer' : 'spending';
-                        
+                        let iconClass = 'transfer';
                         let icon = 'fas fa-exchange-alt';
                         let title = 'Transaction';
                         
                         switch (transaction.type) {
                             case 'daily':
+                                iconClass = 'earning';
                                 icon = 'fas fa-gift';
                                 title = 'Récompense quotidienne';
                                 break;
                             case 'referral':
+                                iconClass = 'earning';
                                 icon = 'fas fa-user-plus';
                                 title = 'Parrainage';
                                 break;
                             case 'deployment':
+                                iconClass = 'spending';
                                 icon = 'fas fa-rocket';
                                 title = 'Déploiement de bot';
                                 break;
                             case 'transfer':
-                                icon = 'fas fa-paper-plane';
+                                iconClass = isIncoming ? 'earning' : 'spending';
+                                icon = isIncoming ? 'fas fa-download' : 'fas fa-upload';
                                 title = isIncoming ? 'Coins reçus' : 'Coins envoyés';
                                 break;
                             case 'admin':
+                                iconClass = 'earning';
                                 icon = 'fas fa-crown';
                                 title = 'Bonus administrateur';
                                 break;
                         }
+                        
+                        const description = transaction.description || 
+                                          (transaction.sender?.email ? 
+                                           `De: ${transaction.sender.email}` : 
+                                           (transaction.receiver?.email ? 
+                                            `À: ${transaction.receiver.email}` : 
+                                            'Transaction'));
                         
                         html += `
                             <div class="transaction-item">
@@ -1407,9 +1397,9 @@
                                 </div>
                                 <div class="transaction-details">
                                     <div class="transaction-title">${title}</div>
-                                    <div class="transaction-description">${transaction.description || 'Sans description'}</div>
+                                    <div class="transaction-description">${description}</div>
                                     <div class="transaction-time">
-                                        <i class="fas fa-clock"></i> ${new Date(transaction.created_at).toLocaleString()}
+                                        <i class="fas fa-clock"></i> ${new Date(transaction.created_at).toLocaleString('fr-FR')}
                                     </div>
                                 </div>
                                 <div class="transaction-amount ${amountClass}">
@@ -1422,7 +1412,7 @@
                     transactionsList.innerHTML = html;
                 }
             } catch (error) {
-                console.error('Erreur chargement transactions:', error);
+                console.error('❌ Erreur chargement transactions:', error);
                 showNotification('Erreur lors du chargement des transactions', 'error');
             }
         }
@@ -1453,16 +1443,35 @@
         }
 
         // Déconnexion
-        document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            
             if (confirm('Déconnexion ? Vous serez redirigé vers la page d\'accueil.')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = '/';
+                try {
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                        await fetch('/api/auth/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Erreur déconnexion:', error);
+                } finally {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                }
             }
         });
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Initialisation de la page coins...');
+            
             // Vérifier l'authentification
             const token = localStorage.getItem('token');
             if (!token) {
@@ -1470,8 +1479,8 @@
                 return;
             }
 
-            // Charger les informations
-            loadUserInfo();
+            // Charger les données
+            loadCoinsData();
 
             // Raccourcis clavier
             document.addEventListener('keydown', (e) => {
@@ -1488,15 +1497,18 @@
                     e.preventDefault();
                 }
                 if (e.key === 'r' && e.ctrlKey) {
-                    loadUserInfo();
+                    loadCoinsData();
+                    showNotification('Données actualisées', 'success');
                     e.preventDefault();
                 }
             });
 
-            // Vérifier automatiquement le claim toutes les minutes
+            // Actualisation automatique
             setInterval(() => {
-                checkDailyClaimStatus();
-            }, 60000);
+                loadCoinBalance();
+            }, 30000);
+            
+            console.log('✅ Page coins initialisée');
         });
     </script>
 </body>
