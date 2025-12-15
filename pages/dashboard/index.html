@@ -647,6 +647,39 @@
             margin-bottom: 20px;
         }
 
+        /* Debug Panel */
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 10px;
+            z-index: 9999;
+            color: white;
+            font-size: 12px;
+            max-width: 300px;
+            display: none;
+        }
+
+        .debug-toggle {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10000;
+            border: 2px solid var(--accent-color);
+        }
+
         /* Responsive */
         @media (max-width: 1200px) {
             .quick-actions {
@@ -953,17 +986,58 @@
         </div>
     </div>
 
+    <!-- Debug Panel -->
+    <div class="debug-toggle" id="debugToggle">🔧</div>
+    <div class="debug-panel" id="debugPanel">
+        <h4>Debug Panel</h4>
+        <div id="debugLogs"></div>
+        <button onclick="testAllAPIs()" style="margin-top: 10px; padding: 5px 10px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Test APIs
+        </button>
+        <button onclick="clearDebug()" style="margin-top: 5px; padding: 5px 10px; background: var(--danger-color); color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Clear
+        </button>
+    </div>
+
     <!-- Notification Container -->
     <div id="notificationContainer"></div>
 
     <script>
         // Variables globales
         let userData = null;
+        const DEBUG_MODE = true; // Active le mode debug
+
+        // Système de logging pour Render
+        function logDebug(message, type = 'info') {
+            if (!DEBUG_MODE) return;
+            
+            const debugLogs = document.getElementById('debugLogs');
+            if (debugLogs) {
+                const timestamp = new Date().toLocaleTimeString();
+                const color = type === 'error' ? '#ff4757' : type === 'success' ? '#00ff9d' : '#00d4ff';
+                const logEntry = document.createElement('div');
+                logEntry.style.margin = '2px 0';
+                logEntry.style.fontSize = '11px';
+                logEntry.style.color = color;
+                logEntry.innerHTML = `[${timestamp}] ${message}`;
+                debugLogs.appendChild(logEntry);
+                debugLogs.scrollTop = debugLogs.scrollHeight;
+            }
+            
+            // Toujours log dans la console aussi
+            if (type === 'error') {
+                console.error(message);
+            } else {
+                console.log(message);
+            }
+        }
 
         // Gestion du menu mobile
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const debugToggle = document.getElementById('debugToggle');
+        const debugPanel = document.getElementById('debugPanel');
 
         function toggleMobileMenu() {
             sidebar.classList.toggle('active');
@@ -973,6 +1047,15 @@
 
         mobileMenuBtn.addEventListener('click', toggleMobileMenu);
         sidebarOverlay.addEventListener('click', toggleMobileMenu);
+
+        // Toggle debug panel
+        debugToggle.addEventListener('click', () => {
+            debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
+        });
+
+        function clearDebug() {
+            document.getElementById('debugLogs').innerHTML = '';
+        }
 
         // Fonction de notification
         function showNotification(message, type = 'success') {
@@ -1000,208 +1083,237 @@
                     container.removeChild(notification);
                 }, 400);
             }, 4000);
+            
+            logDebug(`Notification: ${message}`, type);
         }
 
-        // DEBUG: Fonction pour tester toutes les routes API
-        async function testAllRoutes() {
+        // Test toutes les APIs
+        async function testAllAPIs() {
             const token = localStorage.getItem('token');
-            if (!token) return;
+            if (!token) {
+                showNotification('Pas de token trouvé', 'error');
+                return;
+            }
 
-            console.log('🧪 TEST de toutes les routes API...');
+            logDebug('🧪 Début des tests API...');
             
-            const routes = [
-                { name: 'user/profile', url: '/api/user/profile' },
-                { name: 'user/stats', url: '/api/user/stats' },
-                { name: 'deploy/user-deployments', url: '/api/deploy/user-deployments' },
-                { name: 'coin/balance', url: '/api/coin/balance' },
-                { name: 'coin/referral-stats', url: '/api/coin/referral-stats' },
-                { name: 'coin/claim-daily', url: '/api/coin/claim-daily', method: 'POST' }
+            const apis = [
+                { name: 'Profil utilisateur', url: '/api/user/profile', method: 'GET' },
+                { name: 'Statistiques utilisateur', url: '/api/user/stats', method: 'GET' },
+                { name: 'Déploiements', url: '/api/deploy/user-deployments', method: 'GET' },
+                { name: 'Balance coins', url: '/api/coin/balance', method: 'GET' },
+                { name: 'Stats parrainage', url: '/api/coin/referral-stats', method: 'GET' }
             ];
 
-            for (const route of routes) {
+            for (const api of apis) {
                 try {
-                    const response = await fetch(route.url, {
-                        method: route.method || 'GET',
+                    logDebug(`📡 Test: ${api.name}...`);
+                    
+                    const response = await fetch(api.url, {
+                        method: api.method,
                         headers: {
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
                         }
                     });
                     
-                    console.log(`📡 ${route.name}: ${response.status} ${response.statusText}`);
-                    
                     if (response.ok) {
                         const data = await response.json();
-                        console.log(`✅ ${route.name} response:`, data);
+                        logDebug(`✅ ${api.name}: SUCCÈS (${Object.keys(data).length} clés)`, 'success');
                     } else {
-                        const errorText = await response.text();
-                        console.error(`❌ ${route.name} error:`, errorText);
+                        logDebug(`❌ ${api.name}: ERREUR ${response.status}`, 'error');
                     }
                 } catch (error) {
-                    console.error(`💥 ${route.name} exception:`, error);
+                    logDebug(`💥 ${api.name}: EXCEPTION - ${error.message}`, 'error');
                 }
+            }
+            
+            showNotification('Tests API terminés', 'success');
+        }
+
+        // Fonction utilitaire pour fetch avec timeout
+        async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(id);
+                return response;
+            } catch (error) {
+                clearTimeout(id);
+                throw error;
             }
         }
 
-        // Charger les données du dashboard - VERSION SIMPLIFIÉE
+        // Charger les données du dashboard - VERSION ROBUSTE
         async function loadDashboardData() {
             try {
+                logDebug('🚀 Début du chargement des données...');
+                
                 const token = localStorage.getItem('token');
                 if (!token) {
-                    console.log('❌ Pas de token, redirection vers login');
+                    logDebug('❌ Pas de token, redirection vers login');
                     window.location.href = '/login';
                     return;
                 }
 
-                console.log('🚀 Début du chargement des données...');
+                logDebug(`🔑 Token trouvé (${token.length} caractères)`);
 
-                // 1. Charger les données utilisateur (cette route fonctionne)
-                console.log('📡 Appel de /api/user/profile...');
-                const userResponse = await fetch('/api/user/profile', {
+                // 1. Charger le profil utilisateur (route principale)
+                try {
+                    logDebug('📡 Chargement du profil...');
+                    const userResponse = await fetchWithTimeout('/api/user/profile', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (userResponse.status === 401) {
+                        logDebug('❌ Token invalide, déconnexion...');
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = '/login';
+                        return;
+                    }
+
+                    if (!userResponse.ok) {
+                        throw new Error(`Erreur HTTP ${userResponse.status}: ${await userResponse.text()}`);
+                    }
+
+                    userData = await userResponse.json();
+                    logDebug('✅ Profil chargé');
+                    
+                    // Mettre à jour l'interface
+                    if (userData.user) {
+                        updateUserInfo(userData.user);
+                        // Afficher les coins
+                        const coins = userData.user.coins || 0;
+                        document.getElementById('totalCoins').textContent = coins;
+                        logDebug(`💰 Coins: ${coins}`);
+                    }
+                } catch (profileError) {
+                    logDebug(`❌ Erreur profil: ${profileError.message}`, 'error');
+                }
+
+                // 2. Charger les déploiements (fallback sur plusieurs routes)
+                await loadDeployments(token);
+
+                // 3. Charger les parrainages
+                await loadReferrals(token);
+
+                // 4. Vérifier les coins
+                await checkCoinClaimStatus(token);
+
+                logDebug('✅ Dashboard chargé avec succès');
+                showNotification('Dashboard mis à jour', 'success');
+
+            } catch (error) {
+                logDebug(`❌ Erreur générale: ${error.message}`, 'error');
+                showNotification('Erreur de chargement', 'error');
+            }
+        }
+
+        // Charger les déploiements avec fallback
+        async function loadDeployments(token) {
+            const routes = [
+                '/api/deploy/user-deployments',
+                '/api/user/stats'
+            ];
+
+            for (const route of routes) {
+                try {
+                    logDebug(`📡 Tentative déploiements: ${route}`);
+                    const response = await fetchWithTimeout(route, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        logDebug(`✅ Données déploiements de ${route}`);
+                        
+                        // Essayer différents formats
+                        let deployments = [];
+                        let activeDeployments = 0;
+                        
+                        if (route.includes('deploy')) {
+                            deployments = data.deployments || data || [];
+                            activeDeployments = deployments.filter(d => d.status === 'active').length;
+                        } else if (route.includes('stats')) {
+                            // Format de user/stats
+                            activeDeployments = data.activeDeployments || data.active_deployments || 0;
+                            const totalDeployments = data.totalDeployments || data.total_deployments || 0;
+                            document.getElementById('totalBots').textContent = totalDeployments;
+                        }
+                        
+                        document.getElementById('activeBots').textContent = activeDeployments;
+                        
+                        if (deployments.length > 0) {
+                            updateRecentBots(deployments.slice(0, 3));
+                        }
+                        
+                        return; // Sortir si une route fonctionne
+                    }
+                } catch (error) {
+                    logDebug(`❌ Route ${route} échouée: ${error.message}`);
+                }
+            }
+            
+            // Fallback ultime : valeurs par défaut
+            logDebug('⚠️ Aucune route déploiements ne fonctionne, valeurs par défaut');
+            document.getElementById('totalBots').textContent = '0';
+            document.getElementById('activeBots').textContent = '0';
+        }
+
+        // Charger les parrainages
+        async function loadReferrals(token) {
+            try {
+                logDebug('📡 Chargement parrainages...');
+                const response = await fetchWithTimeout('/api/coin/referral-stats', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });
 
-                if (userResponse.status === 401) {
-                    console.log('❌ Token invalide, déconnexion...');
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login';
-                    return;
+                if (response.ok) {
+                    const data = await response.json();
+                    const referrals = data.stats?.total_referrals || data.total_referrals || 0;
+                    document.getElementById('referralsCount').textContent = referrals;
+                    logDebug(`👥 Parrainages: ${referrals}`);
                 }
-
-                if (!userResponse.ok) {
-                    console.error('❌ Erreur profil:', await userResponse.text());
-                    throw new Error(`Erreur HTTP profil: ${userResponse.status}`);
-                }
-
-                userData = await userResponse.json();
-                console.log('✅ Données utilisateur reçues:', userData);
-                
-                // Mettre à jour l'interface avec les données de base
-                if (userData.user) {
-                    updateUserInfo(userData.user);
-                    
-                    // Afficher les coins directement depuis userData.user.coins
-                    const coins = userData.user.coins || 0;
-                    console.log(`💰 Coins de l'utilisateur: ${coins}`);
-                    document.getElementById('totalCoins').textContent = coins;
-                }
-
-                // 2. Charger les déploiements - ESSAYER DEUX FORMATS
-                console.log('📡 Tentative 1: /api/deploy/user-deployments');
-                try {
-                    const deploymentsResponse = await fetch('/api/deploy/user-deployments', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (deploymentsResponse.ok) {
-                        const deploymentsData = await deploymentsResponse.json();
-                        console.log('✅ Données déploiements:', deploymentsData);
-                        
-                        // Essayer différents formats de réponse
-                        const deployments = deploymentsData.deployments || deploymentsData || [];
-                        const activeDeployments = deployments.filter(d => d.status === 'active').length;
-                        
-                        console.log(`🤖 ${deployments.length} déploiements trouvés, ${activeDeployments} actifs`);
-                        document.getElementById('activeBots').textContent = activeDeployments;
-                        document.getElementById('totalBots').textContent = deployments.length;
-                        
-                        // Mettre à jour les bots récents
-                        updateRecentBots(deployments.slice(0, 3));
-                    } else {
-                        console.warn('⚠️ Erreur déploiements, tentative alternative...');
-                        // Essayer une autre route
-                        try {
-                            const altResponse = await fetch('/api/user/stats', {
-                                headers: {
-                                    'Authorization': `Bearer ${token}`,
-                                    'Content-Type': 'application/json'
-                                }
-                            });
-                            
-                            if (altResponse.ok) {
-                                const altData = await altResponse.json();
-                                console.log('✅ Données stats alternatives:', altData);
-                                document.getElementById('totalBots').textContent = altData.totalDeployments || 0;
-                            }
-                        } catch (altError) {
-                            console.error('❌ Erreur alternative:', altError);
-                        }
-                    }
-                } catch (deployError) {
-                    console.error('❌ Erreur chargement déploiements:', deployError);
-                }
-
-                // 3. Charger les statistiques de parrainage
-                console.log('📡 Chargement stats parrainage...');
-                try {
-                    const referralsResponse = await fetch('/api/coin/referral-stats', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (referralsResponse.ok) {
-                        const referralsData = await referralsResponse.json();
-                        console.log('✅ Données parrainage:', referralsData);
-                        
-                        // Essayer différents formats
-                        const referralsCount = referralsData.stats?.total_referrals || 
-                                               referralsData.total_referrals || 
-                                               referralsData.count || 0;
-                        console.log(`👥 Parrainages: ${referralsCount}`);
-                        document.getElementById('referralsCount').textContent = referralsCount;
-                    }
-                } catch (referralError) {
-                    console.error('❌ Erreur parrainage:', referralError);
-                }
-
-                // 4. Vérifier si l'utilisateur peut réclamer des coins
-                console.log('📡 Vérification des coins...');
-                await checkCoinClaimStatus();
-
-                console.log('✅ Dashboard chargé avec succès');
-                showNotification('Dashboard mis à jour', 'success');
-
-                // DEBUG: Tester toutes les routes
-                // testAllRoutes();
-
             } catch (error) {
-                console.error('❌ Erreur chargement dashboard:', error);
-                showNotification('Erreur: ' + error.message, 'error');
+                logDebug(`❌ Erreur parrainages: ${error.message}`);
+                document.getElementById('referralsCount').textContent = '0';
             }
         }
 
         // Mettre à jour les informations utilisateur
         function updateUserInfo(user) {
-            console.log('👤 Mise à jour info utilisateur:', user);
+            logDebug(`👤 Mise à jour info: ${user.email}`);
             
-            // Mettre à jour la barre latérale
             document.getElementById('userEmail').textContent = user.email;
             const displayName = user.username || user.email.split('@')[0];
             document.getElementById('userName').textContent = displayName;
             document.getElementById('userAvatar').textContent = displayName.charAt(0).toUpperCase();
-            
-            // Mettre à jour la bannière de bienvenue
             document.getElementById('userGreeting').textContent = displayName;
             
-            // Mettre à jour le stockage local
             localStorage.setItem('user', JSON.stringify(user));
         }
 
         // Mettre à jour les bots récents
         function updateRecentBots(deployments) {
-            const recentBotsContainer = document.getElementById('recentBots');
+            const container = document.getElementById('recentBots');
             
             if (!deployments || deployments.length === 0) {
-                recentBotsContainer.innerHTML = `
+                container.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-robot"></i>
                         <h3>Aucun bot déployé</h3>
@@ -1216,31 +1328,17 @@
 
             let html = '<div class="bots-grid">';
             
-            deployments.forEach((deployment, index) => {
-                let statusClass = 'status-pending';
-                let statusText = 'EN ATTENTE';
+            deployments.slice(0, 3).forEach((deployment, index) => {
+                const status = deployment.status || 'pending';
+                const statusClass = status === 'active' ? 'status-active' : 
+                                   status === 'stopped' || status === 'failed' ? 'status-stopped' : 'status-pending';
+                const statusText = status === 'active' ? 'ACTIF' : 
+                                   status === 'stopped' || status === 'failed' ? 'INACTIF' : 'EN ATTENTE';
                 
-                if (deployment.status === 'active') {
-                    statusClass = 'status-active';
-                    statusText = 'ACTIF';
-                } else if (deployment.status === 'stopped' || deployment.status === 'failed') {
-                    statusClass = 'status-stopped';
-                    statusText = 'INACTIF';
-                }
-                
-                // Essayer différents chemins pour les données
-                const botName = deployment.bot?.name || 
-                               deployment.name || 
-                               `Bot ${index + 1}`;
+                const botName = deployment.bot?.name || deployment.name || `Bot ${index + 1}`;
                 const cost = deployment.cost || 0;
                 const createdDate = deployment.created_at ? 
-                    new Date(deployment.created_at).toLocaleDateString('fr-FR') : 
-                    'N/A';
-                const appName = deployment.heroku_app_name ? 
-                    (deployment.heroku_app_name.length > 10 ? 
-                     deployment.heroku_app_name.substring(0, 10) + '...' : 
-                     deployment.heroku_app_name) 
-                    : 'N/A';
+                    new Date(deployment.created_at).toLocaleDateString('fr-FR') : 'N/A';
                 
                 html += `
                     <div class="bot-card-small" onclick="window.location.href='/dashboard/bots'">
@@ -1256,24 +1354,21 @@
                             <div class="info-value">${cost} coins</div>
                             <div class="info-label">Déployé le</div>
                             <div class="info-value">${createdDate}</div>
-                            <div class="info-label">Serveur</div>
-                            <div class="info-value">${appName}</div>
                         </div>
                     </div>
                 `;
             });
             
             html += '</div>';
-            recentBotsContainer.innerHTML = html;
+            container.innerHTML = html;
         }
 
         // Vérifier le statut de réclamation des coins
-        async function checkCoinClaimStatus() {
+        async function checkCoinClaimStatus(token) {
             try {
-                const token = localStorage.getItem('token');
-                console.log('🔍 Vérification claim coins...');
+                logDebug('🎮 Vérification claim coins...');
                 
-                const response = await fetch('/api/coin/balance', {
+                const response = await fetchWithTimeout('/api/coin/balance', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -1282,14 +1377,7 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('💰 Balance coins response:', data);
-                    
-                    // Essayer différents formats de réponse
-                    const canClaim = data.stats?.can_claim_daily || 
-                                    data.can_claim_daily || 
-                                    false;
-                    
-                    console.log(`🎁 Peut réclamer des coins: ${canClaim}`);
+                    const canClaim = data.stats?.can_claim_daily || data.can_claim_daily || false;
                     
                     const claimBtn = document.getElementById('claimCoinsBtn');
                     const banner = document.getElementById('claimCoinsBanner');
@@ -1300,25 +1388,22 @@
                         claimBtn.innerHTML = '<i class="fas fa-gift"></i> Réclamer les Coins';
                         claimBtn.classList.remove('btn-secondary');
                         claimBtn.classList.add('btn-success');
+                        logDebug('✅ Peut réclamer des coins');
                     } else {
                         banner.style.display = 'none';
                         claimBtn.disabled = true;
                         claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
                         claimBtn.classList.remove('btn-success');
                         claimBtn.classList.add('btn-secondary');
+                        logDebug('⏰ Déjà réclamé aujourd\'hui');
                     }
-                } else {
-                    console.warn('⚠️ Erreur balance coins:', response.status);
-                    // Même en cas d'erreur, désactiver le bouton par sécurité
-                    document.getElementById('claimCoinsBtn').disabled = true;
                 }
             } catch (error) {
-                console.error('❌ Erreur vérification coins:', error);
-                document.getElementById('claimCoinsBtn').disabled = true;
+                logDebug(`❌ Erreur vérification coins: ${error.message}`);
             }
         }
 
-        // Réclamer les coins quotidiens - VERSION ROBUSTE
+        // Réclamer les coins quotidiens
         async function claimDailyCoins() {
             try {
                 const token = localStorage.getItem('token');
@@ -1328,13 +1413,12 @@
                 }
 
                 const claimBtn = document.getElementById('claimCoinsBtn');
-                const originalText = claimBtn.innerHTML;
                 claimBtn.disabled = true;
                 claimBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> En cours...';
 
-                console.log('💰 Tentative de réclamation des coins...');
+                logDebug('💰 Tentative de réclamation...');
                 
-                const response = await fetch('/api/coin/claim-daily', {
+                const response = await fetchWithTimeout('/api/coin/claim-daily', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -1342,49 +1426,43 @@
                     }
                 });
 
-                const responseText = await response.text();
-                console.log('💰 Réponse brute:', responseText);
-                
+                const text = await response.text();
                 let data;
                 try {
-                    data = JSON.parse(responseText);
+                    data = JSON.parse(text);
                 } catch (e) {
-                    console.error('❌ Erreur parsing JSON:', e);
+                    logDebug(`❌ Réponse invalide: ${text}`, 'error');
                     throw new Error('Réponse invalide du serveur');
                 }
-                
-                console.log('💰 Réponse claim coins:', data);
                 
                 if (response.ok) {
                     const message = data.message || 'Coins réclamés avec succès !';
                     showNotification(message, 'success');
                     
-                    // Mettre à jour l'affichage des coins
+                    // Mettre à jour les coins
                     if (userData && userData.user) {
                         const coinsAdded = data.coins_added || 10;
                         userData.user.coins = (userData.user.coins || 0) + coinsAdded;
                         document.getElementById('totalCoins').textContent = userData.user.coins;
-                        console.log(`💰 Nouveau total: ${userData.user.coins} coins`);
+                        logDebug(`💰 +${coinsAdded} coins = ${userData.user.coins} total`);
                     }
                     
-                    // Cacher la bannière et désactiver le bouton
+                    // Mettre à jour l'interface
                     document.getElementById('claimCoinsBanner').style.display = 'none';
                     claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
                     claimBtn.classList.remove('btn-success');
                     claimBtn.classList.add('btn-secondary');
                     
-                    // Recharger les données après 1 seconde
-                    setTimeout(() => {
-                        loadDashboardData();
-                    }, 1000);
+                    // Recharger les données
+                    setTimeout(() => loadDashboardData(), 1000);
                 } else {
                     throw new Error(data.error || data.message || 'Erreur lors de la réclamation');
                 }
             } catch (error) {
-                console.error('❌ Erreur réclamation coins:', error);
+                logDebug(`❌ Erreur réclamation: ${error.message}`, 'error');
                 showNotification(error.message, 'error');
                 
-                // Réactiver le bouton en cas d'erreur
+                // Réactiver le bouton
                 const claimBtn = document.getElementById('claimCoinsBtn');
                 claimBtn.disabled = false;
                 claimBtn.innerHTML = '<i class="fas fa-gift"></i> Réclamer les Coins';
@@ -1410,7 +1488,7 @@
                         });
                     }
                 } catch (error) {
-                    console.error('Erreur déconnexion:', error);
+                    logDebug(`❌ Erreur déconnexion: ${error.message}`);
                 } finally {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
@@ -1421,60 +1499,43 @@
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Initialisation du dashboard...');
+            logDebug('🚀 Initialisation du dashboard...');
             
             // Vérifier l'authentification
             const token = localStorage.getItem('token');
             
             if (!token) {
-                console.log('❌ Pas de token, redirection vers login');
+                logDebug('❌ Pas de token, redirection...');
                 window.location.href = '/login';
                 return;
             }
 
-            console.log('🔑 Token trouvé, longueur:', token.length);
-            
-            // Charger les données du dashboard
+            logDebug('✅ Token valide trouvé');
+
+            // Charger les données
             loadDashboardData();
 
-            // Gérer les clics sur les cartes d'action
+            // Gérer les clics sur les cartes
             document.querySelectorAll('.action-card').forEach(card => {
                 card.addEventListener('click', function(e) {
-                    // Ne pas déclencher si on clique sur un lien à l'intérieur
-                    if (e.target.tagName === 'A' || e.target.closest('a')) {
-                        return;
-                    }
+                    if (e.target.tagName === 'A' || e.target.closest('a')) return;
                     const href = this.getAttribute('data-href');
-                    if (href) {
-                        window.location.href = href;
-                    }
+                    if (href) window.location.href = href;
                 });
             });
 
-            // Raccourcis clavier
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
-                    toggleMobileMenu();
-                }
-                if (e.key === 'r' && e.ctrlKey) {
-                    loadDashboardData();
-                    showNotification('Dashboard actualisé', 'success');
-                    e.preventDefault();
-                }
-            });
-
-            // Rafraîchissement automatique toutes les 30 secondes
+            // Rafraîchissement automatique
             setInterval(() => {
                 if (!document.hidden) {
-                    console.log('🔄 Rafraîchissement automatique...');
+                    logDebug('🔄 Rafraîchissement automatique...');
                     loadDashboardData();
                 }
-            }, 30000);
+            }, 60000);
             
-            console.log('✅ Dashboard initialisé');
+            logDebug('✅ Dashboard initialisé');
         });
 
-        // Gérer le redimensionnement de la fenêtre
+        // Redimensionnement
         window.addEventListener('resize', () => {
             if (window.innerWidth > 992) {
                 sidebar.classList.remove('active');
@@ -1483,11 +1544,16 @@
             }
         });
 
-        // Exporter des fonctions pour le débogage
-        window.debugDashboard = {
+        // Export pour debug
+        window.debug = {
             reload: loadDashboardData,
-            testRoutes: testAllRoutes,
-            showData: () => console.log('User Data:', userData)
+            test: testAllAPIs,
+            log: logDebug,
+            showToken: () => {
+                const token = localStorage.getItem('token');
+                console.log('Token:', token ? `${token.substring(0, 20)}...` : 'Aucun');
+                return token;
+            }
         };
     </script>
 </body>
