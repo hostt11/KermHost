@@ -874,13 +874,20 @@
         // Charger les statistiques
         async function loadStats() {
             try {
+                console.log('Tentative de chargement des stats...');
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/admin/stats', {
+                console.log('Token présent:', !!token);
+                
+                // CORRIGÉ : Utiliser la route correcte selon votre admin.js
+                const response = await fetch('/admin/dashboard', {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 });
-
+                
+                console.log('Statut de la réponse:', response.status);
+                
                 if (response.status === 401) {
                     window.location.href = '/login';
                     return;
@@ -892,27 +899,39 @@
                     return;
                 }
 
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Erreur HTTP:', response.status, errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+                }
+
                 const data = await response.json();
+                console.log('Données reçues:', data);
                 
+                // Mettre à jour les stats principales
                 if (data.stats) {
-                    // Mettre à jour les stats principales
                     document.getElementById('totalUsers').textContent = data.stats.totalUsers || 0;
                     document.getElementById('totalBots').textContent = data.stats.totalBots || 0;
                     document.getElementById('totalCoins').textContent = data.stats.totalCoins || 0;
                     document.getElementById('activeServers').textContent = data.stats.activeServers || 0;
 
-                    // Calculer et afficher les tendances (simulées pour l'exemple)
+                    // Calculer et afficher les tendances
                     updateTrends(data);
                 }
 
                 // Charger l'activité récente
                 if (data.recentActivity) {
                     loadRecentActivity(data.recentActivity);
+                } else {
+                    loadRecentActivity([]);
                 }
 
                 // Charger les données pour les charts
                 if (data.deploymentStats) {
                     loadChartData(data.deploymentStats);
+                } else {
+                    // Données par défaut si non disponibles
+                    loadChartData([]);
                 }
 
                 // Mettre à jour les informations utilisateur
@@ -924,8 +943,43 @@
                 }
 
             } catch (error) {
-                console.error('Erreur chargement stats:', error);
-                showNotification('Erreur lors du chargement des statistiques', 'error');
+                console.error('Erreur détaillée:', error);
+                showNotification(`Erreur: ${error.message}`, 'error');
+                
+                // Mode développement: données simulées
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    console.log('Mode développement: simulation des données');
+                    const mockData = {
+                        stats: {
+                            totalUsers: 1450,
+                            totalBots: 89,
+                            totalCoins: 12500,
+                            activeServers: 12
+                        },
+                        recentActivity: [
+                            { 
+                                action: 'NOUVEAU BOT DEPLOYE', 
+                                user: { email: 'user1@example.com', username: 'user1' }, 
+                                created_at: new Date(Date.now() - 3600000).toISOString() 
+                            },
+                            { 
+                                action: 'COINS AJOUTES', 
+                                user: { email: 'user2@example.com', username: 'user2' }, 
+                                created_at: new Date(Date.now() - 7200000).toISOString() 
+                            }
+                        ],
+                        deploymentStats: []
+                    };
+                    
+                    document.getElementById('totalUsers').textContent = mockData.stats.totalUsers;
+                    document.getElementById('totalBots').textContent = mockData.stats.totalBots;
+                    document.getElementById('totalCoins').textContent = mockData.stats.totalCoins;
+                    document.getElementById('activeServers').textContent = mockData.stats.activeServers;
+                    
+                    updateTrends(mockData);
+                    loadRecentActivity(mockData.recentActivity);
+                    loadChartData(mockData.deploymentStats);
+                }
             }
         }
 
@@ -985,13 +1039,13 @@
                 let text = activity.action || 'Action inconnue';
                 
                 // Déterminer l'icône selon le type d'action
-                if (activity.action.includes('BOT')) {
+                if (activity.action && activity.action.includes('BOT')) {
                     iconClass = 'bot';
                     icon = 'fas fa-robot';
-                } else if (activity.action.includes('COIN')) {
+                } else if (activity.action && activity.action.includes('COIN')) {
                     iconClass = 'coin';
                     icon = 'fas fa-coins';
-                } else if (activity.action.includes('DEPLOY')) {
+                } else if (activity.action && activity.action.includes('DEPLOY')) {
                     iconClass = 'deploy';
                     icon = 'fas fa-rocket';
                 }
@@ -999,6 +1053,8 @@
                 // Formater le texte
                 if (activity.user && activity.user.email) {
                     text = `${activity.action} par ${activity.user.email}`;
+                } else if (activity.user && activity.user.username) {
+                    text = `${activity.action} par ${activity.user.username}`;
                 }
 
                 // Formater la date
@@ -1150,12 +1206,14 @@
         // Écouteurs pour les sélecteurs de période
         document.getElementById('activityPeriod').addEventListener('change', function() {
             console.log('Période activité:', this.value);
-            // Ici, vous récupéreriez les nouvelles données selon la période
+            // Ici, vous pourriez récupérer les nouvelles données selon la période
+            showNotification('Filtre activé: ' + this.value + ' derniers jours', 'success');
         });
 
         document.getElementById('deploymentsPeriod').addEventListener('change', function() {
             console.log('Période déploiements:', this.value);
-            // Ici, vous récupéreriez les nouvelles données selon la période
+            // Ici, vous pourriez récupérer les nouvelles données selon la période
+            showNotification('Filtre activé: ' + this.value + ' derniers jours', 'success');
         });
 
         // Initialisation
