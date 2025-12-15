@@ -66,15 +66,29 @@
 
         .sidebar {
             width: var(--sidebar-width);
-            background: rgba(26, 26, 46, 0.8);
+            background: rgba(15, 15, 35, 0.95);
             backdrop-filter: blur(20px);
             border-right: 1px solid var(--glass-border);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
-            transition: var(--transition);
             z-index: 1000;
-            box-shadow: var(--box-shadow);
+            left: 0;
+            top: 0;
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            backdrop-filter: blur(5px);
         }
 
         .sidebar-header {
@@ -130,6 +144,7 @@
             transition: var(--transition);
             font-weight: 500;
             border-radius: var(--border-radius);
+            cursor: pointer;
         }
 
         .sidebar-menu a.active {
@@ -158,7 +173,7 @@
             position: absolute;
             bottom: 0;
             width: 100%;
-            background: rgba(26, 26, 46, 0.9);
+            background: rgba(15, 15, 35, 0.95);
         }
 
         .user-info {
@@ -201,6 +216,8 @@
             margin-left: var(--sidebar-width);
             padding: 30px;
             background: transparent;
+            transition: margin-left 0.3s ease;
+            min-height: 100vh;
         }
 
         .header {
@@ -245,11 +262,13 @@
             background: var(--glass-bg);
             color: var(--text-color);
             border: 1px solid var(--glass-border);
+            text-decoration: none !important;
         }
 
         .btn:hover {
             background: rgba(255, 255, 255, 0.1);
             transform: translateY(-2px);
+            text-decoration: none !important;
         }
 
         .btn-primary {
@@ -262,6 +281,7 @@
         .btn-primary:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 30px rgba(138, 43, 226, 0.6);
+            text-decoration: none !important;
         }
 
         .btn-success {
@@ -274,6 +294,18 @@
             background: linear-gradient(135deg, var(--warning-color), #ff9f43);
             color: white;
             border: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            border: none;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
         }
 
         .mobile-menu-btn {
@@ -451,6 +483,7 @@
             border-radius: 12px;
             padding: 20px;
             transition: var(--transition);
+            cursor: pointer;
         }
 
         .bot-card-small:hover {
@@ -488,6 +521,11 @@
 
         .status-pending {
             background: linear-gradient(135deg, var(--warning-color), #ff9f43);
+            color: white;
+        }
+
+        .status-stopped {
+            background: linear-gradient(135deg, #6c757d, #495057);
             color: white;
         }
 
@@ -623,6 +661,11 @@
 
             .sidebar.active {
                 transform: translateX(0);
+                box-shadow: 0 0 50px rgba(0, 212, 255, 0.2);
+            }
+
+            .sidebar-overlay.active {
+                display: block;
             }
 
             .main-content {
@@ -695,6 +738,9 @@
 </head>
 <body>
     <div class="dashboard-container">
+        <!-- Overlay pour mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -766,7 +812,7 @@
         <div class="main-content">
             <!-- Header -->
             <div class="header">
-                <div>
+                <div style="display: flex; align-items: center; gap: 15px;">
                     <button class="mobile-menu-btn" id="mobileMenuBtn">
                         <i class="fas fa-bars"></i>
                     </button>
@@ -776,9 +822,9 @@
                     </h1>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-primary" onclick="window.location.href='/dashboard/bots'">
+                    <a href="/dashboard/bots" class="btn btn-primary">
                         <i class="fas fa-robot"></i> Mes Bots
-                    </button>
+                    </a>
                     <button class="btn btn-success" onclick="claimDailyCoins()" id="claimCoinsBtn">
                         <i class="fas fa-gift"></i> Réclamer les Coins
                     </button>
@@ -794,7 +840,7 @@
             <!-- Claim Coins Banner (si disponible) -->
             <div class="claim-coins" id="claimCoinsBanner" style="display: none;">
                 <h3><i class="fas fa-gift"></i> Réclamez vos coins quotidiens !</h3>
-                <p>Vous pouvez réclamer <strong id="dailyRewardAmount">10 coins</strong> tous les 24h. Ne manquez pas cette opportunité !</p>
+                <p>Vous pouvez réclamer <strong>10 coins</strong> tous les 24h. Ne manquez pas cette opportunité !</p>
                 <button class="btn btn-success" onclick="claimDailyCoins()">
                     <i class="fas fa-coins"></i> Réclamer maintenant
                 </button>
@@ -840,31 +886,31 @@
                 <i class="fas fa-bolt"></i> Actions Rapides
             </h2>
             <div class="quick-actions">
-                <div class="action-card" onclick="window.location.href='/dashboard/bots'">
+                <div class="action-card" data-href="/dashboard/bots">
                     <div class="action-icon">
                         <i class="fas fa-rocket"></i>
                     </div>
                     <div class="action-title">Déployer un Bot</div>
                     <div class="action-desc">Choisissez parmi nos bots approuvés et déployez-le en quelques clics</div>
-                    <button class="btn btn-primary">Commencer</button>
+                    <a href="/dashboard/bots" class="btn btn-primary">Commencer</a>
                 </div>
 
-                <div class="action-card" onclick="window.location.href='/dashboard/request'">
+                <div class="action-card" data-href="/dashboard/request">
                     <div class="action-icon">
                         <i class="fas fa-plus-circle"></i>
                     </div>
                     <div class="action-title">Ajouter un Bot</div>
                     <div class="action-desc">Soumettez votre bot WhatsApp pour qu'il soit disponible sur la plateforme</div>
-                    <button class="btn btn-primary">Soumettre</button>
+                    <a href="/dashboard/request" class="btn btn-primary">Soumettre</a>
                 </div>
 
-                <div class="action-card" onclick="window.location.href='/dashboard/invite'">
+                <div class="action-card" data-href="/dashboard/invite">
                     <div class="action-icon">
                         <i class="fas fa-user-plus"></i>
                     </div>
                     <div class="action-title">Parrainer des Amis</div>
                     <div class="action-desc">Invitez vos amis et gagnez 10 coins pour chaque inscription réussie</div>
-                    <button class="btn btn-success">Inviter</button>
+                    <a href="/dashboard/invite" class="btn btn-success">Inviter</a>
                 </div>
             </div>
 
@@ -872,9 +918,9 @@
             <div class="recent-bots">
                 <div class="section-header">
                     <h2><i class="fas fa-history"></i> Bots Récemment Déployés</h2>
-                    <button class="btn" onclick="window.location.href='/dashboard/bots'">
+                    <a href="/dashboard/bots" class="btn">
                         <i class="fas fa-eye"></i> Voir tous
-                    </button>
+                    </a>
                 </div>
                 <div id="recentBots">
                     <div class="loading">
@@ -913,16 +959,20 @@
     <script>
         // Variables globales
         let userData = null;
-        let canClaimCoins = false;
-        let coinBalance = 0;
 
         // Gestion du menu mobile
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-        mobileMenuBtn.addEventListener('click', () => {
+        function toggleMobileMenu() {
             sidebar.classList.toggle('active');
-        });
+            sidebarOverlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        sidebarOverlay.addEventListener('click', toggleMobileMenu);
 
         // Fonction de notification
         function showNotification(message, type = 'success') {
@@ -952,68 +1002,143 @@
             }, 4000);
         }
 
+        // Vérifier l'authentification
+        async function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return false;
+            }
+
+            try {
+                const response = await fetch('/api/auth/check', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.valid && data.user) {
+                        return data.user;
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur vérification auth:', error);
+            }
+
+            return null;
+        }
+
         // Charger les données du dashboard
         async function loadDashboardData() {
             try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    window.location.href = '/login';
+                console.log('🔍 Chargement des données du dashboard...');
+
+                // Vérifier l'authentification
+                const authUser = await checkAuth();
+                if (!authUser) {
                     return;
                 }
 
-                // Charger les données utilisateur (inclut les coins)
+                // Mettre à jour les informations utilisateur depuis auth
+                updateUserInfo(authUser);
+
+                // Charger le profil complet
+                const token = localStorage.getItem('token');
                 const userResponse = await fetch('/api/user/profile', {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 });
 
-                if (userResponse.status === 401) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login';
-                    return;
-                }
-
-                userData = await userResponse.json();
-                
-                if (userData.user) {
-                    updateUserInfo(userData.user);
-                    // Récupérer les coins depuis les données utilisateur
-                    coinBalance = userData.user.coins || 0;
-                    document.getElementById('totalCoins').textContent = coinBalance;
-                }
-
-                // Charger les statistiques
-                const statsResponse = await fetch('/api/user/stats', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+                if (userResponse.ok) {
+                    const userData = await userResponse.json();
+                    console.log('✅ Données profil:', userData);
+                    
+                    // Mettre à jour les coins
+                    if (userData.user) {
+                        document.getElementById('totalCoins').textContent = userData.user.coins || 0;
+                        
+                        // Mettre à jour les stats si disponibles
+                        if (userData.user.stats) {
+                            document.getElementById('totalBots').textContent = userData.user.stats.active_deployments || 0;
+                            document.getElementById('activeBots').textContent = userData.user.stats.active_deployments || 0;
+                            document.getElementById('referralsCount').textContent = userData.user.stats.total_referrals || 0;
+                        }
                     }
-                });
-
-                if (statsResponse.ok) {
-                    const statsData = await statsResponse.json();
-                    updateStats(statsData);
                 }
 
-                // Charger les bots récents
-                const botsResponse = await fetch('/api/deploy/user-deployments?limit=3', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+                // Charger les déploiements
+                try {
+                    const deploymentsResponse = await fetch('/api/deploy/user-deployments', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (deploymentsResponse.ok) {
+                        const deploymentsData = await deploymentsResponse.json();
+                        console.log('✅ Données déploiements:', deploymentsData);
+                        updateRecentBots(deploymentsData.deployments || []);
                     }
-                });
-
-                if (botsResponse.ok) {
-                    const botsData = await botsResponse.json();
-                    updateRecentBots(botsData.deployments || []);
+                } catch (error) {
+                    console.error('Erreur déploiements:', error);
                 }
 
-                // Vérifier si l'utilisateur peut réclamer des coins
-                await checkCoinClaimStatus();
+                // Vérifier les coins et le statut de claim
+                await checkCoinStatus();
+
+                console.log('✅ Dashboard chargé avec succès');
 
             } catch (error) {
-                console.error('Erreur chargement dashboard:', error);
+                console.error('❌ Erreur chargement dashboard:', error);
                 showNotification('Erreur lors du chargement des données', 'error');
+            }
+        }
+
+        // Vérifier le statut des coins
+        async function checkCoinStatus() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/coin/balance', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Données balance:', data);
+                    
+                    // Mettre à jour les coins
+                    document.getElementById('totalCoins').textContent = data.balance || 0;
+                    
+                    // Vérifier si on peut réclamer
+                    const canClaim = data.stats?.can_claim_daily || false;
+                    const claimBtn = document.getElementById('claimCoinsBtn');
+                    const claimBanner = document.getElementById('claimCoinsBanner');
+                    
+                    if (canClaim) {
+                        claimBanner.style.display = 'block';
+                        claimBtn.disabled = false;
+                        claimBtn.innerHTML = '<i class="fas fa-gift"></i> Réclamer les Coins';
+                        claimBtn.classList.remove('btn-secondary');
+                        claimBtn.classList.add('btn-success');
+                    } else {
+                        claimBanner.style.display = 'none';
+                        claimBtn.disabled = true;
+                        claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
+                        claimBtn.classList.remove('btn-success');
+                        claimBtn.classList.add('btn-secondary');
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur vérification coins:', error);
             }
         }
 
@@ -1021,22 +1146,15 @@
         function updateUserInfo(user) {
             // Mettre à jour la barre latérale
             document.getElementById('userEmail').textContent = user.email;
-            document.getElementById('userName').textContent = user.username || user.email.split('@')[0];
-            document.getElementById('userAvatar').textContent = (user.username || user.email.charAt(0)).toUpperCase();
+            const displayName = user.username || user.email.split('@')[0];
+            document.getElementById('userName').textContent = displayName;
+            document.getElementById('userAvatar').textContent = displayName.charAt(0).toUpperCase();
             
             // Mettre à jour la bannière de bienvenue
-            document.getElementById('userGreeting').textContent = user.username || user.email.split('@')[0];
+            document.getElementById('userGreeting').textContent = displayName;
             
-            // Mettre à jour le stockage local
+            // Stocker les données
             localStorage.setItem('user', JSON.stringify(user));
-        }
-
-        // Mettre à jour les statistiques
-        function updateStats(stats) {
-            // Statistiques principales (coins mis à jour séparément)
-            document.getElementById('totalBots').textContent = stats.totalBots || 0;
-            document.getElementById('referralsCount').textContent = stats.totalReferrals || 0;
-            document.getElementById('activeBots').textContent = stats.totalDeployments || 0;
         }
 
         // Mettre à jour les bots récents
@@ -1049,9 +1167,9 @@
                         <i class="fas fa-robot"></i>
                         <h3>Aucun bot déployé</h3>
                         <p>Vous n'avez pas encore déployé de bot. Commencez par déployer votre premier bot !</p>
-                        <button class="btn btn-primary" onclick="window.location.href='/dashboard/bots'">
+                        <a href="/dashboard/bots" class="btn btn-primary">
                             <i class="fas fa-rocket"></i> Déployer un bot
-                        </button>
+                        </a>
                     </div>
                 `;
                 return;
@@ -1060,27 +1178,38 @@
             let html = '<div class="bots-grid">';
             
             deployments.slice(0, 3).forEach(deployment => {
-                const statusClass = deployment.status === 'active' ? 'status-active' : 
-                                   deployment.status === 'pending' ? 'status-pending' : 'status-pending';
-                const statusText = deployment.status === 'active' ? 'ACTIF' : 
-                                   deployment.status === 'pending' ? 'EN ATTENTE' : 'INACTIF';
+                let statusClass = 'status-pending';
+                let statusText = 'EN ATTENTE';
+                
+                if (deployment.status === 'active') {
+                    statusClass = 'status-active';
+                    statusText = 'ACTIF';
+                } else if (deployment.status === 'stopped' || deployment.status === 'failed') {
+                    statusClass = 'status-stopped';
+                    statusText = 'INACTIF';
+                }
+                
+                const botName = deployment.bot?.name || 'Bot';
+                const cost = deployment.cost || 0;
+                const createdDate = deployment.created_at ? new Date(deployment.created_at).toLocaleDateString('fr-FR') : 'N/A';
+                const appName = deployment.heroku_app_name || 'N/A';
                 
                 html += `
                     <div class="bot-card-small" onclick="window.location.href='/dashboard/bots'">
                         <div class="bot-header-small">
                             <div class="bot-name-small">
                                 <i class="fas fa-robot"></i>
-                                ${deployment.bot?.name || 'Bot'}
+                                ${botName}
                             </div>
                             <div class="bot-status-small ${statusClass}">${statusText}</div>
                         </div>
                         <div class="bot-info-small">
                             <div class="info-label">Coût</div>
-                            <div class="info-value">${deployment.cost || 0} coins</div>
+                            <div class="info-value">${cost} coins</div>
                             <div class="info-label">Déployé le</div>
-                            <div class="info-value">${new Date(deployment.created_at).toLocaleDateString()}</div>
+                            <div class="info-value">${createdDate}</div>
                             <div class="info-label">Serveur</div>
-                            <div class="info-value">${deployment.heroku_app_name || 'N/A'}</div>
+                            <div class="info-value">${appName.length > 15 ? appName.substring(0, 15) + '...' : appName}</div>
                         </div>
                     </div>
                 `;
@@ -1090,67 +1219,16 @@
             recentBotsContainer.innerHTML = html;
         }
 
-        // Vérifier le statut de réclamation des coins
-        async function checkCoinClaimStatus() {
-            try {
-                const token = localStorage.getItem('token');
-                // Vérifier le solde des coins
-                const balanceResponse = await fetch('/api/coin/balance', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (balanceResponse.ok) {
-                    const balanceData = await balanceResponse.json();
-                    coinBalance = balanceData.balance || 0;
-                    document.getElementById('totalCoins').textContent = coinBalance;
-                    
-                    // Vérifier si l'utilisateur peut réclamer
-                    canClaimCoins = balanceData.stats?.can_claim_daily || false;
-                    
-                    // Mettre à jour la bannière
-                    const claimBanner = document.getElementById('claimCoinsBanner');
-                    if (canClaimCoins) {
-                        claimBanner.style.display = 'block';
-                        document.getElementById('dailyRewardAmount').textContent = '10 coins'; // Valeur par défaut
-                        
-                        // Activer le bouton
-                        const claimBtn = document.getElementById('claimCoinsBtn');
-                        claimBtn.disabled = false;
-                        claimBtn.innerHTML = '<i class="fas fa-gift"></i> Réclamer les Coins';
-                    } else {
-                        claimBanner.style.display = 'none';
-                        
-                        // Désactiver le bouton
-                        const claimBtn = document.getElementById('claimCoinsBtn');
-                        claimBtn.disabled = true;
-                        if (balanceData.stats?.last_daily_claim) {
-                            const lastClaim = new Date(balanceData.stats.last_daily_claim);
-                            const now = new Date();
-                            const hoursSince = (now - lastClaim) / (1000 * 60 * 60);
-                            const hoursRemaining = Math.ceil(24 - hoursSince);
-                            if (hoursRemaining > 0) {
-                                claimBtn.innerHTML = `<i class="fas fa-clock"></i> ${hoursRemaining}h restantes`;
-                            } else {
-                                claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
-                            }
-                        } else {
-                            claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Erreur vérification coins:', error);
-                // Cacher la bannière en cas d'erreur
-                document.getElementById('claimCoinsBanner').style.display = 'none';
-            }
-        }
-
         // Réclamer les coins quotidiens
         async function claimDailyCoins() {
             try {
                 const token = localStorage.getItem('token');
+                const claimBtn = document.getElementById('claimCoinsBtn');
+                claimBtn.disabled = true;
+                claimBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> En cours...';
+
+                console.log('💰 Tentative de réclamation des coins...');
+                
                 const response = await fetch('/api/coin/claim-daily', {
                     method: 'POST',
                     headers: {
@@ -1160,63 +1238,73 @@
                 });
 
                 const data = await response.json();
+                console.log('💰 Réponse claim coins:', data);
                 
                 if (response.ok) {
                     showNotification(data.message || 'Coins réclamés avec succès !', 'success');
                     
                     // Mettre à jour l'affichage des coins
-                    coinBalance = data.new_balance || coinBalance + 10;
-                    document.getElementById('totalCoins').textContent = coinBalance;
-                    
-                    // Mettre à jour userData local
-                    if (userData && userData.user) {
-                        userData.user.coins = coinBalance;
-                    }
+                    document.getElementById('totalCoins').textContent = data.new_balance || 0;
                     
                     // Cacher la bannière
                     document.getElementById('claimCoinsBanner').style.display = 'none';
                     
                     // Désactiver le bouton
-                    const claimBtn = document.getElementById('claimCoinsBtn');
-                    claimBtn.disabled = true;
                     claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
+                    claimBtn.classList.remove('btn-success');
+                    claimBtn.classList.add('btn-secondary');
                     
-                    // Recharger le statut pour mettre à jour le compte à rebours
-                    setTimeout(checkCoinClaimStatus, 1000);
+                    // Recharger les données
+                    setTimeout(checkCoinStatus, 1000);
                 } else {
                     throw new Error(data.error || 'Erreur lors de la réclamation');
                 }
             } catch (error) {
-                console.error('Erreur réclamation coins:', error);
+                console.error('❌ Erreur réclamation coins:', error);
                 showNotification(error.message, 'error');
+                
+                // Réactiver le bouton en cas d'erreur
+                const claimBtn = document.getElementById('claimCoinsBtn');
+                claimBtn.disabled = false;
+                claimBtn.innerHTML = '<i class="fas fa-gift"></i> Réclamer les Coins';
+                claimBtn.classList.remove('btn-secondary');
+                claimBtn.classList.add('btn-success');
+                
+                // Recharger le statut
+                checkCoinStatus();
             }
         }
 
         // Déconnexion
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            
             if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
                 try {
                     const token = localStorage.getItem('token');
-                    // Appeler l'API de déconnexion
-                    await fetch('/api/auth/logout', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
+                    if (token) {
+                        await fetch('/api/auth/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                    }
                 } catch (error) {
                     console.error('Erreur déconnexion:', error);
+                } finally {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
                 }
-                
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = '/';
             }
         });
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Initialisation du dashboard...');
+            
             // Vérifier l'authentification
             const token = localStorage.getItem('token');
             if (!token) {
@@ -1224,33 +1312,50 @@
                 return;
             }
 
-            // Charger les données du dashboard
+            // Charger les données
             loadDashboardData();
+
+            // Gérer les clics sur les cartes d'action
+            document.querySelectorAll('.action-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    if (e.target.tagName === 'A' || e.target.closest('a')) {
+                        return;
+                    }
+                    const href = this.getAttribute('data-href');
+                    if (href) {
+                        window.location.href = href;
+                    }
+                });
+            });
 
             // Raccourcis clavier
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && sidebar.classList.contains('active')) {
-                    sidebar.classList.remove('active');
+                    toggleMobileMenu();
                 }
-                if (e.key === 'd' && e.ctrlKey) {
+                if (e.key === 'r' && e.ctrlKey) {
                     loadDashboardData();
                     showNotification('Dashboard actualisé', 'success');
                     e.preventDefault();
                 }
             });
 
-            // Rafraîchissement automatique toutes les 30 secondes
+            // Rafraîchissement automatique
             setInterval(() => {
                 if (!document.hidden) {
                     loadDashboardData();
                 }
-            }, 30000);
+            }, 60000);
+            
+            console.log('✅ Dashboard initialisé');
         });
 
-        // Gérer le redimensionnement de la fenêtre
+        // Gérer le redimensionnement
         window.addEventListener('resize', () => {
             if (window.innerWidth > 992) {
                 sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.style.overflow = '';
             }
         });
     </script>
