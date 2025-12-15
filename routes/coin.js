@@ -92,6 +92,52 @@ router.get('/balance', authMiddleware, async (req, res) => {
   }
 });
 
+// Vérifier si l'utilisateur peut réclamer les coins quotidiens
+router.get('/claim-status', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Vérifier la dernière réclamation
+    const { data: lastClaim } = await supabase
+      .from('coin_transactions')
+      .select('created_at')
+      .eq('receiver_id', userId)
+      .eq('type', 'daily')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    let canClaim = false;
+    let nextClaimTime = null;
+    let hoursRemaining = 0;
+
+    if (lastClaim) {
+      const lastClaimDate = new Date(lastClaim.created_at);
+      const now = new Date();
+      const hoursSinceLastClaim = (now - lastClaimDate) / (1000 * 60 * 60);
+
+      if (hoursSinceLastClaim >= 24) {
+        canClaim = true;
+      } else {
+        hoursRemaining = Math.ceil(24 - hoursSinceLastClaim);
+        nextClaimTime = new Date(lastClaimDate.getTime() + (24 * 60 * 60 * 1000));
+      }
+    } else {
+      canClaim = true;
+    }
+
+    res.json({
+      can_claim: canClaim,
+      hours_remaining: hoursRemaining,
+      next_claim_time: nextClaimTime,
+      daily_reward: parseInt(process.env.COIN_DAILY_REWARD) || 10
+    });
+  } catch (error) {
+    console.error('Erreur vérification claim status:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // Réclamer les coins quotidiens
 router.post('/claim-daily', authMiddleware, async (req, res) => {
   try {
@@ -400,3 +446,4 @@ router.get('/referral-link', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
+
