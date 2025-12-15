@@ -281,17 +281,10 @@
         .btn-primary:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 30px rgba(138, 43, 226, 0.6);
-            text-decoration: none !important;
         }
 
         .btn-success {
             background: linear-gradient(135deg, var(--success-color), #00b894);
-            color: white;
-            border: none;
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, var(--warning-color), #ff9f43);
             color: white;
             border: none;
         }
@@ -647,46 +640,7 @@
             margin-bottom: 20px;
         }
 
-        /* Debug Panel */
-        .debug-panel {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid var(--accent-color);
-            border-radius: 8px;
-            padding: 10px;
-            z-index: 9999;
-            color: white;
-            font-size: 12px;
-            max-width: 300px;
-            display: none;
-        }
-
-        .debug-toggle {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            width: 40px;
-            height: 40px;
-            background: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 10000;
-            border: 2px solid var(--accent-color);
-        }
-
         /* Responsive */
-        @media (max-width: 1200px) {
-            .quick-actions {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
         @media (max-width: 992px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -694,7 +648,6 @@
 
             .sidebar.active {
                 transform: translateX(0);
-                box-shadow: 0 0 50px rgba(0, 212, 255, 0.2);
             }
 
             .sidebar-overlay.active {
@@ -711,20 +664,6 @@
                 align-items: center;
                 justify-content: center;
             }
-
-            .header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .quick-actions {
-                grid-template-columns: 1fr;
-            }
         }
 
         @media (max-width: 768px) {
@@ -734,37 +673,6 @@
 
             .bots-grid {
                 grid-template-columns: 1fr;
-            }
-
-            .bot-info-small {
-                grid-template-columns: 1fr;
-            }
-
-            .header-actions {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header h1 {
-                font-size: 24px;
-            }
-
-            .welcome-banner {
-                padding: 20px;
-            }
-
-            .welcome-banner h2 {
-                font-size: 22px;
-            }
-
-            .action-card {
-                padding: 20px;
-            }
-
-            .action-icon {
-                font-size: 36px;
             }
         }
     </style>
@@ -785,48 +693,13 @@
 
             <nav class="sidebar-menu">
                 <ul>
-                    <li>
-                        <a href="/dashboard" class="active">
-                            <i class="fas fa-home"></i>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/dashboard/bots">
-                            <i class="fas fa-robot"></i>
-                            <span>Mes Bots</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/dashboard/coins">
-                            <i class="fas fa-coins"></i>
-                            <span>Coins</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/dashboard/invite">
-                            <i class="fas fa-user-plus"></i>
-                            <span>Parrainage</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/dashboard/request">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>Ajouter un Bot</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/dashboard/profile">
-                            <i class="fas fa-user"></i>
-                            <span>Profil</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" id="logoutBtn">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Déconnexion</span>
-                        </a>
-                    </li>
+                    <li><a href="/dashboard" class="active"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+                    <li><a href="/dashboard/bots"><i class="fas fa-robot"></i> <span>Mes Bots</span></a></li>
+                    <li><a href="/dashboard/coins"><i class="fas fa-coins"></i> <span>Coins</span></a></li>
+                    <li><a href="/dashboard/invite"><i class="fas fa-user-plus"></i> <span>Parrainage</span></a></li>
+                    <li><a href="/dashboard/request"><i class="fas fa-plus-circle"></i> <span>Ajouter un Bot</span></a></li>
+                    <li><a href="/dashboard/profile"><i class="fas fa-user"></i> <span>Profil</span></a></li>
+                    <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span>Déconnexion</span></a></li>
                 </ul>
             </nav>
 
@@ -843,127 +716,88 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Header -->
             <div class="header">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <button class="mobile-menu-btn" id="mobileMenuBtn">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h1>
-                        <i class="fas fa-chart-line"></i>
-                        Mon Dashboard
-                    </h1>
+                    <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+                    <h1><i class="fas fa-chart-line"></i> Mon Dashboard</h1>
                 </div>
                 <div class="header-actions">
-                    <a href="/dashboard/bots" class="btn btn-primary">
-                        <i class="fas fa-robot"></i> Mes Bots
-                    </a>
-                    <button class="btn btn-success" onclick="claimDailyCoins()" id="claimCoinsBtn">
+                    <a href="/dashboard/bots" class="btn btn-primary"><i class="fas fa-robot"></i> Mes Bots</a>
+                    <button class="btn btn-success" id="claimCoinsBtn" onclick="claimDailyCoins()">
                         <i class="fas fa-gift"></i> Réclamer les Coins
                     </button>
                 </div>
             </div>
 
-            <!-- Welcome Banner -->
             <div class="welcome-banner" id="welcomeBanner">
                 <h2>Bienvenue sur KermHost, <span id="userGreeting">Utilisateur</span> !</h2>
                 <p>Hébergez vos bots WhatsApp facilement avec Heroku. Déployez, gérez et surveillez tous vos bots depuis une seule interface.</p>
             </div>
 
-            <!-- Claim Coins Banner (si disponible) -->
             <div class="claim-coins" id="claimCoinsBanner" style="display: none;">
                 <h3><i class="fas fa-gift"></i> Réclamez vos coins quotidiens !</h3>
                 <p>Vous pouvez réclamer <strong>10 coins</strong> tous les 24h. Ne manquez pas cette opportunité !</p>
-                <button class="btn btn-success" onclick="claimDailyCoins()">
-                    <i class="fas fa-coins"></i> Réclamer maintenant
-                </button>
+                <button class="btn btn-success" onclick="claimDailyCoins()"><i class="fas fa-coins"></i> Réclamer maintenant</button>
             </div>
 
-            <!-- Stats Overview -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
+                    <div class="stat-icon"><i class="fas fa-robot"></i></div>
                     <div class="stat-value" id="totalBots">0</div>
                     <div class="stat-label">BOTS DÉPLOYÉS</div>
                 </div>
-
                 <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-coins"></i>
-                    </div>
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
                     <div class="stat-value" id="totalCoins">0</div>
                     <div class="stat-label">COINS DISPONIBLES</div>
                 </div>
-
                 <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
                     <div class="stat-value" id="referralsCount">0</div>
                     <div class="stat-label">PARRAINAGES</div>
                 </div>
-
                 <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-server"></i>
-                    </div>
+                    <div class="stat-icon"><i class="fas fa-server"></i></div>
                     <div class="stat-value" id="activeBots">0</div>
                     <div class="stat-label">BOTS ACTIFS</div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <h2 style="margin-bottom: 20px; color: white; font-size: 24px;">
-                <i class="fas fa-bolt"></i> Actions Rapides
-            </h2>
+            <h2 style="margin-bottom: 20px; color: white; font-size: 24px;"><i class="fas fa-bolt"></i> Actions Rapides</h2>
             <div class="quick-actions">
                 <div class="action-card" data-href="/dashboard/bots">
-                    <div class="action-icon">
-                        <i class="fas fa-rocket"></i>
-                    </div>
+                    <div class="action-icon"><i class="fas fa-rocket"></i></div>
                     <div class="action-title">Déployer un Bot</div>
                     <div class="action-desc">Choisissez parmi nos bots approuvés et déployez-le en quelques clics</div>
                     <a href="/dashboard/bots" class="btn btn-primary">Commencer</a>
                 </div>
-
                 <div class="action-card" data-href="/dashboard/request">
-                    <div class="action-icon">
-                        <i class="fas fa-plus-circle"></i>
-                    </div>
+                    <div class="action-icon"><i class="fas fa-plus-circle"></i></div>
                     <div class="action-title">Ajouter un Bot</div>
                     <div class="action-desc">Soumettez votre bot WhatsApp pour qu'il soit disponible sur la plateforme</div>
                     <a href="/dashboard/request" class="btn btn-primary">Soumettre</a>
                 </div>
-
                 <div class="action-card" data-href="/dashboard/invite">
-                    <div class="action-icon">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
+                    <div class="action-icon"><i class="fas fa-user-plus"></i></div>
                     <div class="action-title">Parrainer des Amis</div>
                     <div class="action-desc">Invitez vos amis et gagnez 10 coins pour chaque inscription réussie</div>
                     <a href="/dashboard/invite" class="btn btn-success">Inviter</a>
                 </div>
             </div>
 
-            <!-- Recent Bots -->
             <div class="recent-bots">
                 <div class="section-header">
                     <h2><i class="fas fa-history"></i> Bots Récemment Déployés</h2>
-                    <a href="/dashboard/bots" class="btn">
-                        <i class="fas fa-eye"></i> Voir tous
-                    </a>
+                    <a href="/dashboard/bots" class="btn"><i class="fas fa-eye"></i> Voir tous</a>
                 </div>
                 <div id="recentBots">
                     <div class="loading">
-                        <i class="fas fa-spinner"></i>
+                        <i class="fas fa-spinner fa-spin"></i>
                         <p style="margin-top: 20px; color: var(--text-muted);">Chargement de vos bots...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Tips -->
             <div style="background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: var(--border-radius); padding: 25px; margin-top: 30px;">
                 <h3 style="color: white; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                     <i class="fas fa-lightbulb"></i> Conseils Rapides
@@ -986,58 +820,15 @@
         </div>
     </div>
 
-    <!-- Debug Panel -->
-    <div class="debug-toggle" id="debugToggle">🔧</div>
-    <div class="debug-panel" id="debugPanel">
-        <h4>Debug Panel</h4>
-        <div id="debugLogs"></div>
-        <button onclick="testAllAPIs()" style="margin-top: 10px; padding: 5px 10px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">
-            Test APIs
-        </button>
-        <button onclick="clearDebug()" style="margin-top: 5px; padding: 5px 10px; background: var(--danger-color); color: white; border: none; border-radius: 4px; cursor: pointer;">
-            Clear
-        </button>
-    </div>
-
-    <!-- Notification Container -->
     <div id="notificationContainer"></div>
 
     <script>
-        // Variables globales
         let userData = null;
-        const DEBUG_MODE = true; // Active le mode debug
+        let currentCoins = 0;
 
-        // Système de logging pour Render
-        function logDebug(message, type = 'info') {
-            if (!DEBUG_MODE) return;
-            
-            const debugLogs = document.getElementById('debugLogs');
-            if (debugLogs) {
-                const timestamp = new Date().toLocaleTimeString();
-                const color = type === 'error' ? '#ff4757' : type === 'success' ? '#00ff9d' : '#00d4ff';
-                const logEntry = document.createElement('div');
-                logEntry.style.margin = '2px 0';
-                logEntry.style.fontSize = '11px';
-                logEntry.style.color = color;
-                logEntry.innerHTML = `[${timestamp}] ${message}`;
-                debugLogs.appendChild(logEntry);
-                debugLogs.scrollTop = debugLogs.scrollHeight;
-            }
-            
-            // Toujours log dans la console aussi
-            if (type === 'error') {
-                console.error(message);
-            } else {
-                console.log(message);
-            }
-        }
-
-        // Gestion du menu mobile
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
-        const debugToggle = document.getElementById('debugToggle');
-        const debugPanel = document.getElementById('debugPanel');
 
         function toggleMobileMenu() {
             sidebar.classList.toggle('active');
@@ -1048,494 +839,194 @@
         mobileMenuBtn.addEventListener('click', toggleMobileMenu);
         sidebarOverlay.addEventListener('click', toggleMobileMenu);
 
-        // Toggle debug panel
-        debugToggle.addEventListener('click', () => {
-            debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
-        });
-
-        function clearDebug() {
-            document.getElementById('debugLogs').innerHTML = '';
-        }
-
-        // Fonction de notification
         function showNotification(message, type = 'success') {
             const container = document.getElementById('notificationContainer');
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
-            
             const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : '⚠';
-            notification.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="font-size: 24px; font-weight: bold;">${icon}</div>
-                    <div>${message}</div>
-                </div>
-            `;
-            
+            notification.innerHTML = `<div style="display: flex; align-items: center; gap: 15px;"><div style="font-size: 24px; font-weight: bold;">${icon}</div><div>${message}</div></div>`;
             container.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 10);
-            
+            setTimeout(() => notification.classList.add('show'), 10);
             setTimeout(() => {
                 notification.classList.remove('show');
-                setTimeout(() => {
-                    container.removeChild(notification);
-                }, 400);
+                setTimeout(() => container.removeChild(notification), 400);
             }, 4000);
-            
-            logDebug(`Notification: ${message}`, type);
         }
 
-        // Test toutes les APIs
-        async function testAllAPIs() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                showNotification('Pas de token trouvé', 'error');
-                return;
-            }
-
-            logDebug('🧪 Début des tests API...');
-            
-            const apis = [
-                { name: 'Profil utilisateur', url: '/api/user/profile', method: 'GET' },
-                { name: 'Statistiques utilisateur', url: '/api/user/stats', method: 'GET' },
-                { name: 'Déploiements', url: '/api/deploy/user-deployments', method: 'GET' },
-                { name: 'Balance coins', url: '/api/coin/balance', method: 'GET' },
-                { name: 'Stats parrainage', url: '/api/coin/referral-stats', method: 'GET' }
-            ];
-
-            for (const api of apis) {
-                try {
-                    logDebug(`📡 Test: ${api.name}...`);
-                    
-                    const response = await fetch(api.url, {
-                        method: api.method,
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        logDebug(`✅ ${api.name}: SUCCÈS (${Object.keys(data).length} clés)`, 'success');
-                    } else {
-                        logDebug(`❌ ${api.name}: ERREUR ${response.status}`, 'error');
-                    }
-                } catch (error) {
-                    logDebug(`💥 ${api.name}: EXCEPTION - ${error.message}`, 'error');
-                }
-            }
-            
-            showNotification('Tests API terminés', 'success');
-        }
-
-        // Fonction utilitaire pour fetch avec timeout
-        async function fetchWithTimeout(url, options = {}, timeout = 10000) {
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), timeout);
-            
-            try {
-                const response = await fetch(url, {
-                    ...options,
-                    signal: controller.signal
-                });
-                clearTimeout(id);
-                return response;
-            } catch (error) {
-                clearTimeout(id);
-                throw error;
-            }
-        }
-
-        // Charger les données du dashboard - VERSION ROBUSTE
         async function loadDashboardData() {
             try {
-                logDebug('🚀 Début du chargement des données...');
-                
                 const token = localStorage.getItem('token');
                 if (!token) {
-                    logDebug('❌ Pas de token, redirection vers login');
                     window.location.href = '/login';
                     return;
                 }
 
-                logDebug(`🔑 Token trouvé (${token.length} caractères)`);
-
-                // 1. Charger le profil utilisateur (route principale)
-                try {
-                    logDebug('📡 Chargement du profil...');
-                    const userResponse = await fetchWithTimeout('/api/user/profile', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (userResponse.status === 401) {
-                        logDebug('❌ Token invalide, déconnexion...');
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
-                        window.location.href = '/login';
-                        return;
+                // 1. Profil utilisateur
+                const userRes = await fetch('/api/user/profile', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (userRes.status === 401) {
+                    localStorage.clear();
+                    window.location.href = '/login';
+                    return;
+                }
+                if (!userRes.ok) throw new Error('Erreur profil');
+                userData = await userRes.json();
+                if (userData.user) {
+                    updateUserInfo(userData.user);
+                    document.getElementById('totalCoins').textContent = userData.user.coins || 0;
+                    currentCoins = userData.user.coins || 0;
+                    if (userData.user.stats) {
+                        document.getElementById('totalBots').textContent = userData.user.stats.active_deployments || 0;
+                        document.getElementById('activeBots').textContent = userData.user.stats.active_deployments || 0;
+                        document.getElementById('referralsCount').textContent = userData.user.stats.total_referrals || 0;
                     }
-
-                    if (!userResponse.ok) {
-                        throw new Error(`Erreur HTTP ${userResponse.status}: ${await userResponse.text()}`);
-                    }
-
-                    userData = await userResponse.json();
-                    logDebug('✅ Profil chargé');
-                    
-                    // Mettre à jour l'interface
-                    if (userData.user) {
-                        updateUserInfo(userData.user);
-                        // Afficher les coins
-                        const coins = userData.user.coins || 0;
-                        document.getElementById('totalCoins').textContent = coins;
-                        logDebug(`💰 Coins: ${coins}`);
-                    }
-                } catch (profileError) {
-                    logDebug(`❌ Erreur profil: ${profileError.message}`, 'error');
                 }
 
-                // 2. Charger les déploiements (fallback sur plusieurs routes)
-                await loadDeployments(token);
+                // 2. Déploiements
+                const deployRes = await fetch('/api/deploy/user-deployments', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (deployRes.ok) {
+                    const data = await deployRes.json();
+                    const deployments = data.deployments || [];
+                    document.getElementById('totalBots').textContent = deployments.length;
+                    document.getElementById('activeBots').textContent = deployments.filter(d => d.status === 'active').length;
+                    updateRecentBots(deployments.slice(0, 3));
+                }
 
-                // 3. Charger les parrainages
-                await loadReferrals(token);
+                // 3. Parrainages
+                const refRes = await fetch('/api/coin/referral-stats', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (refRes.ok) {
+                    const data = await refRes.json();
+                    document.getElementById('referralsCount').textContent = data.stats?.total_referrals || 0;
+                }
 
-                // 4. Vérifier les coins
-                await checkCoinClaimStatus(token);
+                // 4. Statut coins (balance + claim)
+                await checkCoinClaimStatus();
 
-                logDebug('✅ Dashboard chargé avec succès');
-                showNotification('Dashboard mis à jour', 'success');
-
-            } catch (error) {
-                logDebug(`❌ Erreur générale: ${error.message}`, 'error');
-                showNotification('Erreur de chargement', 'error');
+            } catch (err) {
+                console.error('Erreur dashboard:', err);
+                showNotification('Erreur lors du chargement', 'error');
             }
         }
 
-        // Charger les déploiements avec fallback
-        async function loadDeployments(token) {
-            const routes = [
-                '/api/deploy/user-deployments',
-                '/api/user/stats'
-            ];
-
-            for (const route of routes) {
-                try {
-                    logDebug(`📡 Tentative déploiements: ${route}`);
-                    const response = await fetchWithTimeout(route, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        logDebug(`✅ Données déploiements de ${route}`);
-                        
-                        // Essayer différents formats
-                        let deployments = [];
-                        let activeDeployments = 0;
-                        
-                        if (route.includes('deploy')) {
-                            deployments = data.deployments || data || [];
-                            activeDeployments = deployments.filter(d => d.status === 'active').length;
-                        } else if (route.includes('stats')) {
-                            // Format de user/stats
-                            activeDeployments = data.activeDeployments || data.active_deployments || 0;
-                            const totalDeployments = data.totalDeployments || data.total_deployments || 0;
-                            document.getElementById('totalBots').textContent = totalDeployments;
-                        }
-                        
-                        document.getElementById('activeBots').textContent = activeDeployments;
-                        
-                        if (deployments.length > 0) {
-                            updateRecentBots(deployments.slice(0, 3));
-                        }
-                        
-                        return; // Sortir si une route fonctionne
-                    }
-                } catch (error) {
-                    logDebug(`❌ Route ${route} échouée: ${error.message}`);
-                }
-            }
-            
-            // Fallback ultime : valeurs par défaut
-            logDebug('⚠️ Aucune route déploiements ne fonctionne, valeurs par défaut');
-            document.getElementById('totalBots').textContent = '0';
-            document.getElementById('activeBots').textContent = '0';
-        }
-
-        // Charger les parrainages
-        async function loadReferrals(token) {
-            try {
-                logDebug('📡 Chargement parrainages...');
-                const response = await fetchWithTimeout('/api/coin/referral-stats', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const referrals = data.stats?.total_referrals || data.total_referrals || 0;
-                    document.getElementById('referralsCount').textContent = referrals;
-                    logDebug(`👥 Parrainages: ${referrals}`);
-                }
-            } catch (error) {
-                logDebug(`❌ Erreur parrainages: ${error.message}`);
-                document.getElementById('referralsCount').textContent = '0';
-            }
-        }
-
-        // Mettre à jour les informations utilisateur
         function updateUserInfo(user) {
-            logDebug(`👤 Mise à jour info: ${user.email}`);
-            
             document.getElementById('userEmail').textContent = user.email;
-            const displayName = user.username || user.email.split('@')[0];
-            document.getElementById('userName').textContent = displayName;
-            document.getElementById('userAvatar').textContent = displayName.charAt(0).toUpperCase();
-            document.getElementById('userGreeting').textContent = displayName;
-            
+            const name = user.username || user.email.split('@')[0];
+            document.getElementById('userName').textContent = name;
+            document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+            document.getElementById('userGreeting').textContent = name;
             localStorage.setItem('user', JSON.stringify(user));
         }
 
-        // Mettre à jour les bots récents
         function updateRecentBots(deployments) {
             const container = document.getElementById('recentBots');
-            
             if (!deployments || deployments.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-robot"></i>
-                        <h3>Aucun bot déployé</h3>
-                        <p>Vous n'avez pas encore déployé de bot. Commencez par déployer votre premier bot !</p>
-                        <a href="/dashboard/bots" class="btn btn-primary">
-                            <i class="fas fa-rocket"></i> Déployer un bot
-                        </a>
-                    </div>
-                `;
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-robot"></i><h3>Aucun bot déployé</h3><p>Commencez par déployer votre premier bot !</p><a href="/dashboard/bots" class="btn btn-primary"><i class="fas fa-rocket"></i> Déployer un bot</a></div>`;
                 return;
             }
-
             let html = '<div class="bots-grid">';
-            
-            deployments.slice(0, 3).forEach((deployment, index) => {
-                const status = deployment.status || 'pending';
-                const statusClass = status === 'active' ? 'status-active' : 
-                                   status === 'stopped' || status === 'failed' ? 'status-stopped' : 'status-pending';
-                const statusText = status === 'active' ? 'ACTIF' : 
-                                   status === 'stopped' || status === 'failed' ? 'INACTIF' : 'EN ATTENTE';
-                
-                const botName = deployment.bot?.name || deployment.name || `Bot ${index + 1}`;
-                const cost = deployment.cost || 0;
-                const createdDate = deployment.created_at ? 
-                    new Date(deployment.created_at).toLocaleDateString('fr-FR') : 'N/A';
-                
-                html += `
-                    <div class="bot-card-small" onclick="window.location.href='/dashboard/bots'">
-                        <div class="bot-header-small">
-                            <div class="bot-name-small">
-                                <i class="fas fa-robot"></i>
-                                ${botName}
-                            </div>
-                            <div class="bot-status-small ${statusClass}">${statusText}</div>
-                        </div>
-                        <div class="bot-info-small">
-                            <div class="info-label">Coût</div>
-                            <div class="info-value">${cost} coins</div>
-                            <div class="info-label">Déployé le</div>
-                            <div class="info-value">${createdDate}</div>
-                        </div>
+            deployments.forEach(d => {
+                const statusClass = d.status === 'active' ? 'status-active' : d.status === 'pending' ? 'status-pending' : 'status-stopped';
+                const statusText = d.status === 'active' ? 'ACTIF' : d.status === 'pending' ? 'EN ATTENTE' : 'INACTIF';
+                const botName = d.bot?.name || 'Bot inconnu';
+                const cost = d.cost || 0;
+                const date = d.created_at ? new Date(d.created_at).toLocaleDateString('fr-FR') : 'N/A';
+                const app = d.heroku_app_name ? (d.heroku_app_name.length > 10 ? d.heroku_app_name.substring(0,10)+'...' : d.heroku_app_name) : 'N/A';
+                html += `<div class="bot-card-small" onclick="window.location.href='/dashboard/bots'">
+                    <div class="bot-header-small"><div class="bot-name-small"><i class="fas fa-robot"></i>${botName}</div><div class="bot-status-small ${statusClass}">${statusText}</div></div>
+                    <div class="bot-info-small">
+                        <div class="info-label">Coût</div><div class="info-value">${cost} coins</div>
+                        <div class="info-label">Déployé le</div><div class="info-value">${date}</div>
+                        <div class="info-label">Serveur</div><div class="info-value">${app}</div>
                     </div>
-                `;
+                </div>`;
             });
-            
             html += '</div>';
             container.innerHTML = html;
         }
 
-        // Vérifier le statut de réclamation des coins
-        async function checkCoinClaimStatus(token) {
-            try {
-                logDebug('🎮 Vérification claim coins...');
-                
-                const response = await fetchWithTimeout('/api/coin/balance', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const canClaim = data.stats?.can_claim_daily || data.can_claim_daily || false;
-                    
-                    const claimBtn = document.getElementById('claimCoinsBtn');
-                    const banner = document.getElementById('claimCoinsBanner');
-                    
-                    if (canClaim) {
-                        banner.style.display = 'block';
-                        claimBtn.disabled = false;
-                        claimBtn.innerHTML = '<i class="fas fa-gift"></i> Réclamer les Coins';
-                        claimBtn.classList.remove('btn-secondary');
-                        claimBtn.classList.add('btn-success');
-                        logDebug('✅ Peut réclamer des coins');
-                    } else {
-                        banner.style.display = 'none';
-                        claimBtn.disabled = true;
-                        claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
-                        claimBtn.classList.remove('btn-success');
-                        claimBtn.classList.add('btn-secondary');
-                        logDebug('⏰ Déjà réclamé aujourd\'hui');
-                    }
-                }
-            } catch (error) {
-                logDebug(`❌ Erreur vérification coins: ${error.message}`);
-            }
-        }
-
-        // Réclamer les coins quotidiens
-        async function claimDailyCoins() {
+        async function checkCoinClaimStatus() {
             try {
                 const token = localStorage.getItem('token');
-                if (!token) {
-                    showNotification('Vous devez être connecté', 'error');
-                    return;
-                }
+                const res = await fetch('/api/coin/balance', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const data = await res.json();
+                    currentCoins = data.balance || 0;
+                    document.getElementById('totalCoins').textContent = currentCoins;
 
-                const claimBtn = document.getElementById('claimCoinsBtn');
-                claimBtn.disabled = true;
-                claimBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> En cours...';
+                    const canClaim = data.stats?.can_claim_daily === true;
+                    const banner = document.getElementById('claimCoinsBanner');
+                    const btn = document.getElementById('claimCoinsBtn');
 
-                logDebug('💰 Tentative de réclamation...');
-                
-                const response = await fetchWithTimeout('/api/coin/claim-daily', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                    if (canClaim) {
+                        banner.style.display = 'block';
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-gift"></i> Réclamer les Coins';
+                        btn.classList.remove('btn-secondary');
+                        btn.classList.add('btn-success');
+                    } else {
+                        banner.style.display = 'none';
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
+                        btn.classList.remove('btn-success');
+                        btn.classList.add('btn-secondary');
                     }
-                });
-
-                const text = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch (e) {
-                    logDebug(`❌ Réponse invalide: ${text}`, 'error');
-                    throw new Error('Réponse invalide du serveur');
                 }
-                
-                if (response.ok) {
-                    const message = data.message || 'Coins réclamés avec succès !';
-                    showNotification(message, 'success');
-                    
-                    // Mettre à jour les coins
-                    if (userData && userData.user) {
-                        const coinsAdded = data.coins_added || 10;
-                        userData.user.coins = (userData.user.coins || 0) + coinsAdded;
-                        document.getElementById('totalCoins').textContent = userData.user.coins;
-                        logDebug(`💰 +${coinsAdded} coins = ${userData.user.coins} total`);
-                    }
-                    
-                    // Mettre à jour l'interface
-                    document.getElementById('claimCoinsBanner').style.display = 'none';
-                    claimBtn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
-                    claimBtn.classList.remove('btn-success');
-                    claimBtn.classList.add('btn-secondary');
-                    
-                    // Recharger les données
-                    setTimeout(() => loadDashboardData(), 1000);
-                } else {
-                    throw new Error(data.error || data.message || 'Erreur lors de la réclamation');
-                }
-            } catch (error) {
-                logDebug(`❌ Erreur réclamation: ${error.message}`, 'error');
-                showNotification(error.message, 'error');
-                
-                // Réactiver le bouton
-                const claimBtn = document.getElementById('claimCoinsBtn');
-                claimBtn.disabled = false;
-                claimBtn.innerHTML = '<i class="fas fa-gift"></i> Réclamer les Coins';
-                claimBtn.classList.remove('btn-secondary');
-                claimBtn.classList.add('btn-success');
+            } catch (err) {
+                console.error('Erreur statut coins:', err);
             }
         }
 
-        // Déconnexion
+        async function claimDailyCoins() {
+            const btn = document.getElementById('claimCoinsBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> En cours...';
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/coin/claim-daily', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showNotification(data.message || 'Coins réclamés !', 'success');
+                    currentCoins += data.coins_added || 10;
+                    document.getElementById('totalCoins').textContent = currentCoins;
+                    document.getElementById('claimCoinsBanner').style.display = 'none';
+                    btn.innerHTML = '<i class="fas fa-clock"></i> Déjà réclamé';
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-secondary');
+                } else {
+                    throw new Error(data.error || 'Erreur');
+                }
+            } catch (err) {
+                showNotification(err.message || 'Erreur lors du claim', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-gift"></i> Réclamer les Coins';
+            }
+        }
+
         document.getElementById('logoutBtn').addEventListener('click', async (e) => {
             e.preventDefault();
-            
-            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+            if (confirm('Déconnexion ?')) {
                 try {
                     const token = localStorage.getItem('token');
-                    if (token) {
-                        await fetch('/api/auth/logout', {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                    }
-                } catch (error) {
-                    logDebug(`❌ Erreur déconnexion: ${error.message}`);
-                } finally {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login';
-                }
+                    if (token) await fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                } catch (_) {}
+                localStorage.clear();
+                window.location.href = '/login';
             }
         });
 
-        // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
-            logDebug('🚀 Initialisation du dashboard...');
-            
-            // Vérifier l'authentification
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                logDebug('❌ Pas de token, redirection...');
+            if (!localStorage.getItem('token')) {
                 window.location.href = '/login';
                 return;
             }
-
-            logDebug('✅ Token valide trouvé');
-
-            // Charger les données
             loadDashboardData();
-
-            // Gérer les clics sur les cartes
-            document.querySelectorAll('.action-card').forEach(card => {
-                card.addEventListener('click', function(e) {
-                    if (e.target.tagName === 'A' || e.target.closest('a')) return;
-                    const href = this.getAttribute('data-href');
-                    if (href) window.location.href = href;
-                });
-            });
-
-            // Rafraîchissement automatique
-            setInterval(() => {
-                if (!document.hidden) {
-                    logDebug('🔄 Rafraîchissement automatique...');
-                    loadDashboardData();
-                }
-            }, 60000);
-            
-            logDebug('✅ Dashboard initialisé');
+            setInterval(() => { if (!document.hidden) loadDashboardData(); }, 60000);
         });
 
-        // Redimensionnement
         window.addEventListener('resize', () => {
             if (window.innerWidth > 992) {
                 sidebar.classList.remove('active');
@@ -1543,18 +1034,6 @@
                 document.body.style.overflow = '';
             }
         });
-
-        // Export pour debug
-        window.debug = {
-            reload: loadDashboardData,
-            test: testAllAPIs,
-            log: logDebug,
-            showToken: () => {
-                const token = localStorage.getItem('token');
-                console.log('Token:', token ? `${token.substring(0, 20)}...` : 'Aucun');
-                return token;
-            }
-        };
     </script>
 </body>
 </html>
