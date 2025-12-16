@@ -445,5 +445,136 @@ router.get('/referral-link', authMiddleware, async (req, res) => {
   }
 });
 
-module.exports = router;
+// Ajouter cette fonction dans coin.js après la route referral-stats
+router.get('/referral-data', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
 
+    // Récupérer les données de base
+    const [referralStats, referralLink] = await Promise.all([
+      // Statistiques
+      supabase
+        .from('referrals')
+        .select('*')
+        .eq('referrer_id', userId),
+      
+      // Lien de parrainage
+      supabase
+        .from('users')
+        .select('referral_code')
+        .eq('id', userId)
+        .single()
+    ]);
+
+    // Calculer les statistiques
+    const stats = {
+      total_referrals: referralStats.data?.length || 0,
+      total_coins_earned: (referralStats.data?.length || 0) * 10,
+      pending_referrals: referralStats.data?.filter(r => !r.reward_given).length || 0,
+      conversion_rate: '0%', // À calculer si tu as les données
+      avg_per_day: '0' // À calculer si tu as les données
+    };
+
+    res.json({
+      stats,
+      referrals: referralStats.data || [],
+      referral_code: referralLink.data?.referral_code || '',
+      referral_link: `${process.env.APP_URL}/signup?ref=${referralLink.data?.referral_code || ''}`,
+      rank: 0 // À implémenter si tu veux un classement
+    });
+  } catch (error) {
+    console.error('Erreur récupération données parrainage:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Récupérer toutes les données de parrainage
+router.get('/referral-data', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Récupérer les statistiques de base
+    const { count: totalReferrals } = await supabase
+      .from('referrals')
+      .select('*', { count: 'exact', head: true })
+      .eq('referrer_id', userId);
+
+    // Récupérer les transactions de parrainage
+    const { data: referralTransactions } = await supabase
+      .from('coin_transactions')
+      .select('*')
+      .eq('receiver_id', userId)
+      .eq('type', 'referral');
+
+    const totalCoinsEarned = referralTransactions?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
+
+    // Récupérer les parrainages avec détails
+    const { data: referrals } = await supabase
+      .from('referrals')
+      .select(`
+        *,
+        referred_user:users!referred_id(email, created_at)
+      `)
+      .eq('referrer_id', userId)
+      .order('created_at', { ascending: false });
+
+    // Calculer les récompenses en attente
+    const pendingRewards = referrals?.filter(r => !r.reward_given).length || 0;
+
+    // Statistiques avancées
+    const conversionRate = totalReferrals > 0 ? Math.round((referrals?.length || 0) / totalReferrals * 100) : 0;
+    
+    // Calculer la moyenne par jour (7 derniers jours)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const { data: recentReferrals } = await supabase
+      .from('referrals')
+      .select('created_at')
+      .eq('referrer_id', userId)
+      .gte('created_at', sevenDaysAgo.toISOString());
+
+    const avgPerDay = recentReferrals?.length ? Math.round(recentReferrals.length / 7) : 0;
+
+    // Calculer le classement (simplifié)
+    const { data: allReferrals } = await supabase
+      .from('referrals')
+      .select('referrer_id')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    // Compter les références par utilisateur pour le classement
+    const referralCounts = {};
+    allReferrals?.forEach(ref => {
+      referralCounts[ref.referrer_id] = (referralCounts[ref.referrer_id] || 0) + 1;
+    });
+
+    // Trier par nombre de références
+    const sortedUsers = Object.entries(referralCounts)
+      .sort((a, b) => b[1] - a[1]);
+
+    // Trouver le rang de l'utilisateur
+    const rank = sortedUsers.findIndex(([id]) => id === userId) + 1 || 0;
+
+    res.json({
+      totalReferrals,
+      totalCoinsEarned,
+      pendingRewards,
+      rank,
+      conversionRate,
+      avgPerDay,
+      referrals: referrals?.map(r => ({
+        id: r.id,
+        referred_email: r.referred_user?.email,
+        created_at: r.created_at,
+        reward_given: r.reward_given
+      })) || []
+    });
+
+  } catch (error) {
+    console.error('Erreur récupération données parrainage:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+module.exports = router;
