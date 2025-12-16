@@ -51,7 +51,9 @@ router.get('/profile', authMiddleware, async (req, res) => {
   }
 });
 
-// Mettre à jour le profil
+// Ajouter ces routes dans routes/user.js
+
+// Route pour mettre à jour le profil (remplacer update-profile)
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
     const { username, email } = req.body;
@@ -113,6 +115,70 @@ router.put('/profile', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur mise à jour profil:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Route pour supprimer le compte
+router.delete('/account', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Vérifier si l'utilisateur a des déploiements actifs
+    const { data: activeDeployments } = await supabase
+      .from('deployments')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .limit(1);
+
+    if (activeDeployments && activeDeployments.length > 0) {
+      return res.status(400).json({ 
+        error: 'Impossible de supprimer le compte : vous avez des déploiements actifs. Supprimez d\'abord vos bots.' 
+      });
+    }
+
+    // Supprimer l'utilisateur
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', userId);
+
+    if (error) throw error;
+
+    // Log d'activité (avec user_id null car l'utilisateur est supprimé)
+    await supabase
+      .from('activity_logs')
+      .insert([{
+        user_id: null,
+        action: 'DELETE_ACCOUNT',
+        details: { user_id: userId, email: req.user.email }
+      }]);
+
+    res.json({ message: 'Compte supprimé avec succès' });
+  } catch (error) {
+    console.error('Erreur suppression compte:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Route pour récupérer les sessions (à simplifier)
+router.get('/sessions', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Simuler des données de session (à adapter selon ta base)
+    const sessions = [{
+      id: 'current',
+      user_agent: navigator?.userAgent || 'Appareil actuel',
+      ip_address: '127.0.0.1',
+      created_at: new Date().toISOString(),
+      is_current: true
+    }];
+
+    res.json({ sessions });
+  } catch (error) {
+    console.error('Erreur récupération sessions:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
