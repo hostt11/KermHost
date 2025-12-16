@@ -6,6 +6,7 @@
     <title>Demandes de Bots - KermHost Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* GARDE TOUT LE CSS EXISTANT EXACTEMENT COMME AVANT */
         :root {
             --primary-color: #8a2be2;
             --secondary-color: #4a00e0;
@@ -1345,15 +1346,15 @@
                     `;
                     
                     document.getElementById('pagination').style.display = 'none';
-                    document.getElementById('pendingCount').textContent = '0';
-                    document.getElementById('approvedCount').textContent = '0';
+                    // Charger les compteurs depuis une requête séparée
+                    loadBotCounts();
                 } else {
                     let html = '<div class="bots-grid">';
                     
-                    // Mettre à jour les compteurs si disponibles
-                    if (data.counts) {
-                        document.getElementById('pendingCount').textContent = data.counts.pending || 0;
-                        document.getElementById('approvedCount').textContent = data.counts.approved || 0;
+                    // Mettre à jour la pagination
+                    if (data.pagination) {
+                        updatePagination(data.pagination);
+                        totalPages = data.pagination.pages;
                     }
                     
                     data.requests.forEach(bot => {
@@ -1361,6 +1362,8 @@
                         const statusClass = bot.is_approved ? 'status-approved' : 'status-pending';
                         const statusText = bot.is_approved ? 'APPROUVÉ' : 'EN ATTENTE';
                         const submittedDate = new Date(bot.created_at).toLocaleDateString();
+                        const ownerEmail = bot.user?.email || bot.owner_email || 'N/A';
+                        const ownerVerification = bot.kerm_json?.['owner-verification'] || 'N/A';
                         
                         html += `
                             <div class="bot-card" data-id="${bot.id}">
@@ -1381,11 +1384,15 @@
                                     <div class="bot-info">
                                         <div class="bot-info-item">
                                             <div class="bot-info-label">PROPRIÉTAIRE</div>
-                                            <div class="bot-info-value">${bot.user?.email || 'N/A'}</div>
+                                            <div class="bot-info-value">${ownerEmail}</div>
                                         </div>
                                         <div class="bot-info-item">
                                             <div class="bot-info-label">DÉPÔT GITHUB</div>
-                                            <div class="bot-info-value">${bot.github_repo}</div>
+                                            <div class="bot-info-value">
+                                                <a href="https://github.com/${bot.github_repo}" target="_blank" style="color: var(--accent-color);">
+                                                    ${bot.github_repo}
+                                                </a>
+                                            </div>
                                         </div>
                                         <div class="bot-info-item">
                                             <div class="bot-info-label">COÛT</div>
@@ -1401,7 +1408,7 @@
                                         </div>
                                         <div class="bot-info-item">
                                             <div class="bot-info-label">EMAIL VÉRIFICATION</div>
-                                            <div class="bot-info-value">${bot.owner_verification || 'N/A'}</div>
+                                            <div class="bot-info-value">${ownerVerification}</div>
                                         </div>
                                     </div>
                                     
@@ -1433,17 +1440,48 @@
                     html += '</div>';
                     botRequestsList.innerHTML = html;
                     
-                    // Mettre à jour la pagination
-                    if (data.pagination && data.pagination.pages > 1) {
-                        updatePagination(data.pagination);
-                    } else {
-                        document.getElementById('pagination').style.display = 'none';
-                    }
+                    // Charger les compteurs
+                    loadBotCounts();
                 }
                 
             } catch (error) {
                 console.error('Erreur chargement demandes bots:', error);
+                botRequestsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Erreur de chargement</h3>
+                        <p>Impossible de charger les demandes de bots. Veuillez réessayer.</p>
+                        <button class="btn btn-primary" onclick="loadBotRequests()">
+                            <i class="fas fa-redo"></i> Réessayer
+                        </button>
+                    </div>
+                `;
                 showNotification('Erreur lors du chargement des demandes', 'error');
+            }
+        }
+
+        // Charger les compteurs de bots
+        async function loadBotCounts() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+
+                // Pour les bots en attente
+                const pendingResponse = await fetch('/api/admin/bot-requests?status=pending&limit=1', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const pendingData = await pendingResponse.json();
+                document.getElementById('pendingCount').textContent = pendingData.pagination?.total || 0;
+
+                // Pour les bots approuvés
+                const approvedResponse = await fetch('/api/admin/bot-requests?status=approved&limit=1', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const approvedData = await approvedResponse.json();
+                document.getElementById('approvedCount').textContent = approvedData.pagination?.total || 0;
+
+            } catch (error) {
+                console.error('Erreur chargement compteurs:', error);
             }
         }
 
@@ -1458,6 +1496,7 @@
             paginationDiv.style.display = 'flex';
             currentPageSpan.textContent = pagination.page;
             totalPagesSpan.textContent = pagination.pages;
+            totalPages = pagination.pages;
             
             // Désactiver/activer les boutons
             prevBtn.disabled = pagination.page <= 1;
@@ -1501,7 +1540,7 @@
 
                 const data = await response.json();
                 
-                if (response.ok) {
+                if (response.ok && data.request) {
                     const bot = data.request;
                     const kermJson = bot.kerm_json || {};
                     const envVars = kermJson.env || {};
@@ -1531,16 +1570,17 @@
                         envVarsHtml += '<div class="env-vars-grid">';
                         
                         Object.entries(envVars).forEach(([key, config]) => {
+                            const configObj = typeof config === 'object' ? config : { description: String(config) };
                             envVarsHtml += `
                                 <div class="env-var-item">
                                     <div class="env-var-name">${key}</div>
-                                    <div class="env-var-required ${config.required !== false ? 'required-true' : 'required-false'}">
-                                        ${config.required !== false ? 'OBLIGATOIRE' : 'OPTIONNEL'}
+                                    <div class="env-var-required ${configObj.required !== false ? 'required-true' : 'required-false'}">
+                                        ${configObj.required !== false ? 'OBLIGATOIRE' : 'OPTIONNEL'}
                                     </div>
-                                    <div class="env-var-description">${config.description || 'Pas de description'}</div>
-                                    ${config.value ? `
+                                    <div class="env-var-description">${configObj.description || 'Pas de description'}</div>
+                                    ${configObj.value ? `
                                         <div class="env-var-default">
-                                            <strong>Valeur par défaut:</strong> ${config.value}
+                                            <strong>Valeur par défaut:</strong> ${configObj.value}
                                         </div>
                                     ` : ''}
                                 </div>
@@ -1549,6 +1589,9 @@
                         
                         envVarsHtml += '</div></div>';
                     }
+                    
+                    const ownerEmail = bot.user?.email || bot.owner_email || 'N/A';
+                    const documentationLink = kermJson['documentation-link'] || kermJson.documentation_url || null;
                     
                     const botDetailsContent = document.getElementById('botDetailsContent');
                     botDetailsContent.innerHTML = `
@@ -1559,7 +1602,7 @@
                             </div>
                             <div class="bot-detail-card">
                                 <div class="bot-detail-title">PROPRIÉTAIRE</div>
-                                <div class="bot-detail-value">${bot.user?.email || 'N/A'}</div>
+                                <div class="bot-detail-value">${ownerEmail}</div>
                             </div>
                             <div class="bot-detail-card">
                                 <div class="bot-detail-title">DÉPÔT GITHUB</div>
@@ -1594,12 +1637,12 @@
                             </div>
                         ` : ''}
                         
-                        ${kermJson.documentation_link ? `
+                        ${documentationLink ? `
                             <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                                 <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 10px;">LIEN DE DOCUMENTATION</div>
                                 <div style="color: white;">
-                                    <a href="${kermJson.documentation_link}" target="_blank" style="color: var(--accent-color); text-decoration: none;">
-                                        ${kermJson.documentation_link}
+                                    <a href="${documentationLink}" target="_blank" style="color: var(--accent-color); text-decoration: none;">
+                                        ${documentationLink}
                                     </a>
                                 </div>
                             </div>
