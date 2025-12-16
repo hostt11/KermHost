@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -812,7 +811,8 @@
 
             <!-- Form Container -->
             <div class="form-container">
-                <form id="botRequestForm">
+                <!-- Formulaire sans <form> pour éviter les soumissions automatiques -->
+                <div id="botRequestContainer">
                     <!-- Step 1: Basic Information -->
                     <div id="step1Content" class="step-content">
                         <h3 style="color: white; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
@@ -1004,13 +1004,13 @@
                                 <button type="button" class="btn btn-secondary" id="prevStep3Btn">
                                     <i class="fas fa-arrow-left"></i> Précédent
                                 </button>
-                                <button type="submit" class="btn btn-success" id="submitBtn">
+                                <button type="button" class="btn btn-success" id="submitBtn">
                                     <i class="fas fa-paper-plane"></i> Soumettre le Bot
                                 </button>
                             </div>
                         </div>
                     </div>
-                </form>
+                </div>
             </div>
 
             <!-- JSON Example -->
@@ -1059,25 +1059,111 @@
     <div id="notificationContainer"></div>
 
     <script>
-        // SIMPLE ET EFFICACE - Code minimaliste qui fonctionne
-        
-        // Variables
+        // Code JavaScript ultra-simple et fonctionnel
         let currentStep = 1;
         let kermJsonData = null;
         
-        // Initialisation - TOUT est ici, pas de fonctions externes
+        // Fonction pour mettre à jour les étapes
+        function updateSteps() {
+            // Mettre à jour les indicateurs
+            document.querySelectorAll('.step').forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index + 1 === currentStep) {
+                    step.classList.add('active');
+                } else if (index + 1 < currentStep) {
+                    step.classList.add('completed');
+                }
+            });
+            
+            // Afficher/masquer le contenu
+            document.getElementById('step1Content').style.display = currentStep === 1 ? 'block' : 'none';
+            document.getElementById('step2Content').style.display = currentStep === 2 ? 'block' : 'none';
+            document.getElementById('step3Content').style.display = currentStep === 3 ? 'block' : 'none';
+        }
+        
+        // Fonction pour afficher les notifications
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 24px; font-weight: bold;">${type === 'success' ? '✓' : '✗'}</div>
+                    <div>${message}</div>
+                </div>
+            `;
+            container.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 10);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (container.contains(notification)) {
+                        container.removeChild(notification);
+                    }
+                }, 400);
+            }, 4000);
+        }
+        
+        // Fonction pour valider l'étape 1
+        function validateStep1() {
+            const githubRepo = document.getElementById('githubRepo').value.trim();
+            const botName = document.getElementById('botName').value.trim();
+            const description = document.getElementById('botDescription').value.trim();
+            const botCost = document.getElementById('botCost').value.trim();
+            
+            if (!githubRepo) {
+                showNotification('Repository GitHub requis', 'error');
+                return false;
+            }
+            if (!botName) {
+                showNotification('Nom du bot requis', 'error');
+                return false;
+            }
+            if (!description) {
+                showNotification('Description requise', 'error');
+                return false;
+            }
+            if (!botCost) {
+                showNotification('Coût en coins requis', 'error');
+                return false;
+            }
+            
+            const repoRegex = /^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/;
+            if (!repoRegex.test(githubRepo)) {
+                showNotification('Format GitHub invalide. Utilisez: username/repository', 'error');
+                return false;
+            }
+            
+            const cost = parseInt(botCost);
+            if (isNaN(cost) || cost < 1 || cost > 100) {
+                showNotification('Le coût doit être entre 1 et 100 coins', 'error');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Fonction pour mettre à jour l'aperçu
+        function updateReviewData() {
+            document.getElementById('reviewBotName').textContent = document.getElementById('botName').value;
+            document.getElementById('reviewBotCost').textContent = document.getElementById('botCost').value + ' coins';
+            document.getElementById('reviewGithubRepo').textContent = document.getElementById('githubRepo').value;
+            document.getElementById('reviewDescription').textContent = document.getElementById('botDescription').value;
+        }
+        
+        // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Page chargée - initialisation en cours...');
             
-            // 1. Vérifier l'authentification
+            // Vérifier l'authentification
             const token = localStorage.getItem('token');
             if (!token) {
-                console.log('Pas de token, redirection vers login');
                 window.location.href = '/login';
                 return;
             }
             
-            // 2. Mettre à jour les infos utilisateur
+            // Charger les infos utilisateur
             fetch('/api/auth/check', {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
@@ -1093,22 +1179,21 @@
                 }
             })
             .catch(error => {
-                console.error('Erreur auth:', error);
                 localStorage.removeItem('token');
                 window.location.href = '/login';
             });
             
-            // 3. Gestion du menu mobile
+            // Menu mobile
             document.getElementById('mobileMenuBtn').addEventListener('click', function() {
                 document.getElementById('sidebar').classList.toggle('active');
             });
             
-            // 4. Bouton retour aux bots
+            // Bouton retour
             document.getElementById('backToBots').addEventListener('click', function() {
                 window.location.href = '/dashboard/bots';
             });
             
-            // 5. Déconnexion
+            // Déconnexion
             document.getElementById('logoutBtn').addEventListener('click', function() {
                 if (confirm('Déconnexion ?')) {
                     localStorage.removeItem('token');
@@ -1117,33 +1202,20 @@
                 }
             });
             
-            // 6. ÉTAPE 1 - Bouton Suivant
+            // ÉTAPE 1 - Suivant
             document.getElementById('nextStep1Btn').addEventListener('click', function() {
                 console.log('Bouton Suivant Étape 1 cliqué');
                 
-                // Validation simple
-                const githubRepo = document.getElementById('githubRepo').value.trim();
-                const botName = document.getElementById('botName').value.trim();
-                const description = document.getElementById('botDescription').value.trim();
-                const botCost = document.getElementById('botCost').value.trim();
-                
-                if (!githubRepo || !botName || !description || !botCost) {
-                    showNotification('Veuillez remplir tous les champs obligatoires', 'error');
+                if (!validateStep1()) {
                     return;
                 }
                 
-                // Mettre à jour l'aperçu
-                document.getElementById('reviewBotName').textContent = botName;
-                document.getElementById('reviewBotCost').textContent = botCost + ' coins';
-                document.getElementById('reviewGithubRepo').textContent = githubRepo;
-                document.getElementById('reviewDescription').textContent = description;
-                
-                // Passer à l'étape 2
+                updateReviewData();
                 currentStep = 2;
                 updateSteps();
             });
             
-            // 7. ÉTAPE 2 - Validation kerm.json
+            // ÉTAPE 2 - Valider kerm.json
             document.getElementById('validateKermBtn').addEventListener('click', async function() {
                 console.log('Validation kerm.json cliqué');
                 
@@ -1177,9 +1249,7 @@
                         showNotification('Fichier kerm.json trouvé !', 'success');
                         
                         // Afficher l'aperçu
-                        if (kermJsonData) {
-                            displayKermJsonPreview(kermJsonData);
-                        }
+                        displayKermJsonPreview(kermJsonData);
                     } else {
                         status.innerHTML = '<i class="fas fa-times"></i> ' + (data.error || 'Invalide');
                         status.style.color = 'var(--danger-color)';
@@ -1193,38 +1263,38 @@
                 }
             });
             
-            // 8. ÉTAPE 2 - Précédent
+            // ÉTAPE 2 - Précédent
             document.getElementById('prevStep2Btn').addEventListener('click', function() {
                 currentStep = 1;
                 updateSteps();
             });
             
-            // 9. ÉTAPE 2 - Suivant
+            // ÉTAPE 2 - Suivant
             document.getElementById('nextStep2Btn').addEventListener('click', function() {
                 currentStep = 3;
                 updateSteps();
             });
             
-            // 10. ÉTAPE 3 - Précédent
+            // ÉTAPE 3 - Précédent
             document.getElementById('prevStep3Btn').addEventListener('click', function() {
                 currentStep = 2;
                 updateSteps();
             });
             
-            // 11. ÉTAPE 3 - Soumission
-            document.getElementById('botRequestForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                console.log('Formulaire soumis');
+            // ÉTAPE 3 - Soumettre (LE BOUTON QUI NE FONCTIONNAIT PAS)
+            document.getElementById('submitBtn').addEventListener('click', async function() {
+                console.log('Bouton Soumettre cliqué');
                 
                 // Vérifier les conditions
                 if (!document.getElementById('termsAgreement').checked) {
-                    showNotification('Vous devez accepter les conditions', 'error');
+                    showNotification('Vous devez accepter les conditions d\'utilisation', 'error');
                     return;
                 }
                 
                 const submitBtn = document.getElementById('submitBtn');
+                const originalText = submitBtn.innerHTML;
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
                 
                 try {
                     const token = localStorage.getItem('token');
@@ -1233,7 +1303,7 @@
                         cost: parseInt(document.getElementById('botCost').value)
                     };
                     
-                    console.log('Données envoyées:', botData);
+                    console.log('Données à envoyer:', botData);
                     
                     const response = await fetch('/api/bot/submit-request', {
                         method: 'POST',
@@ -1248,45 +1318,29 @@
                     console.log('Réponse API:', data);
                     
                     if (response.ok) {
-                        showNotification('Bot soumis avec succès !', 'success');
+                        showNotification('✅ Bot soumis avec succès ! Notre équipe va l\'examiner.', 'success');
+                        
+                        // Rediriger après 2 secondes
                         setTimeout(() => {
                             window.location.href = '/dashboard/bots';
                         }, 2000);
                     } else {
-                        throw new Error(data.error || 'Erreur serveur');
+                        throw new Error(data.error || 'Erreur lors de la soumission');
                     }
                 } catch (error) {
                     console.error('Erreur soumission:', error);
-                    showNotification(error.message, 'error');
+                    showNotification('❌ ' + error.message, 'error');
+                    
+                    // Réactiver le bouton
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Soumettre le Bot';
+                    submitBtn.innerHTML = originalText;
                 }
             });
             
             // Initialiser l'affichage
             updateSteps();
-            console.log('Initialisation terminée - tous les boutons sont prêts');
+            console.log('Initialisation terminée');
         });
-        
-        // Fonction pour mettre à jour les étapes
-        function updateSteps() {
-            console.log('Changement étape:', currentStep);
-            
-            // Mettre à jour les indicateurs
-            document.querySelectorAll('.step').forEach((step, index) => {
-                step.classList.remove('active', 'completed');
-                if (index + 1 === currentStep) {
-                    step.classList.add('active');
-                } else if (index + 1 < currentStep) {
-                    step.classList.add('completed');
-                }
-            });
-            
-            // Afficher/masquer le contenu
-            document.getElementById('step1Content').style.display = currentStep === 1 ? 'block' : 'none';
-            document.getElementById('step2Content').style.display = currentStep === 2 ? 'block' : 'none';
-            document.getElementById('step3Content').style.display = currentStep === 3 ? 'block' : 'none';
-        }
         
         // Fonction pour afficher l'aperçu kerm.json
         function displayKermJsonPreview(kermJson) {
@@ -1294,18 +1348,13 @@
             const jsonContent = document.getElementById('jsonContent');
             const envCount = document.getElementById('envCount');
             
-            // Compter les variables
             const envVars = kermJson.env ? Object.keys(kermJson.env) : [];
             envCount.textContent = `${envVars.length} variables`;
             
-            // Formater le JSON
-            const formattedJson = JSON.stringify(kermJson, null, 2);
-            jsonContent.innerHTML = formattedJson;
-            
-            // Afficher
+            jsonContent.textContent = JSON.stringify(kermJson, null, 2);
             previewSection.style.display = 'block';
             
-            // Mettre à jour l'aperçu étape 3
+            // Mettre à jour l'aperçu des variables
             updateEnvVarsPreview(envVars, kermJson.env);
         }
         
@@ -1325,6 +1374,13 @@
                 const isRequired = config && config.required !== false;
                 
                 const envCard = document.createElement('div');
+                envCard.style.cssText = `
+                    background: rgba(255, 255, 255, 0.05);
+                    padding: 15px;
+                    border-radius: 8px;
+                    border: 1px solid var(--glass-border);
+                `;
+                
                 envCard.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div style="font-family: monospace; font-weight: 600; color: var(--accent-color);">${key}</div>
@@ -1334,30 +1390,11 @@
                     </div>
                     <div style="font-size: 12px; color: var(--text-muted);">${config && config.description ? config.description : 'Pas de description'}</div>
                 `;
+                
                 envContainer.appendChild(envCard);
             });
             
             reviewEnvVars.style.display = 'block';
-        }
-        
-        // Fonction de notification
-        function showNotification(message, type = 'success') {
-            const container = document.getElementById('notificationContainer');
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="font-size: 24px; font-weight: bold;">${type === 'success' ? '✓' : '✗'}</div>
-                    <div>${message}</div>
-                </div>
-            `;
-            container.appendChild(notification);
-            
-            setTimeout(() => notification.classList.add('show'), 10);
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => container.removeChild(notification), 400);
-            }, 4000);
         }
     </script>
 </body>
