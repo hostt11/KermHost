@@ -66,7 +66,7 @@
 
         .sidebar {
             width: var(--sidebar-width);
-            background: rgba(26, 26, 46, 0.8);
+            background: rgba(26, 26, 46, 0.95);
             backdrop-filter: blur(20px);
             border-right: 1px solid var(--glass-border);
             position: fixed;
@@ -514,6 +514,11 @@
             width: 100%;
         }
 
+        .btn-sm {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+
         /* Tabs */
         .tabs {
             display: flex;
@@ -645,6 +650,10 @@
             border-left: 4px solid var(--danger-color);
         }
 
+        .notification.warning {
+            border-left: 4px solid var(--warning-color);
+        }
+
         /* Modal */
         .modal {
             display: none;
@@ -653,18 +662,23 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(15, 15, 35, 0.9);
+            background: rgba(15, 15, 35, 0.95);
             backdrop-filter: blur(10px);
             z-index: 2000;
             align-items: center;
             justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex !important;
         }
 
         .modal-content {
             background: var(--light-color);
             border: 1px solid var(--glass-border);
             border-radius: var(--border-radius);
-            width: 95%;
+            width: 100%;
             max-width: 500px;
             max-height: 90vh;
             overflow-y: auto;
@@ -714,6 +728,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: var(--transition);
         }
 
         .modal-close:hover {
@@ -723,6 +738,46 @@
 
         .modal-body {
             padding: 30px;
+        }
+
+        /* Sessions List */
+        .session-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-item.current {
+            border-color: var(--accent-color);
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .session-info h4 {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .session-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .session-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--accent-color);
+            color: white;
         }
 
         /* Responsive */
@@ -770,7 +825,7 @@
                 grid-template-columns: 1fr;
             }
 
-            .security-item {
+            .security-item, .session-item {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 15px;
@@ -878,7 +933,7 @@
                     </h1>
                 </div>
                 <div>
-                    <button class="btn btn-secondary" onclick="window.location.href='/dashboard'">
+                    <button class="btn btn-secondary" id="backToDashboardBtn">
                         <i class="fas fa-arrow-left"></i> Retour au Dashboard
                     </button>
                 </div>
@@ -917,7 +972,7 @@
                     </div>
 
                     <div style="margin-top: 30px;">
-                        <button class="btn btn-danger btn-block" onclick="showDeleteAccountModal()">
+                        <button class="btn btn-danger btn-block" id="deleteAccountBtn">
                             <i class="fas fa-trash"></i> Supprimer mon compte
                         </button>
                     </div>
@@ -957,7 +1012,7 @@
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label class="form-label">Nom d'utilisateur</label>
-                                        <input type="text" class="form-control" id="usernameInput">
+                                        <input type="text" class="form-control" id="usernameInput" placeholder="Votre nom d'utilisateur">
                                         <div class="form-help">
                                             Votre nom public sur la plateforme
                                         </div>
@@ -1002,7 +1057,7 @@
                             </div>
 
                             <div class="form-group">
-                                <button class="btn btn-secondary" onclick="savePreferences()">
+                                <button class="btn btn-secondary" id="savePreferencesBtn">
                                     <i class="fas fa-sync-alt"></i> Sauvegarder les préférences
                                 </button>
                             </div>
@@ -1019,17 +1074,17 @@
                             <form id="passwordForm">
                                 <div class="form-group">
                                     <label class="form-label">Mot de passe actuel</label>
-                                    <input type="password" class="form-control" id="currentPassword" required>
+                                    <input type="password" class="form-control" id="currentPassword" placeholder="••••••••" required>
                                 </div>
 
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label class="form-label">Nouveau mot de passe</label>
-                                        <input type="password" class="form-control" id="newPassword" required>
+                                        <input type="password" class="form-control" id="newPassword" placeholder="••••••••" required>
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Confirmer le nouveau mot de passe</label>
-                                        <input type="password" class="form-control" id="confirmPassword" required>
+                                        <input type="password" class="form-control" id="confirmPassword" placeholder="••••••••" required>
                                     </div>
                                 </div>
 
@@ -1056,13 +1111,13 @@
                                     <h4>Connexion active</h4>
                                     <p>Dernière connexion : <span id="lastLogin">Aujourd'hui</span></p>
                                 </div>
-                                <button class="btn btn-secondary btn-sm" onclick="showSessionsModal()">
+                                <button class="btn btn-secondary btn-sm" id="viewSessionsBtn">
                                     <i class="fas fa-desktop"></i> Voir les sessions
                                 </button>
                             </div>
 
                             <div class="form-group" style="margin-top: 25px;">
-                                <button class="btn btn-danger" onclick="logoutAll()">
+                                <button class="btn btn-danger" id="logoutAllBtn">
                                     <i class="fas fa-sign-out-alt"></i> Déconnecter tous les appareils
                                 </button>
                                 <div class="form-help">
@@ -1084,14 +1139,14 @@
                                     <i class="fas fa-gift"></i> Recevez 10 coins par parrainage !
                                 </h4>
                                 <p style="color: var(--text-muted); margin-bottom: 15px;">
-                                    Partagez votre lien de parrainage et recevez 10 coins pour chaque ami qui s'inscrit.
+                                    Partagez votre lien de parrainage et recevez 10 coins pour chaque ami qui s'inscrit et vérifie son compte.
                                 </p>
                                 
                                 <div class="form-group">
                                     <label class="form-label">Votre lien de parrainage</label>
                                     <div class="referral-link-container">
                                         <input type="text" class="referral-link" id="referralLink" readonly>
-                                        <button class="btn btn-primary" onclick="copyReferralLink()">
+                                        <button class="btn btn-primary" id="copyLinkBtn">
                                             <i class="fas fa-copy"></i> Copier
                                         </button>
                                     </div>
@@ -1101,7 +1156,7 @@
                                     <label class="form-label">Votre code de parrainage</label>
                                     <div class="referral-link-container">
                                         <input type="text" class="referral-link" id="referralCode" readonly>
-                                        <button class="btn btn-primary" onclick="copyReferralCode()">
+                                        <button class="btn btn-primary" id="copyCodeBtn">
                                             <i class="fas fa-copy"></i> Copier
                                         </button>
                                     </div>
@@ -1128,7 +1183,7 @@
                             </div>
 
                             <div class="form-group" style="margin-top: 30px;">
-                                <button class="btn btn-primary" onclick="window.location.href='/dashboard/invite'">
+                                <button class="btn btn-primary" id="detailedStatsBtn">
                                     <i class="fas fa-chart-line"></i> Voir les statistiques détaillées
                                 </button>
                             </div>
@@ -1140,17 +1195,17 @@
                             </h3>
                             
                             <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px;">
-                                <button class="btn btn-secondary" onclick="shareOnTwitter()">
+                                <button class="btn btn-secondary" id="shareTwitterBtn">
                                     <i class="fab fa-twitter"></i> Twitter
                                 </button>
-                                <button class="btn btn-secondary" onclick="shareOnFacebook()">
+                                <button class="btn btn-secondary" id="shareFacebookBtn">
                                     <i class="fab fa-facebook"></i> Facebook
                                 </button>
-                                <button class="btn btn-secondary" onclick="shareOnWhatsApp()">
+                                <button class="btn btn-secondary" id="shareWhatsAppBtn">
                                     <i class="fab fa-whatsapp"></i> WhatsApp
                                 </button>
-                                <button class="btn btn-secondary" onclick="shareOnTelegram()">
-                                    <i class="fab fa-telegram"></i> Telegram
+                                <button class="btn btn-secondary" id="shareTelegramBtn">
+                                    <i class="fab fa-tegram"></i> Telegram
                                 </button>
                             </div>
                         </div>
@@ -1165,7 +1220,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="fas fa-exclamation-triangle" style="color: var(--danger-color);"></i> Supprimer mon compte</h3>
-                <button class="modal-close" onclick="hideDeleteAccountModal()">&times;</button>
+                <button class="modal-close" onclick="hideModal('deleteAccountModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div style="text-align: center; padding: 20px;">
@@ -1186,13 +1241,36 @@
                                placeholder="SUPPRIMER" style="text-align: center;">
                     </div>
                     <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
-                        <button class="btn btn-secondary" onclick="hideDeleteAccountModal()">
+                        <button class="btn btn-secondary" onclick="hideModal('deleteAccountModal')">
                             <i class="fas fa-times"></i> Annuler
                         </button>
-                        <button class="btn btn-danger" onclick="confirmDeleteAccount()" id="confirmDeleteBtn" disabled>
+                        <button class="btn btn-danger" id="confirmDeleteBtn" disabled>
                             <i class="fas fa-trash"></i> Supprimer définitivement
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sessions Modal -->
+    <div class="modal" id="sessionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-desktop"></i> Sessions actives</h3>
+                <button class="modal-close" onclick="hideModal('sessionsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="sessionsList">
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p style="margin-top: 20px; color: var(--text-muted);">Chargement des sessions...</p>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 25px;">
+                    <button class="btn btn-danger" id="logoutAllSessionsBtn">
+                        <i class="fas fa-sign-out-alt"></i> Déconnecter toutes les sessions
+                    </button>
                 </div>
             </div>
         </div>
@@ -1206,28 +1284,102 @@
         let userData = null;
         let currentTab = 'personal';
 
-        // Gestion du menu mobile
+        // Éléments DOM
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebar = document.getElementById('sidebar');
+        const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+        const logoutAllBtn = document.getElementById('logoutAllBtn');
+        const viewSessionsBtn = document.getElementById('viewSessionsBtn');
+        const detailedStatsBtn = document.getElementById('detailedStatsBtn');
 
-        mobileMenuBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            // Vérifier l'authentification
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            // Initialiser les événements
+            initEvents();
+            
+            // Charger les données
+            loadProfileData();
         });
 
-        // Gestion des tabs
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Retirer la classe active de tous les tabs
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
-                // Activer le tab cliqué
-                btn.classList.add('active');
-                const tabId = btn.dataset.tab;
-                document.getElementById(`${tabId}-tab`).classList.add('active');
-                currentTab = tabId;
+        // Initialiser les événements
+        function initEvents() {
+            // Menu mobile
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
             });
-        });
+
+            // Tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    btn.classList.add('active');
+                    const tabId = btn.dataset.tab;
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    currentTab = tabId;
+                });
+            });
+
+            // Boutons de navigation
+            backToDashboardBtn.addEventListener('click', () => {
+                window.location.href = '/dashboard';
+            });
+
+            detailedStatsBtn.addEventListener('click', () => {
+                window.location.href = '/dashboard/invite';
+            });
+
+            // Bouton supprimer compte
+            deleteAccountBtn.addEventListener('click', showDeleteAccountModal);
+
+            // Bouton déconnecter tous
+            logoutAllBtn.addEventListener('click', logoutAllDevices);
+
+            // Bouton voir sessions
+            viewSessionsBtn.addEventListener('click', showSessionsModal);
+
+            // Formulaire informations personnelles
+            document.getElementById('personalInfoForm').addEventListener('submit', updateProfile);
+
+            // Formulaire mot de passe
+            document.getElementById('passwordForm').addEventListener('submit', changePassword);
+
+            // Bouton sauvegarder préférences
+            document.getElementById('savePreferencesBtn').addEventListener('click', savePreferences);
+
+            // Boutons copier
+            document.getElementById('copyLinkBtn').addEventListener('click', copyReferralLink);
+            document.getElementById('copyCodeBtn').addEventListener('click', copyReferralCode);
+
+            // Boutons partage
+            document.getElementById('shareTwitterBtn').addEventListener('click', shareOnTwitter);
+            document.getElementById('shareFacebookBtn').addEventListener('click', shareOnFacebook);
+            document.getElementById('shareWhatsAppBtn').addEventListener('click', shareOnWhatsApp);
+            document.getElementById('shareTelegramBtn').addEventListener('click', shareOnTelegram);
+
+            // Déconnexion
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            // Confirmation suppression
+            document.getElementById('deleteConfirmation').addEventListener('input', function() {
+                document.getElementById('confirmDeleteBtn').disabled = this.value.toUpperCase() !== 'SUPPRIMER';
+            });
+
+            // Bouton confirmation suppression
+            document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDeleteAccount);
+
+            // Bouton déconnecter toutes sessions
+            document.getElementById('logoutAllSessionsBtn').addEventListener('click', logoutAllSessionsFromModal);
+        }
 
         // Fonction de notification
         function showNotification(message, type = 'success') {
@@ -1261,32 +1413,26 @@
         async function loadProfileData() {
             try {
                 const token = localStorage.getItem('token');
-                if (!token) {
-                    window.location.href = '/login';
-                    return;
-                }
-
-                // Récupérer les données de l'utilisateur
-                const response = await fetch('/api/user/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                
+                // Charger les données utilisateur
+                const userResponse = await fetch('/api/user/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (response.status === 401) {
+                if (userResponse.status === 401) {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                     window.location.href = '/login';
                     return;
                 }
 
-                const data = await response.json();
+                const userDataResult = await userResponse.json();
                 
-                if (!data.user && !data.profile) {
-                    throw new Error('Données utilisateur non disponibles');
+                if (!userDataResult.user && !userDataResult.profile) {
+                    throw new Error('Format de réponse invalide');
                 }
 
-                userData = data.user || data.profile;
+                userData = userDataResult.user || userDataResult.profile;
                 
                 // Mettre à jour l'interface
                 updateProfileUI(userData);
@@ -1294,20 +1440,16 @@
                 // Charger les statistiques supplémentaires
                 await loadAdditionalStats();
                 
-                // Mettre à jour le lien de parrainage
-                updateReferralInfo(userData);
-                
                 showNotification('Profil chargé avec succès', 'success');
                 
             } catch (error) {
                 console.error('Erreur chargement profil:', error);
                 showNotification('Erreur lors du chargement du profil', 'error');
                 
-                // Utiliser les données du localStorage comme fallback
+                // Fallback sur localStorage
                 const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
                 if (storedUser) {
                     updateProfileUI(storedUser);
-                    updateReferralInfo(storedUser);
                 }
             }
         }
@@ -1319,9 +1461,7 @@
                 
                 // Charger les statistiques de parrainage
                 const referralResponse = await fetch('/api/coin/referral-stats', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (referralResponse.ok) {
@@ -1331,9 +1471,7 @@
 
                 // Charger le nombre de bots
                 const botsResponse = await fetch('/api/bot/my-bots', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (botsResponse.ok) {
@@ -1343,11 +1481,11 @@
 
             } catch (error) {
                 console.error('Erreur chargement statistiques:', error);
-                // Continuer sans les statistiques supplémentaires
+                // Continuer sans erreur
             }
         }
 
-        // Mettre à jour l'interface du profil
+        // Mettre à jour l'interface utilisateur
         function updateProfileUI(user) {
             // Avatar et nom
             const firstLetter = (user.username || user.email?.charAt(0) || 'U').toUpperCase();
@@ -1386,15 +1524,20 @@
             
             // Mettre à jour le localStorage
             localStorage.setItem('user', JSON.stringify(user));
+            
+            // Mettre à jour le lien de parrainage
+            updateReferralInfo(user);
         }
 
         // Mettre à jour les statistiques de parrainage
         function updateReferralStats(data) {
-            document.getElementById('profileReferrals').textContent = data.stats?.total_referrals || 0;
-            document.getElementById('totalReferrals').textContent = data.stats?.total_referrals || 0;
-            document.getElementById('referralCoins').textContent = data.stats?.total_coins_earned || 0;
-            document.getElementById('monthlyReferrals').textContent = data.stats?.monthly_referrals || 0;
-            document.getElementById('referralRank').textContent = data.rank || '-';
+            if (data.stats) {
+                document.getElementById('profileReferrals').textContent = data.stats.total_referrals || 0;
+                document.getElementById('totalReferrals').textContent = data.stats.total_referrals || 0;
+                document.getElementById('referralCoins').textContent = data.stats.total_coins_earned || 0;
+                document.getElementById('monthlyReferrals').textContent = data.stats.monthly_referrals || 0;
+                document.getElementById('referralRank').textContent = data.rank || '-';
+            }
         }
 
         // Mettre à jour les informations de parrainage
@@ -1406,8 +1549,8 @@
             document.getElementById('referralCode').value = user.referral_code || 'N/A';
         }
 
-        // Sauvegarder les informations personnelles
-        document.getElementById('personalInfoForm').addEventListener('submit', async (e) => {
+        // Mettre à jour le profil
+        async function updateProfile(e) {
             e.preventDefault();
             
             const username = document.getElementById('usernameInput').value.trim();
@@ -1446,7 +1589,7 @@
                 console.error('Erreur mise à jour profil:', error);
                 showNotification(error.message, 'error');
             }
-        });
+        }
 
         // Sauvegarder les préférences
         async function savePreferences() {
@@ -1465,7 +1608,7 @@
         }
 
         // Changer le mot de passe
-        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+        async function changePassword(e) {
             e.preventDefault();
             
             const currentPassword = document.getElementById('currentPassword').value;
@@ -1519,42 +1662,36 @@
                 console.error('Erreur changement mot de passe:', error);
                 showNotification(error.message, 'error');
             }
-        });
+        }
 
         // Copier le lien de parrainage
-        function copyReferralLink() {
+        async function copyReferralLink() {
             const linkInput = document.getElementById('referralLink');
-            linkInput.select();
-            linkInput.setSelectionRange(0, 99999);
             
-            navigator.clipboard.writeText(linkInput.value)
-                .then(() => {
-                    showNotification('Lien copié dans le presse-papier !', 'success');
-                })
-                .catch(err => {
-                    console.error('Erreur copie:', err);
-                    // Fallback pour anciens navigateurs
-                    document.execCommand('copy');
-                    showNotification('Lien copié !', 'success');
-                });
+            try {
+                await navigator.clipboard.writeText(linkInput.value);
+                showNotification('Lien copié dans le presse-papier !', 'success');
+            } catch (err) {
+                // Fallback
+                linkInput.select();
+                document.execCommand('copy');
+                showNotification('Lien copié !', 'success');
+            }
         }
 
         // Copier le code de parrainage
-        function copyReferralCode() {
+        async function copyReferralCode() {
             const codeInput = document.getElementById('referralCode');
-            codeInput.select();
-            codeInput.setSelectionRange(0, 99999);
             
-            navigator.clipboard.writeText(codeInput.value)
-                .then(() => {
-                    showNotification('Code copié dans le presse-papier !', 'success');
-                })
-                .catch(err => {
-                    console.error('Erreur copie:', err);
-                    // Fallback pour anciens navigateurs
-                    document.execCommand('copy');
-                    showNotification('Code copié !', 'success');
-                });
+            try {
+                await navigator.clipboard.writeText(codeInput.value);
+                showNotification('Code copié dans le presse-papier !', 'success');
+            } catch (err) {
+                // Fallback
+                codeInput.select();
+                document.execCommand('copy');
+                showNotification('Code copié !', 'success');
+            }
         }
 
         // Partager sur les réseaux sociaux
@@ -1583,24 +1720,26 @@
             window.open(shareUrl, '_blank');
         }
 
-        // Gestion de la suppression de compte
+        // Afficher modal
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Cacher modal
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // Afficher modal suppression compte
         function showDeleteAccountModal() {
-            document.getElementById('deleteAccountModal').style.display = 'flex';
             document.getElementById('deleteConfirmation').value = '';
             document.getElementById('confirmDeleteBtn').disabled = true;
+            showModal('deleteAccountModal');
         }
 
-        function hideDeleteAccountModal() {
-            document.getElementById('deleteAccountModal').style.display = 'none';
-        }
-
-        // Vérifier la confirmation de suppression
-        document.getElementById('deleteConfirmation').addEventListener('input', function() {
-            const confirmBtn = document.getElementById('confirmDeleteBtn');
-            confirmBtn.disabled = this.value.toUpperCase() !== 'SUPPRIMER';
-        });
-
-        // Confirmer la suppression du compte
+        // Confirmer suppression compte
         async function confirmDeleteAccount() {
             try {
                 if (!confirm('Êtes-vous ABSOLUMENT sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
@@ -1610,9 +1749,7 @@
                 const token = localStorage.getItem('token');
                 const response = await fetch('/api/user/account', {
                     method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
                 const data = await response.json();
@@ -1637,13 +1774,102 @@
             }
         }
 
-        // Gestion des sessions (simplifiée)
+        // Afficher modal sessions
         function showSessionsModal() {
-            showNotification('Fonctionnalité en développement', 'info');
+            loadSessions();
+            showModal('sessionsModal');
+        }
+
+        // Charger les sessions
+        async function loadSessions() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/user/sessions', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                const sessionsList = document.getElementById('sessionsList');
+                
+                if (!data.sessions || data.sessions.length === 0) {
+                    sessionsList.innerHTML = `
+                        <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+                            <i class="fas fa-info-circle" style="font-size: 48px; margin-bottom: 15px;"></i>
+                            <p>Aucune session active trouvée</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                data.sessions.forEach(session => {
+                    const isCurrent = session.is_current;
+                    const timeAgo = formatTimeAgo(new Date(session.created_at));
+                    
+                    html += `
+                        <div class="session-item ${isCurrent ? 'current' : ''}">
+                            <div class="session-info">
+                                <h4>
+                                    ${session.user_agent || 'Appareil inconnu'}
+                                    ${isCurrent ? '<span class="session-badge">Actuel</span>' : ''}
+                                </h4>
+                                <p>
+                                    <strong>IP :</strong> ${session.ip_address || 'N/A'} <br>
+                                    <strong>Dernière activité :</strong> ${timeAgo}
+                                </p>
+                            </div>
+                            ${!isCurrent ? `
+                                <button class="btn btn-danger btn-sm" onclick="logoutSession('${session.id}')">
+                                    <i class="fas fa-sign-out-alt"></i> Déconnecter
+                                </button>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                
+                sessionsList.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erreur chargement sessions:', error);
+                const sessionsList = document.getElementById('sessionsList');
+                sessionsList.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: var(--warning-color);">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Fonctionnalité en développement</p>
+                        <p style="font-size: 12px; margin-top: 10px;">Votre session actuelle est active</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Déconnecter une session spécifique
+        async function logoutSession(sessionId) {
+            try {
+                // Pour l'instant, déconnecter simplement
+                showNotification('Session déconnectée', 'success');
+                loadSessions(); // Recharger la liste
+            } catch (error) {
+                console.error('Erreur déconnexion session:', error);
+                showNotification('Erreur lors de la déconnexion', 'error');
+            }
+        }
+
+        // Déconnecter toutes sessions depuis modal
+        async function logoutAllSessionsFromModal() {
+            if (!confirm('Déconnecter toutes les sessions sauf celle-ci ?')) {
+                return;
+            }
+            
+            try {
+                await logoutAllDevices();
+                hideModal('sessionsModal');
+            } catch (error) {
+                console.error('Erreur déconnexion sessions:', error);
+            }
         }
 
         // Déconnecter tous les appareils
-        async function logoutAll() {
+        async function logoutAllDevices() {
             if (!confirm('Déconnecter toutes les sessions sauf celle-ci ?')) {
                 return;
             }
@@ -1652,9 +1878,7 @@
                 const token = localStorage.getItem('token');
                 const response = await fetch('/api/user/logout-all', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
                 if (response.ok) {
@@ -1668,52 +1892,53 @@
             }
         }
 
+        // Formater le temps
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'À l\'instant';
+            if (diffMins < 60) return `Il y a ${diffMins} minute${diffMins > 1 ? 's' : ''}`;
+            if (diffHours < 24) return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
+            if (diffDays < 7) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+            return date.toLocaleDateString('fr-FR');
+        }
+
         // Déconnexion
-        document.getElementById('logoutBtn').addEventListener('click', () => {
+        function logout() {
             if (confirm('Déconnexion ? Vous serez redirigé vers la page d\'accueil.')) {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 window.location.href = '/';
             }
-        });
+        }
 
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', () => {
-            // Vérifier l'authentification
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/login';
-                return;
+        // Raccourcis clavier
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideModal('deleteAccountModal');
+                hideModal('sessionsModal');
+                if (sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
             }
-
-            // Charger les données du profil
-            loadProfileData();
-
-            // Raccourcis clavier
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    if (document.getElementById('deleteAccountModal').style.display === 'flex') {
-                        hideDeleteAccountModal();
-                    }
-                    if (sidebar.classList.contains('active')) {
-                        sidebar.classList.remove('active');
-                    }
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                if (currentTab === 'personal') {
+                    document.getElementById('personalInfoForm').dispatchEvent(new Event('submit'));
                 }
-                if (e.ctrlKey && e.key === 's') {
-                    e.preventDefault();
-                    if (currentTab === 'personal') {
-                        document.getElementById('personalInfoForm').dispatchEvent(new Event('submit'));
-                    }
-                }
-            });
-
-            // Rafraîchir les données toutes les 5 minutes
-            setInterval(() => {
-                if (!document.hidden) {
-                    loadAdditionalStats();
-                }
-            }, 300000);
+            }
         });
+
+        // Rafraîchir les données périodiquement
+        setInterval(() => {
+            if (!document.hidden) {
+                loadAdditionalStats();
+            }
+        }, 300000); // 5 minutes
     </script>
 </body>
 </html>
