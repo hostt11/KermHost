@@ -41,24 +41,77 @@ router.post('/signup', async (req, res) => {
         .eq('referral_code', referralCode)
         .single();
 
-      if (referrer) {
-        referred_by = referrer.id;
-        initialCoins = 20; // 10 + 10 de parrainage
-        
-        // Vérifier que le parrain n'est pas déjà le même utilisateur
-        const { data: existingReferral } = await supabase
-          .from('referrals')
-          .select('id')
-          .eq('referrer_id', referrer.id)
-          .eq('referred_id', referred_by)
-          .single();
+      // CORRECTION COMPLÈTE DE LA SECTION PARRAINAGE
+if (referred_by) {
+  console.log(`🎯 Parrainage détecté: ${email} parrainé par ${referred_by}`);
+  
+  // 1. Ajouter l'entrée de référence
+  const { error: referralError } = await supabase
+    .from('referrals')
+    .insert([{
+      referrer_id: referred_by,
+      referred_id: user.id,
+      reward_given: true
+    }]);
 
-        if (existingReferral) {
-          referred_by = null;
-          initialCoins = 10;
-        }
-      }
+  if (referralError) {
+    console.error('Erreur création referral:', referralError);
+  }
+
+  // 2. DONNER 10 COINS AU PARRAIN
+  const referralReward = parseInt(process.env.COIN_REFERRAL_REWARD) || 10;
+  
+  // Transaction pour le parrain
+  const { error: transactionError } = await supabase
+    .from('coin_transactions')
+    .insert([{
+      sender_id: null,
+      receiver_id: referred_by,
+      amount: referralReward,
+      type: 'referral',
+      description: `Parrainage de ${email}`
+    }]);
+
+  if (transactionError) {
+    console.error('Erreur transaction parrain:', transactionError);
+  }
+
+  // Mettre à jour les coins du parrain MANUELLEMENT
+  const { data: referrerUser } = await supabase
+    .from('users')
+    .select('coins, email')
+    .eq('id', referred_by)
+    .single();
+
+  if (referrerUser) {
+    const newCoins = (parseInt(referrerUser.coins) || 0) + referralReward;
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ coins: newCoins })
+      .eq('id', referred_by);
+
+    if (updateError) {
+      console.error('Erreur mise à jour coins parrain:', updateError);
+    } else {
+      console.log(`✅ Parrain ${referred_by} a reçu ${referralReward} coins. Nouveau total: ${newCoins}`);
     }
+  }
+
+  // 3. Transaction pour le parrainé (bonus de parrainage)
+  await supabase
+    .from('coin_transactions')
+    .insert([{
+      sender_id: null,
+      receiver_id: user.id,
+      amount: referralReward,
+      type: 'referral_bonus',
+      description: 'Bonus de parrainage'
+    }]);
+
+  console.log(`📊 Résumé parrainage:`);
+  console.log(`   → Parrainé ${email}: ${initialCoins} coins (10 base + 10 bonus)`);
+  console.log(`   → Parrain: +${referralReward} coins ajoutés`);
+}
 
     // Créer l'utilisateur
     const { data: user, error } = await supabase
