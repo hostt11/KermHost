@@ -911,7 +911,7 @@
                                 Assurez-vous qu'il est présent dans votre repository.
                             </div>
                             <div style="margin-top: 15px;">
-                                <button type="button" class="btn btn-secondary" onclick="validateKermJson()">
+                                <button type="button" class="btn btn-primary" onclick="validateKermJson()">
                                     <i class="fas fa-search"></i> Vérifier le fichier kerm.json
                                 </button>
                                 <span id="validationStatus" style="margin-left: 15px; color: var(--text-muted);">
@@ -937,7 +937,7 @@
                                 <button type="button" class="btn btn-secondary" onclick="prevStep()">
                                     <i class="fas fa-arrow-left"></i> Précédent
                                 </button>
-                                <button type="button" class="btn btn-primary" id="nextStep2Btn" onclick="nextStep()" disabled>
+                                <button type="button" class="btn btn-primary" id="nextStep2Btn" onclick="nextStep()">
                                     Suivant <i class="fas fa-arrow-right"></i>
                                 </button>
                             </div>
@@ -984,7 +984,7 @@
                                     <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 15px;">
                                         <i class="fas fa-sliders-h"></i> Variables d'environnement détectées
                                     </div>
-                                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                                    <div id="envVarsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
                                         <!-- Environment variables will be added here -->
                                     </div>
                                 </div>
@@ -1003,7 +1003,7 @@
                                 <button type="button" class="btn btn-secondary" onclick="prevStep()">
                                     <i class="fas fa-arrow-left"></i> Précédent
                                 </button>
-                                <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                                <button type="submit" class="btn btn-success" id="submitBtn">
                                     <i class="fas fa-paper-plane"></i> Soumettre le Bot
                                 </button>
                             </div>
@@ -1061,7 +1061,6 @@
         // Variables
         let currentStep = 1;
         let kermJsonData = null;
-        let validationAttempted = false;
 
         // Gestion du menu mobile
         document.getElementById('mobileMenuBtn').addEventListener('click', () => {
@@ -1120,19 +1119,9 @@
                 // Valider l'étape actuelle avant de passer à la suivante
                 if (currentStep === 1) {
                     if (!validateStep1()) {
-                        showNotification('Veuillez remplir tous les champs obligatoires', 'error');
                         return;
                     }
                     updateReviewData();
-                } else if (currentStep === 2) {
-                    if (!validationAttempted) {
-                        showNotification('Veuillez d\'abord vérifier le fichier kerm.json', 'error');
-                        return;
-                    }
-                    if (!kermJsonData) {
-                        showNotification('Le fichier kerm.json n\'a pas été validé', 'error');
-                        return;
-                    }
                 }
                 
                 currentStep++;
@@ -1147,7 +1136,7 @@
             }
         }
 
-        // Validation de l'étape 1 - CORRIGÉ
+        // Validation de l'étape 1 - CORRIGÉE
         function validateStep1() {
             const githubRepo = document.getElementById('githubRepo').value.trim();
             const botName = document.getElementById('botName').value.trim();
@@ -1155,7 +1144,27 @@
             const botCost = document.getElementById('botCost').value.trim();
             
             // Vérifications de base
-            if (!githubRepo || !botName || !description || !botCost) {
+            if (!githubRepo) {
+                showNotification('Le repository GitHub est requis', 'error');
+                document.getElementById('githubRepo').focus();
+                return false;
+            }
+            
+            if (!botName) {
+                showNotification('Le nom du bot est requis', 'error');
+                document.getElementById('botName').focus();
+                return false;
+            }
+            
+            if (!description) {
+                showNotification('La description est requise', 'error');
+                document.getElementById('botDescription').focus();
+                return false;
+            }
+            
+            if (!botCost) {
+                showNotification('Le coût en coins est requis', 'error');
+                document.getElementById('botCost').focus();
                 return false;
             }
             
@@ -1163,6 +1172,7 @@
             const repoRegex = /^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/;
             if (!repoRegex.test(githubRepo)) {
                 showNotification('Format GitHub invalide. Utilisez: username/repository', 'error');
+                document.getElementById('githubRepo').focus();
                 return false;
             }
             
@@ -1170,6 +1180,7 @@
             const cost = parseInt(botCost);
             if (isNaN(cost) || cost < 1 || cost > 100) {
                 showNotification('Le coût doit être entre 1 et 100 coins', 'error');
+                document.getElementById('botCost').focus();
                 return false;
             }
             
@@ -1184,12 +1195,19 @@
             document.getElementById('reviewDescription').textContent = document.getElementById('botDescription').value;
         }
 
-        // Valider le fichier kerm.json - CORRIGÉ
+        // Valider le fichier kerm.json
         async function validateKermJson() {
             const githubRepo = document.getElementById('githubRepo').value.trim();
             
             if (!githubRepo) {
                 showNotification('Veuillez d\'abord entrer le repository GitHub', 'error');
+                return;
+            }
+            
+            // Valider le format GitHub
+            const repoRegex = /^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/;
+            if (!repoRegex.test(githubRepo)) {
+                showNotification('Format GitHub invalide', 'error');
                 return;
             }
             
@@ -1205,7 +1223,7 @@
                     return;
                 }
                 
-                // CORRECTION : Route correcte
+                // API call to check repository
                 const response = await fetch('/api/bot/check-repo', {
                     method: 'POST',
                     headers: {
@@ -1221,14 +1239,10 @@
                 
                 if (response.ok) {
                     if (data.valid) {
-                        validationAttempted = true;
                         kermJsonData = data.kerm_json || data;
                         
                         validationStatus.innerHTML = '<i class="fas fa-check"></i> Fichier kerm.json valide';
                         validationStatus.style.color = 'var(--success-color)';
-                        
-                        // Activer le bouton suivant
-                        document.getElementById('nextStep2Btn').disabled = false;
                         
                         // Afficher l'aperçu
                         if (kermJsonData) {
@@ -1244,11 +1258,11 @@
                 } else {
                     validationStatus.innerHTML = '<i class="fas fa-times"></i> Erreur serveur';
                     validationStatus.style.color = 'var(--danger-color)';
-                    throw new Error(data.error || 'Erreur de validation');
+                    showNotification(data.error || 'Erreur de validation', 'error');
                 }
             } catch (error) {
                 console.error('Erreur validation kerm.json:', error);
-                showNotification('Erreur lors de la vérification: ' + error.message, 'error');
+                showNotification('Erreur lors de la vérification', 'error');
             }
         }
 
@@ -1296,7 +1310,7 @@
         // Mettre à jour l'aperçu des variables d'environnement
         function updateEnvVarsPreview(envVars, envConfig) {
             const reviewEnvVars = document.getElementById('reviewEnvVars');
-            const envContainer = reviewEnvVars.querySelector('div:last-child');
+            const envContainer = document.getElementById('envVarsContainer');
             
             if (envVars.length === 0) {
                 reviewEnvVars.style.display = 'none';
@@ -1337,32 +1351,36 @@
 
         // Activer/désactiver le bouton de soumission
         document.getElementById('termsAgreement').addEventListener('change', function() {
-            document.getElementById('submitBtn').disabled = !this.checked;
+            // Le bouton reste toujours actif, on vérifie juste au moment du submit
         });
 
-        // Soumission du formulaire - CORRIGÉ
+        // Soumission du formulaire
         document.getElementById('botRequestForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // Désactiver le bouton pour éviter les double-clics
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Soumission...';
-            
-            if (!kermJsonData) {
-                showNotification('Veuillez d\'abord valider le fichier kerm.json', 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Soumettre le Bot';
+            // Vérifier les conditions
+            const termsAgreed = document.getElementById('termsAgreement').checked;
+            if (!termsAgreed) {
+                showNotification('Vous devez accepter les conditions d\'utilisation', 'error');
                 return;
             }
             
-            // CORRECTION : Les données attendues par l'API
+            if (!kermJsonData) {
+                showNotification('Veuillez d\'abord valider le fichier kerm.json', 'error');
+                return;
+            }
+            
+            // Désactiver le bouton pour éviter les double-clics
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Soumission...';
+            
+            // Les données attendues par l'API
             const botData = {
                 github_repo: document.getElementById('githubRepo').value.trim(),
                 cost: parseInt(document.getElementById('botCost').value)
             };
-            
-            console.log('Données envoyées:', botData);
             
             try {
                 const token = localStorage.getItem('token');
@@ -1372,7 +1390,7 @@
                     return;
                 }
                 
-                // CORRECTION : Route correcte
+                // API call to submit bot
                 const response = await fetch('/api/bot/submit-request', {
                     method: 'POST',
                     headers: {
@@ -1383,7 +1401,6 @@
                 });
                 
                 const data = await response.json();
-                console.log('Réponse API:', data);
                 
                 if (response.ok) {
                     showNotification(data.message || 'Bot soumis avec succès ! Il sera examiné par notre équipe.', 'success');
@@ -1401,7 +1418,7 @@
                 
                 // Réactiver le bouton
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Soumettre le Bot';
+                submitBtn.innerHTML = originalText;
             }
         });
 
@@ -1414,17 +1431,31 @@
                 return;
             }
 
-            // Mettre à jour les informations utilisateur
-            try {
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                if (user.email) {
+            // Vérifier si le token est valide
+            fetch('/api/auth/check', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Token invalide');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.user) {
+                    // Mettre à jour les informations utilisateur
+                    const user = data.user;
                     document.getElementById('userEmail').textContent = user.email;
                     document.getElementById('userName').textContent = user.username || user.email.split('@')[0];
                     document.getElementById('userAvatar').textContent = (user.username || user.email.charAt(0)).toUpperCase();
                 }
-            } catch (e) {
-                console.error('Erreur chargement utilisateur:', e);
-            }
+            })
+            .catch(error => {
+                console.error('Erreur vérification token:', error);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            });
 
             // Déconnexion
             document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -1446,6 +1477,9 @@
                     e.preventDefault();
                 }
             });
+            
+            // Initialiser les étapes
+            updateSteps();
         });
     </script>
 </body>
