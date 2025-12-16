@@ -6,6 +6,7 @@
     <title>Soumettre un Bot - KermHost</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Garde tout ton CSS existant */
         :root {
             --primary-color: #8a2be2;
             --secondary-color: #4a00e0;
@@ -1063,11 +1064,8 @@
         let validationAttempted = false;
 
         // Gestion du menu mobile
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const sidebar = document.getElementById('sidebar');
-
-        mobileMenuBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('active');
         });
 
         // Fonction de notification
@@ -1127,8 +1125,12 @@
                     }
                     updateReviewData();
                 } else if (currentStep === 2) {
-                    if (!validationAttempted || !kermJsonData) {
+                    if (!validationAttempted) {
                         showNotification('Veuillez d\'abord vérifier le fichier kerm.json', 'error');
+                        return;
+                    }
+                    if (!kermJsonData) {
+                        showNotification('Le fichier kerm.json n\'a pas été validé', 'error');
                         return;
                     }
                 }
@@ -1145,13 +1147,15 @@
             }
         }
 
-        // Validation de l'étape 1
+        // Validation de l'étape 1 - CORRIGÉ
         function validateStep1() {
             const githubRepo = document.getElementById('githubRepo').value.trim();
             const botName = document.getElementById('botName').value.trim();
             const description = document.getElementById('botDescription').value.trim();
+            const botCost = document.getElementById('botCost').value.trim();
             
-            if (!githubRepo || !botName || !description) {
+            // Vérifications de base
+            if (!githubRepo || !botName || !description || !botCost) {
                 return false;
             }
             
@@ -1159,6 +1163,13 @@
             const repoRegex = /^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/;
             if (!repoRegex.test(githubRepo)) {
                 showNotification('Format GitHub invalide. Utilisez: username/repository', 'error');
+                return false;
+            }
+            
+            // Valider le coût
+            const cost = parseInt(botCost);
+            if (isNaN(cost) || cost < 1 || cost > 100) {
+                showNotification('Le coût doit être entre 1 et 100 coins', 'error');
                 return false;
             }
             
@@ -1173,7 +1184,7 @@
             document.getElementById('reviewDescription').textContent = document.getElementById('botDescription').value;
         }
 
-        // Valider le fichier kerm.json - CORRECTION ICI
+        // Valider le fichier kerm.json - CORRIGÉ
         async function validateKermJson() {
             const githubRepo = document.getElementById('githubRepo').value.trim();
             
@@ -1188,41 +1199,56 @@
                 validationStatus.style.color = 'var(--warning-color)';
                 
                 const token = localStorage.getItem('token');
+                if (!token) {
+                    showNotification('Non authentifié. Veuillez vous reconnecter.', 'error');
+                    window.location.href = '/login';
+                    return;
+                }
                 
-                // CORRECTION : Utiliser la route existante /api/bot/check-repo
+                // CORRECTION : Route correcte
                 const response = await fetch('/api/bot/check-repo', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ github_repo: githubRepo })
+                    body: JSON.stringify({ 
+                        github_repo: githubRepo 
+                    })
                 });
                 
                 const data = await response.json();
                 
-                if (response.ok && data.valid) {
-                    validationAttempted = true;
-                    kermJsonData = data.kerm_json;
-                    
-                    validationStatus.innerHTML = '<i class="fas fa-check"></i> Fichier kerm.json valide';
-                    validationStatus.style.color = 'var(--success-color)';
-                    
-                    // Activer le bouton suivant
-                    document.getElementById('nextStep2Btn').disabled = false;
-                    
-                    // Afficher l'aperçu
-                    displayKermJsonPreview(data.kerm_json);
-                    
-                    showNotification('Fichier kerm.json validé avec succès', 'success');
+                if (response.ok) {
+                    if (data.valid) {
+                        validationAttempted = true;
+                        kermJsonData = data.kerm_json || data;
+                        
+                        validationStatus.innerHTML = '<i class="fas fa-check"></i> Fichier kerm.json valide';
+                        validationStatus.style.color = 'var(--success-color)';
+                        
+                        // Activer le bouton suivant
+                        document.getElementById('nextStep2Btn').disabled = false;
+                        
+                        // Afficher l'aperçu
+                        if (kermJsonData) {
+                            displayKermJsonPreview(kermJsonData);
+                        }
+                        
+                        showNotification('Fichier kerm.json validé avec succès', 'success');
+                    } else {
+                        validationStatus.innerHTML = '<i class="fas fa-times"></i> ' + (data.error || 'Fichier invalide');
+                        validationStatus.style.color = 'var(--danger-color)';
+                        showNotification(data.error || 'Fichier kerm.json invalide', 'error');
+                    }
                 } else {
-                    validationStatus.innerHTML = '<i class="fas fa-times"></i> ' + (data.error || 'Erreur de validation');
+                    validationStatus.innerHTML = '<i class="fas fa-times"></i> Erreur serveur';
                     validationStatus.style.color = 'var(--danger-color)';
                     throw new Error(data.error || 'Erreur de validation');
                 }
             } catch (error) {
                 console.error('Erreur validation kerm.json:', error);
-                showNotification(error.message || 'Erreur lors de la vérification', 'error');
+                showNotification('Erreur lors de la vérification: ' + error.message, 'error');
             }
         }
 
@@ -1283,7 +1309,7 @@
             // Ajouter chaque variable
             envVars.forEach(key => {
                 const config = envConfig[key];
-                const isRequired = config.required !== false;
+                const isRequired = config && config.required !== false;
                 
                 const envCard = document.createElement('div');
                 envCard.style.cssText = `
@@ -1300,7 +1326,7 @@
                             ${isRequired ? 'OBLIGATOIRE' : 'OPTIONNEL'}
                         </div>
                     </div>
-                    <div style="font-size: 12px; color: var(--text-muted);">${config.description || 'Pas de description'}</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">${config && config.description ? config.description : 'Pas de description'}</div>
                 `;
                 
                 envContainer.appendChild(envCard);
@@ -1314,27 +1340,39 @@
             document.getElementById('submitBtn').disabled = !this.checked;
         });
 
-        // Soumission du formulaire - CORRECTION ICI
+        // Soumission du formulaire - CORRIGÉ
         document.getElementById('botRequestForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // Désactiver le bouton pour éviter les double-clics
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Soumission...';
+            
             if (!kermJsonData) {
                 showNotification('Veuillez d\'abord valider le fichier kerm.json', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Soumettre le Bot';
                 return;
             }
             
+            // CORRECTION : Les données attendues par l'API
             const botData = {
-                github_repo: document.getElementById('githubRepo').value,
+                github_repo: document.getElementById('githubRepo').value.trim(),
                 cost: parseInt(document.getElementById('botCost').value)
             };
             
-            // Note: Le nom, description, etc. sont automatiquement extraits du kerm.json
-            // par l'API /api/bot/submit-request
+            console.log('Données envoyées:', botData);
             
             try {
                 const token = localStorage.getItem('token');
+                if (!token) {
+                    showNotification('Non authentifié. Veuillez vous reconnecter.', 'error');
+                    window.location.href = '/login';
+                    return;
+                }
                 
-                // CORRECTION : Utiliser la route existante /api/bot/submit-request
+                // CORRECTION : Route correcte
                 const response = await fetch('/api/bot/submit-request', {
                     method: 'POST',
                     headers: {
@@ -1345,9 +1383,10 @@
                 });
                 
                 const data = await response.json();
+                console.log('Réponse API:', data);
                 
                 if (response.ok) {
-                    showNotification('Bot soumis avec succès ! Il sera examiné par notre équipe.', 'success');
+                    showNotification(data.message || 'Bot soumis avec succès ! Il sera examiné par notre équipe.', 'success');
                     
                     // Rediriger après 2 secondes
                     setTimeout(() => {
@@ -1358,7 +1397,11 @@
                 }
             } catch (error) {
                 console.error('Erreur soumission bot:', error);
-                showNotification(error.message, 'error');
+                showNotification(error.message || 'Erreur lors de la soumission', 'error');
+                
+                // Réactiver le bouton
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Soumettre le Bot';
             }
         });
 
@@ -1372,11 +1415,15 @@
             }
 
             // Mettre à jour les informations utilisateur
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (user.email) {
-                document.getElementById('userEmail').textContent = user.email;
-                document.getElementById('userName').textContent = user.username || user.email.split('@')[0];
-                document.getElementById('userAvatar').textContent = (user.username || user.email.charAt(0)).toUpperCase();
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (user.email) {
+                    document.getElementById('userEmail').textContent = user.email;
+                    document.getElementById('userName').textContent = user.username || user.email.split('@')[0];
+                    document.getElementById('userAvatar').textContent = (user.username || user.email.charAt(0)).toUpperCase();
+                }
+            } catch (e) {
+                console.error('Erreur chargement utilisateur:', e);
             }
 
             // Déconnexion
@@ -1390,11 +1437,12 @@
 
             // Raccourcis clavier
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
-                    sidebar.classList.remove('active');
+                if (e.key === 'Escape' && document.getElementById('sidebar').classList.contains('active')) {
+                    document.getElementById('sidebar').classList.remove('active');
                 }
                 if (e.ctrlKey && e.key === 'Enter' && currentStep === 3) {
-                    document.getElementById('botRequestForm').dispatchEvent(new Event('submit'));
+                    const event = new Event('submit');
+                    document.getElementById('botRequestForm').dispatchEvent(event);
                     e.preventDefault();
                 }
             });
