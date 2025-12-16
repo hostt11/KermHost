@@ -6,13 +6,16 @@ const { v4: uuidv4 } = require('uuid');
 const supabase = require('../utils/database');
 const EmailService = require('../utils/email');
 
-// Inscription - CORRIGÉ POUR LES RÉCOMPENSES
+// Inscription
 router.post('/signup', async (req, res) => {
   try {
     const { email, password, username, referralCode } = req.body;
     
-    console.log(`🔍 Inscription: ${email}, code parrainage: ${referralCode}`);
-    
+    // Validation
+    if (!email || !password || !username) {
+      return res.status(400).json({ error: 'Email, mot de passe et nom d\'utilisateur requis' });
+    }
+
     // Vérifier si l'utilisateur existe déjà
     const { data: existingUser } = await supabase
       .from('users')
@@ -34,25 +37,28 @@ router.post('/signup', async (req, res) => {
     
     let referred_by = null;
     let initialCoins = 10; // Coins de bienvenue
-    let referrerData = null;
+    let referralEntry = null;
 
     // Vérifier le code de parrainage
-    if (referralCode && referralCode.trim() !== '') {
-      console.log(`🔎 Vérification code parrainage: ${referralCode}`);
-      
+    if (referralCode) {
       const { data: referrer } = await supabase
         .from('users')
-        .select('id, email, username, coins')
+        .select('id, email, is_verified')
         .eq('referral_code', referralCode)
+        .eq('is_verified', true)
         .single();
 
       if (referrer) {
         referred_by = referrer.id;
-        referrerData = referrer;
         initialCoins = 20; // 10 + 10 de parrainage
-        console.log(`✅ Parrain trouvé: ${referrer.email} (ID: ${referrer.id})`);
-      } else {
-        console.log(`❌ Code parrainage invalide: ${referralCode}`);
+        
+        // Créer l'entrée de référence (reward_given sera false jusqu'à vérification)
+        referralEntry = {
+          referrer_id: referrer.id,
+          referred_email: email,
+          reward_given: false,
+          status: 'pending'
+        };
       }
     }
 
@@ -67,118 +73,50 @@ router.post('/signup', async (req, res) => {
         referral_code: referral_code,
         referred_by,
         verification_code: verificationCode,
-        verification_expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        verification_expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        is_verified: false
       }])
       .select()
       .single();
 
     if (error) throw error;
 
-    console.log(`✅ Utilisateur créé: ${user.id}, coins initiaux: ${initialCoins}`);
+    // Si parrainage, créer l'entrée maintenant qu'on a l'ID
+    if (referralEntry && referred_by && user) {
+      await supabase
+        .from('referrals')
+        .insert([{
+          referrer_id: referralEntry.referrer_id,
+          referred_id: user.id,
+          referred_email: referralEntry.referred_email,
+          reward_given: false,
+          status: 'pending'
+        }]);
+    }
 
     // Envoyer l'email de vérification
     await EmailService.sendVerificationEmail(email, verificationCode);
 
-    // CORRECTION COMPLÈTE : Si parrainage, donner les coins AU PARRAIN AUSSI
-    if (referred_by && referrerData) {
-      console.log(`🎯 TRAITEMENT PARRAINAGE pour ${email}`);
-      
-      const referralReward = parseInt(process.env.COIN_REFERRAL_REWARD) || 10;
-      
-      // 1. Ajouter l'entrée de référence
-      const { error: referralError } = await supabase
-        .from('referrals')
-        .insert([{
-          referrer_id: referred_by,
-          referred_id: user.id,
-          reward_given: true
-        }]);
-
-      if (referralError) {
-        console.error('❌ Erreur création referral:', referralError);
-      } else {
-        console.log(`✅ Referral créé: ${referred_by} -> ${user.id}`);
-      }
-
-      // 2. DONNER LES COINS AU PARRAIN
-      console.log(`💰 Donner ${referralReward} coins au parrain ${referrerData.email}`);
-      
-      // Transaction pour le parrain
-      const { error: transactionError } = await supabase
-        .from('coin_transactions')
-        .insert([{
-          sender_id: null,
-          receiver_id: referred_by,
-          amount: referralReward,
-          type: 'referral',
-          description: `Parrainage de ${email}`
-        }]);
-
-      if (transactionError) {
-        console.error('❌ Erreur transaction parrain:', transactionError);
-      } else {
-        console.log(`✅ Transaction parrain enregistrée`);
-      }
-
-      // Mettre à jour les coins du parrain MANUELLEMENT (sans rpc)
-      const newCoinsForReferrer = (parseInt(referrerData.coins) || 0) + referralReward;
-      
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ 
-          coins: newCoinsForReferrer,
-          updated_at: new Date()
-        })
-        .eq('id', referred_by);
-
-      if (updateError) {
-        console.error('❌ Erreur mise à jour coins parrain:', updateError);
-      } else {
-        console.log(`✅ Parrain ${referrerData.email} a maintenant ${newCoinsForReferrer} coins (+${referralReward})`);
-      }
-
-      // 3. Transaction pour le parrainé (bonus de parrainage)
-      await supabase
-        .from('coin_transactions')
-        .insert([{
-          sender_id: null,
-          receiver_id: user.id,
-          amount: referralReward,
-          type: 'referral_bonus',
-          description: 'Bonus de parrainage'
-        }]);
-
-      console.log(`✅ Transaction bonus parrainé enregistrée`);
-
-      // 4. Envoyer un email au parrain
-      try {
-        await EmailService.sendReferralRewardEmail(
-          referrerData.email,
-          referralReward,
-          email
-        );
-        console.log(`✅ Email envoyé au parrain ${referrerData.email}`);
-      } catch (emailError) {
-        console.error('❌ Erreur envoi email parrain:', emailError);
-      }
-
-      // 5. Log complet
-      console.log(`📊 RÉSUMÉ PARRAINAGE FINAL:`);
-      console.log(`   👤 Parrainé ${email}: ${initialCoins} coins (10 base + 10 bonus)`);
-      console.log(`   👥 Parrain ${referrerData.email}: +${referralReward} coins (total: ${newCoinsForReferrer})`);
-      console.log(`   💰 Total distribué: ${initialCoins + referralReward} coins`);
-    } else {
-      console.log(`ℹ️  Pas de parrainage pour ${email}`);
-    }
+    // Log d'activité
+    await supabase
+      .from('activity_logs')
+      .insert([{
+        user_id: user.id,
+        action: 'SIGNUP',
+        details: { 
+          email,
+          referred_by: referred_by ? 'oui' : 'non',
+          initial_coins: initialCoins
+        }
+      }]);
 
     res.status(201).json({ 
       message: 'Compte créé avec succès. Vérifiez votre email.',
       userId: user.id,
-      coins: initialCoins,
-      referred: referred_by ? true : false
+      verificationRequired: true
     });
   } catch (error) {
-    console.error('❌ Erreur inscription:', error);
+    console.error('Erreur inscription:', error);
     res.status(500).json({ error: 'Erreur lors de l\'inscription' });
   }
 });
@@ -207,7 +145,11 @@ router.post('/login', async (req, res) => {
 
     // Vérifier si le compte est vérifié
     if (!user.is_verified) {
-      return res.status(403).json({ error: 'Veuillez vérifier votre email' });
+      return res.status(403).json({ 
+        error: 'Veuillez vérifier votre email',
+        needsVerification: true,
+        email: user.email
+      });
     }
 
     // Générer le token JWT
@@ -231,7 +173,8 @@ router.post('/login', async (req, res) => {
         username: user.username,
         role: user.role,
         coins: user.coins,
-        referral_code: user.referral_code
+        referral_code: user.referral_code,
+        is_verified: user.is_verified
       }
     });
   } catch (error) {
@@ -240,7 +183,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Vérification d'email
+// Vérification d'email avec bonus de parrainage
 router.post('/verify', async (req, res) => {
   try {
     const { email, code } = req.body;
@@ -273,11 +216,69 @@ router.post('/verify', async (req, res) => {
       .update({
         is_verified: true,
         verification_code: null,
-        verification_expires: null
+        verification_expires: null,
+        updated_at: new Date()
       })
       .eq('id', user.id);
 
-    res.json({ message: 'Compte vérifié avec succès' });
+    // VÉRIFICATION IMPORTANTE : Donner le bonus de parrainage si applicable
+    if (user.referred_by) {
+      try {
+        const referralReward = parseInt(process.env.COIN_REFERRAL_REWARD) || 10;
+        
+        // 1. Mettre à jour l'entrée de référence
+        await supabase
+          .from('referrals')
+          .update({
+            reward_given: true,
+            status: 'completed',
+            completed_at: new Date()
+          })
+          .eq('referred_id', user.id)
+          .eq('referrer_id', user.referred_by);
+
+        // 2. Donner les coins au parrain
+        await supabase
+          .from('coin_transactions')
+          .insert([{
+            sender_id: null,
+            receiver_id: user.referred_by,
+            amount: referralReward,
+            type: 'referral',
+            description: `Parrainage de ${user.email}`
+          }]);
+
+        // 3. Mettre à jour les coins du parrain
+        await supabase.rpc('increment_coins', {
+          user_id: user.referred_by,
+          amount: referralReward
+        });
+
+        // 4. Notifier le parrain par email
+        const { data: referrer } = await supabase
+          .from('users')
+          .select('email')
+          .eq('id', user.referred_by)
+          .single();
+
+        if (referrer && referrer.email) {
+          await EmailService.sendReferralBonusEmail(referrer.email, user.email, referralReward);
+        }
+
+        console.log(`✅ Bonus parrainage donné: ${referralReward} coins à ${user.referred_by} pour ${user.email}`);
+      } catch (referralError) {
+        console.error('Erreur attribution bonus parrainage:', referralError);
+        // Ne pas bloquer la vérification si le bonus échoue
+      }
+    }
+
+    // Envoyer email de confirmation
+    await EmailService.sendVerificationSuccessEmail(user.email);
+
+    res.json({ 
+      message: 'Compte vérifié avec succès',
+      bonus: user.referred_by ? 'Bonus de parrainage attribué' : null
+    });
   } catch (error) {
     console.error('Erreur vérification:', error);
     res.status(500).json({ error: 'Erreur lors de la vérification' });
@@ -310,7 +311,8 @@ router.post('/resend-verification', async (req, res) => {
       .from('users')
       .update({
         verification_code: verificationCode,
-        verification_expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        verification_expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        updated_at: new Date()
       })
       .eq('id', user.id);
 
@@ -349,35 +351,40 @@ router.post('/forgot-password', async (req, res) => {
         .from('users')
         .update({
           reset_code: resetCode,
-          reset_expires: new Date(Date.now() + 60 * 60 * 1000)
+          reset_expires: new Date(Date.now() + 60 * 60 * 1000), // 1 heure
+          updated_at: new Date()
         })
         .eq('id', user.id);
 
       if (updateError) {
         console.error('Erreur mise à jour reset_code:', updateError);
+        // On ne plante pas → on cache l'erreur pour la sécurité
       } else {
         try {
           await EmailService.sendPasswordResetCodeEmail(email, resetCode);
           console.log(`Code de réinitialisation envoyé à ${email} : ${resetCode}`);
         } catch (emailError) {
-          console.error('Échec envoi email:', emailError);
+          console.error('Échec envoi email (mais on cache):', emailError);
+          // On ne dit rien → sécurité
         }
       }
     }
 
+    // TOUJOURS la même réponse, même si l'email n'existe pas ou si l'envoi a échoué
     return res.json({
       message: 'Si cet email est associé à un compte, un code de réinitialisation a été envoyé.'
     });
 
   } catch (error) {
     console.error('Erreur inattendue forgot-password:', error);
+    // Même en cas d'erreur serveur → même message neutre
     return res.json({
       message: 'Si cet email est associé à un compte, un code de réinitialisation a été envoyé.'
     });
   }
 });
 
-// Reset password
+// Dans auth.js - Remplacer la fonction reset-password existante
 router.post('/reset-password', async (req, res) => {
   try {
     const { email, code, password } = req.body;
@@ -430,7 +437,7 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-// Vérifier code reset
+// À ajouter dans auth.js
 router.post('/verify-reset-code', async (req, res) => {
   try {
     const { email, code } = req.body;
@@ -550,9 +557,12 @@ router.post('/refresh-token', async (req, res) => {
   }
 });
 
-// Déconnexion
+// Déconnexion (côté serveur - invalider le token si nécessaire)
 router.post('/logout', async (req, res) => {
   try {
+    // Dans une implémentation plus avancée, vous pourriez blacklister le token
+    // Pour l'instant, nous laissons le client supprimer le token localement
+    
     res.json({ message: 'Déconnexion réussie' });
   } catch (error) {
     console.error('Erreur déconnexion:', error);
@@ -581,34 +591,25 @@ router.get('/profile', async (req, res) => {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    // Récupérer les statistiques de l'utilisateur
-    const [deploymentsCount, referralsCount, transactions] = await Promise.all([
-      supabase
-        .from('deployments')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('status', 'active'),
-      
-      supabase
-        .from('referrals')
-        .select('id', { count: 'exact', head: true })
-        .eq('referrer_id', user.id),
-      
-      supabase
-        .from('coin_transactions')
-        .select('*')
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
-        .limit(5)
-    ]);
+    // Récupérer les statistiques de parrainage
+    const referralsCount = await supabase
+      .from('referrals')
+      .select('*', { count: 'exact', head: true })
+      .eq('referrer_id', user.id);
+
+    // Récupérer les transactions
+    const transactions = await supabase
+      .from('coin_transactions')
+      .select('*')
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .order('created_at', { ascending: false })
+      .limit(5);
 
     res.json({
       user: {
         ...user,
         stats: {
-          active_deployments: deploymentsCount.count || 0,
-          total_referrals: referralsCount.count || 0,
-          recent_transactions: transactions.data || []
+          total_referrals: referralsCount.count || 0
         }
       }
     });
@@ -639,7 +640,7 @@ router.get('/check-email', async (req, res) => {
     
     res.json({ available: true });
   } catch (error) {
-    res.json({ available: true });
+    res.json({ available: true }); // Par défaut disponible
   }
 });
 
@@ -650,25 +651,26 @@ router.get('/check-referral', async (req, res) => {
     
     const { data: referrer, error } = await supabase
       .from('users')
-      .select('id, email, username, coins')
+      .select('id, email, username, is_verified')
       .eq('referral_code', code)
+      .eq('is_verified', true)
       .single();
 
     if (error || !referrer) {
-      return res.status(404).json({ error: 'Code de parrainage invalide' });
+      return res.status(404).json({ error: 'Code de parrainage invalide ou parrain non vérifié' });
     }
     
     res.json({ 
       referrer,
-      reward_amount: parseInt(process.env.COIN_REFERRAL_REWARD) || 10
+      bonus: parseInt(process.env.COIN_REFERRAL_REWARD) || 10
     });
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// NOUVELLE ROUTE : Récupérer les données de parrainage (pour invite.html)
-router.get('/referral-stats', async (req, res) => {
+// NOUVELLE ROUTE : Récupérer les statistiques détaillées de parrainage
+router.get('/referral-stats-detailed', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     
@@ -677,99 +679,70 @@ router.get('/referral-stats', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
-
-    // Récupérer l'utilisateur
-    const { data: user } = await supabase
-      .from('users')
-      .select('referral_code, coins, email, username')
-      .eq('id', userId)
-      .single();
-
-    if (!user) {
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
-    }
-
-    // Compter les parrainages
-    const { count: totalReferrals } = await supabase
+    
+    // Récupérer les références
+    const { data: referrals, error } = await supabase
       .from('referrals')
-      .select('*', { count: 'exact', head: true })
-      .eq('referrer_id', userId);
+      .select('*, referred_user:users!referred_id(email, created_at)')
+      .eq('referrer_id', decoded.userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Erreur récupération références:', error);
+      return res.status(500).json({ error: 'Erreur serveur' });
+    }
 
     // Récupérer les transactions de parrainage
     const { data: referralTransactions } = await supabase
       .from('coin_transactions')
       .select('amount, created_at')
-      .eq('receiver_id', userId)
-      .eq('type', 'referral');
-
-    const totalCoinsEarned = referralTransactions?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
-
-    // Récupérer les parrainages avec détails
-    const { data: referrals } = await supabase
-      .from('referrals')
-      .select(`
-        *,
-        referred_user:users!referred_id(email, created_at, is_verified)
-      `)
-      .eq('referrer_id', userId)
+      .eq('receiver_id', decoded.userId)
+      .eq('type', 'referral')
       .order('created_at', { ascending: false });
 
-    // Calculer les récompenses en attente
+    // Calculer les statistiques
+    const totalReferrals = referrals?.length || 0;
+    const totalCoinsEarned = referralTransactions?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
     const pendingRewards = referrals?.filter(r => !r.reward_given).length || 0;
 
-    // Statistiques avancées
-    const conversionRate = totalReferrals > 0 ? Math.round((referrals?.length || 0) / totalReferrals * 100) : 0;
-    
-    // Moyenne par jour (30 derniers jours)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const { data: recentReferrals } = await supabase
-      .from('referrals')
-      .select('created_at')
-      .eq('referrer_id', userId)
-      .gte('created_at', thirtyDaysAgo.toISOString());
-
-    const avgPerDay = recentReferrals?.length ? (recentReferrals.length / 30).toFixed(1) : 0;
+    // Calculer les références ce mois-ci
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthlyReferrals = referrals?.filter(r => 
+      new Date(r.created_at) >= firstDayOfMonth
+    ).length || 0;
 
     res.json({
-      success: true,
-      user: {
-        referral_code: user.referral_code || 'N/A',
-        total_coins: user.coins || 0,
-        email: user.email,
-        username: user.username
-      },
       stats: {
-        total_referrals: totalReferrals || 0,
+        total_referrals: totalReferrals,
         total_coins_earned: totalCoinsEarned,
         pending_rewards: pendingRewards,
-        conversion_rate: conversionRate,
-        avg_per_day: avgPerDay,
-        rank: 1
+        monthly_referrals: monthlyReferrals,
+        conversion_rate: totalReferrals > 0 ? Math.round((totalReferrals - pendingRewards) / totalReferrals * 100) : 0
       },
-      referrals: referrals?.map(r => ({
-        id: r.id,
-        referred_email: r.referred_user?.email || 'Email non disponible',
-        created_at: r.created_at,
-        is_verified: r.referred_user?.is_verified || false,
-        reward_given: r.reward_given || false,
-        status: r.reward_given ? 'rewarded' : 'pending'
-      })) || []
+      referrals: referrals || [],
+      rank: calculateRank(totalReferrals)
     });
-
   } catch (error) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token invalide ou expiré' });
     }
     
-    console.error('Erreur récupération stats parrainage:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Erreur serveur'
-    });
+    console.error('Erreur statistiques parrainage:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+
+// Fonction pour calculer le rang
+function calculateRank(totalReferrals) {
+  if (totalReferrals >= 50) return 1;
+  if (totalReferrals >= 25) return 2;
+  if (totalReferrals >= 15) return 3;
+  if (totalReferrals >= 10) return 4;
+  if (totalReferrals >= 5) return 5;
+  if (totalReferrals >= 3) return 10;
+  if (totalReferrals >= 1) return 20;
+  return 50;
+}
 
 module.exports = router;
