@@ -62,6 +62,7 @@
         .dashboard-container {
             display: flex;
             min-height: 100vh;
+            position: relative;
         }
 
         .sidebar {
@@ -75,15 +76,8 @@
             transition: var(--transition);
             z-index: 1000;
             box-shadow: var(--box-shadow);
-        }
-
-        @media (max-width: 992px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            .sidebar.active {
-                transform: translateX(0);
-            }
+            left: 0;
+            top: 0;
         }
 
         .sidebar-header {
@@ -210,9 +204,18 @@
             margin-left: var(--sidebar-width);
             padding: 30px;
             background: transparent;
+            min-height: 100vh;
         }
 
         @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
             .main-content {
                 margin-left: 0;
                 padding: 20px;
@@ -251,10 +254,10 @@
             border-radius: 50%;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            z-index: 1001;
             position: fixed;
             top: 20px;
             right: 20px;
+            z-index: 1001;
         }
 
         @media (max-width: 992px) {
@@ -390,6 +393,13 @@
             font-family: monospace;
             overflow: hidden;
             text-overflow: ellipsis;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .link-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--accent-glow);
         }
 
         .btn {
@@ -451,6 +461,7 @@
             letter-spacing: 5px;
             color: var(--accent-color);
             font-family: monospace;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         /* Share Buttons */
@@ -517,6 +528,14 @@
             margin-bottom: 10px;
         }
 
+        @media (max-width: 768px) {
+            .referrals-header {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 10px;
+            }
+        }
+
         .referral-item {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr;
@@ -527,10 +546,24 @@
             align-items: center;
         }
 
+        @media (max-width: 768px) {
+            .referral-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 10px;
+            }
+        }
+
         .user-cell {
             display: flex;
             align-items: center;
             gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .user-cell {
+                justify-content: center;
+            }
         }
 
         .user-avatar-small {
@@ -556,6 +589,7 @@
             display: flex;
             align-items: center;
             gap: 5px;
+            justify-content: center;
         }
 
         /* How It Works */
@@ -666,31 +700,6 @@
             border-left: 4px solid var(--danger-color);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .share-buttons {
-                flex-direction: column;
-            }
-
-            .steps {
-                grid-template-columns: 1fr;
-            }
-
-            .link-container {
-                flex-direction: column;
-            }
-
-            .referrals-header,
-            .referral-item {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-        }
-
         /* Loading */
         .loading {
             text-align: center;
@@ -729,14 +738,14 @@
             margin-top: 10px;
         }
 
-        /* Overlay pour mobile */
+        /* Overlay for mobile */
         .sidebar-overlay {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0, 0, 0, 0.7);
             z-index: 999;
             backdrop-filter: blur(5px);
@@ -751,6 +760,9 @@
 </head>
 <body>
     <div class="dashboard-container">
+        <!-- Overlay for mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -818,17 +830,16 @@
             </div>
         </div>
 
-        <!-- Overlay pour mobile -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
         <!-- Main Content -->
         <div class="main-content">
+            <!-- Mobile Menu Button -->
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+
             <!-- Header -->
             <div class="header">
                 <div>
-                    <button class="mobile-menu-btn" id="mobileMenuBtn">
-                        <i class="fas fa-bars"></i>
-                    </button>
                     <h1>
                         <i class="fas fa-user-plus"></i>
                         Programme de Parrainage
@@ -914,7 +925,7 @@
                     <!-- QR Code -->
                     <div class="qr-container">
                         <div class="link-label">QR Code pour partager facilement :</div>
-                        <canvas id="qrCode"></canvas>
+                        <div id="qrCode"></div>
                         <div class="qr-note">
                             Scannez ce code avec votre téléphone pour inviter des amis
                         </div>
@@ -943,16 +954,16 @@
 
                     <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(138, 43, 226, 0.1)); padding: 20px; border-radius: 10px; margin-bottom: 25px;">
                         <h3 style="color: white; margin-bottom: 15px;">
-                            <i class="fas fa-chart-line"></i> Statistiques Avancées
+                            <i class="fas fa-chart-line"></i> Vos Gains
                         </h3>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                             <div>
-                                <div style="font-size: 12px; color: var(--text-muted);">Taux de conversion</div>
-                                <div style="font-size: 24px; font-weight: bold; color: var(--success-color);" id="conversionRate">0%</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Par parrainage</div>
+                                <div style="font-size: 24px; font-weight: bold; color: var(--success-color);">10 coins</div>
                             </div>
                             <div>
-                                <div style="font-size: 12px; color: var(--text-muted);">Moyenne par jour</div>
-                                <div style="font-size: 24px; font-weight: bold; color: var(--accent-color);" id="avgPerDay">0</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Votre ami reçoit</div>
+                                <div style="font-size: 24px; font-weight: bold; color: var(--accent-color);">20 coins</div>
                             </div>
                         </div>
                     </div>
@@ -1044,13 +1055,21 @@
         const sidebarOverlay = document.getElementById('sidebarOverlay');
 
         mobileMenuBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            sidebarOverlay.classList.toggle('active');
+            sidebar.classList.add('active');
+            sidebarOverlay.classList.add('active');
         });
 
         sidebarOverlay.addEventListener('click', () => {
             sidebar.classList.remove('active');
             sidebarOverlay.classList.remove('active');
+        });
+
+        // Fermer le menu avec escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            }
         });
 
         // Fonction de notification
@@ -1081,190 +1100,168 @@
             }, 4000);
         }
 
-        // Fonction pour charger les données utilisateur
+        // Charger les données utilisateur
         async function loadUserData() {
             try {
                 const token = localStorage.getItem('token');
                 if (!token) {
                     window.location.href = '/login';
-                    return null;
-                }
-
-                const response = await fetch('/api/user/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.status === 401) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login';
-                    return null;
-                }
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                return result.user || result.profile;
-            } catch (error) {
-                console.error('Erreur chargement données utilisateur:', error);
-                return null;
-            }
-        }
-
-        // Fonction pour charger les statistiques de parrainage
-        async function loadReferralStats() {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) return null;
-
-                const response = await fetch('/api/coin/referral-stats', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                return await response.json();
-            } catch (error) {
-                console.error('Erreur chargement stats parrainage:', error);
-                return null;
-            }
-        }
-
-        // Fonction pour charger le lien de parrainage
-        async function loadReferralLink() {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) return null;
-
-                const response = await fetch('/api/coin/referral-link', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                return await response.json();
-            } catch (error) {
-                console.error('Erreur chargement lien parrainage:', error);
-                return null;
-            }
-        }
-
-        // Charger toutes les données
-        async function loadAllData() {
-            try {
-                // Charger les données en parallèle
-                const [userDataResult, referralStatsResult, referralLinkResult] = await Promise.all([
-                    loadUserData(),
-                    loadReferralStats(),
-                    loadReferralLink()
-                ]);
-
-                if (!userDataResult) {
-                    showNotification('Session expirée, veuillez vous reconnecter', 'error');
-                    setTimeout(() => window.location.href = '/login', 2000);
                     return;
                 }
 
-                userData = userDataResult;
-                referralStats = referralStatsResult;
+                // Charger le profil utilisateur
+                const userResponse = await fetch('/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
 
-                // Mettre à jour l'interface utilisateur
+                if (userResponse.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (!userResponse.ok) {
+                    throw new Error('Erreur lors du chargement du profil');
+                }
+
+                const userResult = await userResponse.json();
+                userData = userResult.user;
+
+                // Mettre à jour les infos utilisateur
                 updateUserInfo();
-                updateReferralStats();
-                updateReferralLink(referralLinkResult);
-                updateReferralsList();
-                
+
+                // Charger les statistiques de parrainage
+                await loadReferralStats();
+
+                // Mettre à jour le lien de parrainage et QR code
+                updateReferralLink();
+
             } catch (error) {
                 console.error('Erreur chargement données:', error);
                 showNotification('Erreur lors du chargement des données', 'error');
             }
         }
 
-        // Mettre à jour les infos utilisateur
+        // Mettre à jour les infos utilisateur dans la sidebar
         function updateUserInfo() {
             if (!userData) return;
 
-            document.getElementById('userEmail').textContent = userData.email || 'Non disponible';
-            document.getElementById('userName').textContent = userData.username || userData.email?.split('@')[0] || 'Utilisateur';
-            document.getElementById('userAvatar').textContent = (userData.username?.charAt(0) || userData.email?.charAt(0) || 'U').toUpperCase();
+            const displayName = userData.username || userData.email.split('@')[0];
+            const avatarLetter = displayName.charAt(0).toUpperCase();
+
+            document.getElementById('userEmail').textContent = userData.email;
+            document.getElementById('userName').textContent = displayName;
+            document.getElementById('userAvatar').textContent = avatarLetter;
         }
 
-        // Mettre à jour les statistiques de parrainage
-        function updateReferralStats() {
+        // Charger les statistiques de parrainage
+        async function loadReferralStats() {
+            try {
+                const token = localStorage.getItem('token');
+                
+                // Charger les statistiques
+                const statsResponse = await fetch('/api/coin/referral-stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (statsResponse.ok) {
+                    const statsResult = await statsResponse.json();
+                    referralStats = statsResult;
+                    updateStatsDisplay();
+                    updateReferralsList();
+                } else {
+                    // Si l'API n'est pas disponible, utiliser des données par défaut
+                    console.warn('API referral-stats non disponible, utilisation données par défaut');
+                    referralStats = {
+                        stats: {
+                            total_referrals: 0,
+                            total_coins_earned: 0,
+                            pending_referrals: 0
+                        },
+                        referrals: []
+                    };
+                    updateStatsDisplay();
+                    updateReferralsList();
+                }
+
+            } catch (error) {
+                console.error('Erreur chargement statistiques:', error);
+                // Utiliser des données par défaut en cas d'erreur
+                referralStats = {
+                    stats: {
+                        total_referrals: 0,
+                        total_coins_earned: 0,
+                        pending_referrals: 0
+                    },
+                    referrals: []
+                };
+                updateStatsDisplay();
+                updateReferralsList();
+            }
+        }
+
+        // Mettre à jour l'affichage des statistiques
+        function updateStatsDisplay() {
             if (!referralStats) return;
 
             const stats = referralStats.stats || {};
+            
             document.getElementById('totalReferrals').textContent = stats.total_referrals || 0;
             document.getElementById('referralCoins').textContent = stats.total_coins_earned || 0;
-            document.getElementById('pendingRewards').textContent = stats.pending_referrals || (stats.total_referrals || 0);
+            document.getElementById('pendingRewards').textContent = stats.pending_referrals || 0;
+            document.getElementById('rank').textContent = '#0';
         }
 
-        // Mettre à jour le lien de parrainage
-        function updateReferralLink(linkData) {
-            if (!userData && !linkData) return;
-
-            // Utiliser le lien du backend ou générer un lien par défaut
-            let referralLink = '';
-            let referralCode = '';
-
-            if (linkData && linkData.referral_link) {
-                referralLink = linkData.referral_link;
-                referralCode = linkData.referral_code || '';
-            } else if (userData && userData.referral_code) {
-                // Générer le lien manuellement
-                const baseUrl = window.location.origin;
-                referralLink = `${baseUrl}/signup?ref=${userData.referral_code}`;
-                referralCode = userData.referral_code;
-            } else {
-                // Générer un code temporaire
-                referralCode = 'KERM' + Math.random().toString(36).substr(2, 6).toUpperCase();
-                const baseUrl = window.location.origin;
-                referralLink = `${baseUrl}/signup?ref=${referralCode}`;
+        // Mettre à jour le lien de parrainage et QR code
+        function updateReferralLink() {
+            if (!userData || !userData.referral_code) {
+                console.error('Code de parrainage non disponible');
+                return;
             }
 
-            // Mettre à jour les champs
+            // Construire l'URL de parrainage
+            const baseUrl = window.location.origin;
+            const referralLink = `${baseUrl}/signup?ref=${userData.referral_code}`;
+            
+            // Mettre à jour le champ de lien
             const linkInput = document.getElementById('referralLink');
             linkInput.value = referralLink;
-            document.getElementById('referralCode').textContent = referralCode;
+            
+            // Mettre à jour le code
+            const codeBox = document.getElementById('referralCode');
+            codeBox.textContent = userData.referral_code;
 
-            // Générer le QR Code
-            generateQRCode(referralLink);
-        }
-
-        // Générer le QR Code
-        function generateQRCode(text) {
-            const canvas = document.getElementById('qrCode');
-            canvas.innerHTML = ''; // Nettoyer
-
-            QRCode.toCanvas(canvas, text, {
-                width: 200,
-                height: 200,
-                margin: 2,
-                color: {
-                    dark: '#00d4ff',
-                    light: 'rgba(26, 26, 46, 0.8)'
-                }
-            }, function(error) {
-                if (error) {
-                    console.error('Erreur génération QR code:', error);
-                    canvas.innerHTML = '<div style="color: var(--danger-color); padding: 20px;">Erreur QR Code</div>';
-                }
-            });
+            // Générer le QR code
+            const qrContainer = document.getElementById('qrCode');
+            qrContainer.innerHTML = ''; // Nettoyer
+            
+            try {
+                QRCode.toCanvas(qrContainer, referralLink, {
+                    width: 180,
+                    height: 180,
+                    color: {
+                        dark: '#00d4ff',
+                        light: 'rgba(26, 26, 46, 0.8)'
+                    },
+                    margin: 1
+                }, function(error) {
+                    if (error) {
+                        console.error('Erreur génération QR code:', error);
+                        qrContainer.innerHTML = `
+                            <div style="color: var(--danger-color); padding: 20px;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p>Erreur QR Code</p>
+                            </div>
+                        `;
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur QR code:', error);
+            }
         }
 
         // Mettre à jour la liste des parrainages
@@ -1277,9 +1274,9 @@
                         <i class="fas fa-users-slash"></i>
                         <h3>Aucun parrainage pour l'instant</h3>
                         <p>Commencez à partager votre lien pour inviter vos premiers amis !</p>
-                        <button class="btn btn-primary" onclick="shareOnWhatsApp()" style="margin-top: 20px;">
-                            <i class="fab fa-whatsapp"></i> Partager maintenant
-                        </button>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">
+                            Votre lien: ${document.getElementById('referralLink')?.value || ''}
+                        </p>
                     </div>
                 `;
                 return;
@@ -1295,28 +1292,34 @@
 
             referralStats.referrals.forEach(referral => {
                 const referredUser = referral.referred_user || {};
-                const registrationDate = new Date(referral.created_at).toLocaleDateString('fr-FR');
-                const rewardStatus = referral.reward_given ? 
-                    `<span style="color: var(--success-color);"><i class="fas fa-check-circle"></i> 10 coins</span>` :
+                const registrationDate = new Date(referral.created_at).toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                
+                const rewardText = referral.reward_given ? 
+                    `<span style="color: var(--success-color);"><i class="fas fa-check-circle"></i> 10 coins reçus</span>` :
                     `<span style="color: var(--warning-color);"><i class="fas fa-clock"></i> En attente</span>`;
                 
                 const userEmail = referredUser.email || 'Utilisateur';
-                const userName = referredUser.username || '';
+                const username = referredUser.username || '';
+                const avatarLetter = userEmail.charAt(0).toUpperCase();
                 
                 html += `
                     <div class="referral-item">
                         <div class="user-cell">
                             <div class="user-avatar-small">
-                                ${userEmail.charAt(0).toUpperCase()}
+                                ${avatarLetter}
                             </div>
                             <div>
                                 <div class="user-email">${userEmail}</div>
-                                ${userName ? `<div style="font-size: 12px; color: var(--text-muted);">${userName}</div>` : ''}
+                                ${username ? `<div style="font-size: 12px; color: var(--text-muted);">${username}</div>` : ''}
                             </div>
                         </div>
                         <div>${registrationDate}</div>
                         <div class="coins-cell">
-                            ${rewardStatus}
+                            ${rewardText}
                         </div>
                     </div>
                 `;
@@ -1325,37 +1328,15 @@
             referralsList.innerHTML = html;
         }
 
-        // Fonctions de partage
-        function shareOnWhatsApp() {
-            const link = document.getElementById('referralLink').value;
-            const message = `Rejoins-moi sur KermHost ! Déploie tes bots WhatsApp gratuitement avec ${link}`;
-            const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
-            window.open(url, '_blank');
-        }
-
-        function shareOnTelegram() {
-            const link = document.getElementById('referralLink').value;
-            const message = `Rejoins-moi sur KermHost ! Déploie tes bots WhatsApp gratuitement`;
-            const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(message)}`;
-            window.open(url, '_blank');
-        }
-
-        function shareOnTwitter() {
-            const link = document.getElementById('referralLink').value;
-            const message = `Je viens de découvrir KermHost, une plateforme géniale pour déployer des bots WhatsApp ! Rejoins-moi avec mon lien de parrainage:`;
-            const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(link)}`;
-            window.open(url, '_blank');
-        }
-
-        function shareOnFacebook() {
-            const link = document.getElementById('referralLink').value;
-            const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
-            window.open(url, '_blank');
-        }
-
         // Copier le lien de parrainage
         document.getElementById('copyLinkBtn').addEventListener('click', async () => {
             const linkInput = document.getElementById('referralLink');
+            
+            if (!linkInput.value || linkInput.value === '') {
+                showNotification('Le lien de parrainage n\'est pas disponible', 'error');
+                return;
+            }
+            
             linkInput.select();
             linkInput.setSelectionRange(0, 99999);
             
@@ -1371,7 +1352,13 @@
 
         // Copier le code de parrainage
         document.getElementById('copyCodeBtn').addEventListener('click', async () => {
-            const code = document.getElementById('referralCode').textContent;
+            const codeBox = document.getElementById('referralCode');
+            const code = codeBox.textContent;
+            
+            if (!code || code === 'CHARGEMENT' || code === 'ERROR') {
+                showNotification('Le code de parrainage n\'est pas disponible', 'error');
+                return;
+            }
             
             try {
                 await navigator.clipboard.writeText(code);
@@ -1388,14 +1375,56 @@
             }
         });
 
-        // Attacher les événements de partage
-        document.getElementById('shareWhatsApp').addEventListener('click', shareOnWhatsApp);
-        document.getElementById('shareTelegram').addEventListener('click', shareOnTelegram);
-        document.getElementById('shareTwitter').addEventListener('click', shareOnTwitter);
-        document.getElementById('shareFacebook').addEventListener('click', shareOnFacebook);
+        // Partager sur WhatsApp
+        document.getElementById('shareWhatsApp').addEventListener('click', () => {
+            const link = document.getElementById('referralLink').value;
+            if (!link) {
+                showNotification('Lien non disponible', 'error');
+                return;
+            }
+            const message = `Rejoins-moi sur KermHost ! Déploie tes bots WhatsApp gratuitement. Utilise mon lien de parrainage: ${link}`;
+            const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        });
+
+        // Partager sur Telegram
+        document.getElementById('shareTelegram').addEventListener('click', () => {
+            const link = document.getElementById('referralLink').value;
+            if (!link) {
+                showNotification('Lien non disponible', 'error');
+                return;
+            }
+            const message = `Rejoins-moi sur KermHost ! Déploie tes bots WhatsApp gratuitement`;
+            const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        });
+
+        // Partager sur Twitter
+        document.getElementById('shareTwitter').addEventListener('click', () => {
+            const link = document.getElementById('referralLink').value;
+            if (!link) {
+                showNotification('Lien non disponible', 'error');
+                return;
+            }
+            const message = `Je viens de découvrir KermHost, une plateforme géniale pour déployer des bots WhatsApp ! Rejoins-moi avec mon lien de parrainage`;
+            const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(link)}`;
+            window.open(url, '_blank');
+        });
+
+        // Partager sur Facebook
+        document.getElementById('shareFacebook').addEventListener('click', () => {
+            const link = document.getElementById('referralLink').value;
+            if (!link) {
+                showNotification('Lien non disponible', 'error');
+                return;
+            }
+            const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
+            window.open(url, '_blank');
+        });
 
         // Déconnexion
-        document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.getElementById('logoutBtn').addEventListener('click', (e) => {
+            e.preventDefault();
             if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
@@ -1413,22 +1442,22 @@
             }
 
             // Charger les données
-            loadAllData();
+            loadUserData();
 
-            // Raccourcis clavier
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    sidebar.classList.remove('active');
-                    sidebarOverlay.classList.remove('active');
-                }
-            });
-
-            // Rafraîchissement automatique toutes les 2 minutes
+            // Rafraîchissement automatique toutes les 30 secondes
             setInterval(() => {
                 if (!document.hidden) {
-                    loadAllData();
+                    loadReferralStats();
                 }
-            }, 120000);
+            }, 30000);
+        });
+
+        // Gestion du redimensionnement
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 992 && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            }
         });
     </script>
 </body>
