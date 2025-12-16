@@ -1082,15 +1082,32 @@
                 document.getElementById('userName').textContent = userData.username || userData.email.split('@')[0];
                 document.getElementById('userAvatar').textContent = (userData.username || userData.email.charAt(0)).toUpperCase();
 
-                // Charger les données de parrainage
-                const referralResponse = await fetch('/api/coin/referral-data', {
+                // Charger les données de parrainage - CORRECTION : utiliser la route existante
+                const referralResponse = await fetch('/api/coin/referral-stats', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
 
+                if (!referralResponse.ok) {
+                    throw new Error('Erreur chargement données parrainage');
+                }
+
                 const referralResult = await referralResponse.json();
                 referralData = referralResult;
+
+                // Charger le lien de parrainage
+                const linkResponse = await fetch('/api/coin/referral-link', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (linkResponse.ok) {
+                    const linkResult = await linkResponse.json();
+                    referralData.referral_link = linkResult.referral_link;
+                    referralData.referral_code = linkResult.referral_code;
+                }
 
                 // Mettre à jour l'interface
                 updateReferralUI();
@@ -1098,32 +1115,39 @@
             } catch (error) {
                 console.error('Erreur chargement données parrainage:', error);
                 showNotification('Erreur lors du chargement des données', 'error');
+                
+                // Afficher les données de base si la route échoue
+                if (userData) {
+                    updateReferralUIWithBasicData();
+                }
             }
         }
 
-        // Mettre à jour l'interface utilisateur
+        // Mettre à jour l'interface utilisateur avec les données du backend
         function updateReferralUI() {
             if (!referralData || !userData) return;
 
             // Mettre à jour les statistiques
-            document.getElementById('totalReferrals').textContent = referralData.totalReferrals || 0;
-            document.getElementById('referralCoins').textContent = referralData.totalCoinsEarned || 0;
-            document.getElementById('pendingRewards').textContent = referralData.pendingRewards || 0;
-            document.getElementById('rank').textContent = `#${referralData.rank || '0'}`;
+            const stats = referralData.stats || {};
+            document.getElementById('totalReferrals').textContent = stats.total_referrals || 0;
+            document.getElementById('referralCoins').textContent = stats.total_coins_earned || 0;
+            document.getElementById('pendingRewards').textContent = stats.pending_referrals || 0;
+            document.getElementById('rank').textContent = '#0'; // À implémenter si tu ajoutes un classement
             
             // Mettre à jour les statistiques avancées
-            document.getElementById('conversionRate').textContent = 
-                referralData.conversionRate ? `${referralData.conversionRate}%` : '0%';
-            document.getElementById('avgPerDay').textContent = referralData.avgPerDay || 0;
+            document.getElementById('conversionRate').textContent = '0%'; // À calculer
+            document.getElementById('avgPerDay').textContent = '0'; // À calculer
 
             // Mettre à jour le lien de parrainage
             const appUrl = '${process.env.APP_URL}' || window.location.origin;
-            const referralLink = `${appUrl}/signup?ref=${userData.referral_code}`;
+            const referralLink = referralData.referral_link || `${appUrl}/signup?ref=${userData.referral_code}`;
             document.getElementById('referralLink').value = referralLink;
-            document.getElementById('referralCode').textContent = userData.referral_code || 'ERROR';
+            document.getElementById('referralCode').textContent = referralData.referral_code || userData.referral_code || 'ERROR';
 
             // Générer le QR Code
-            QRCode.toCanvas(document.getElementById('qrCode'), referralLink, {
+            const qrContainer = document.getElementById('qrCode');
+            qrContainer.innerHTML = ''; // Nettoyer
+            QRCode.toCanvas(qrContainer, referralLink, {
                 width: 200,
                 height: 200,
                 color: {
@@ -1131,11 +1155,45 @@
                     light: 'rgba(26, 26, 46, 0.8)'
                 }
             }, function(error) {
-                if (error) console.error('Erreur génération QR code:', error);
+                if (error) {
+                    console.error('Erreur génération QR code:', error);
+                    qrContainer.innerHTML = '<div style="color: var(--danger-color);">Erreur QR code</div>';
+                }
             });
 
             // Mettre à jour la liste des parrainages
             updateReferralsList();
+        }
+
+        // Mettre à jour l'interface avec des données basiques si l'API échoue
+        function updateReferralUIWithBasicData() {
+            // Mettre à jour le lien de parrainage de base
+            const appUrl = window.location.origin;
+            const referralLink = `${appUrl}/signup?ref=${userData.referral_code}`;
+            document.getElementById('referralLink').value = referralLink;
+            document.getElementById('referralCode').textContent = userData.referral_code || 'ERROR';
+
+            // Générer le QR Code de base
+            const qrContainer = document.getElementById('qrCode');
+            qrContainer.innerHTML = '';
+            QRCode.toCanvas(qrContainer, referralLink, {
+                width: 200,
+                height: 200,
+                color: {
+                    dark: '#00d4ff',
+                    light: 'rgba(26, 26, 46, 0.8)'
+                }
+            });
+
+            // Afficher un message d'erreur pour la liste
+            const referralsList = document.getElementById('referralsList');
+            referralsList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Données temporairement indisponibles</h3>
+                    <p>Les statistiques détaillées seront disponibles prochainement.</p>
+                </div>
+            `;
         }
 
         // Mettre à jour la liste des parrainages
@@ -1162,7 +1220,8 @@
             `;
 
             referralData.referrals.forEach(referral => {
-                const registrationDate = new Date(referral.created_at).toLocaleDateString();
+                const referredUser = referral.referred_user || {};
+                const registrationDate = new Date(referral.created_at).toLocaleDateString('fr-FR');
                 const rewardStatus = referral.reward_given ? 
                     `<span style="color: var(--success-color);"><i class="fas fa-check"></i> 10 coins</span>` :
                     `<span style="color: var(--warning-color);"><i class="fas fa-clock"></i> En attente</span>`;
@@ -1171,10 +1230,11 @@
                     <div class="referral-item">
                         <div class="user-cell">
                             <div class="user-avatar-small">
-                                ${(referral.referred_email?.charAt(0) || 'U').toUpperCase()}
+                                ${(referredUser.email?.charAt(0) || 'U').toUpperCase()}
                             </div>
                             <div>
-                                <div class="user-email">${referral.referred_email || 'Utilisateur'}</div>
+                                <div class="user-email">${referredUser.email || 'Utilisateur'}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">${referredUser.username || ''}</div>
                             </div>
                         </div>
                         <div>${registrationDate}</div>
