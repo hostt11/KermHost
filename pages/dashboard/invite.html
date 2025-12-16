@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Parrainage - KermHost</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <style>
         :root {
             --primary-color: #8a2be2;
@@ -66,7 +68,7 @@
 
         .sidebar {
             width: var(--sidebar-width);
-            background: rgba(26, 26, 46, 0.8);
+            background: rgba(26, 26, 46, 0.95);
             backdrop-filter: blur(20px);
             border-right: 1px solid var(--glass-border);
             position: fixed;
@@ -75,6 +77,15 @@
             transition: var(--transition);
             z-index: 1000;
             box-shadow: var(--box-shadow);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
         }
 
         .sidebar-header {
@@ -158,7 +169,7 @@
             position: absolute;
             bottom: 0;
             width: 100%;
-            background: rgba(26, 26, 46, 0.9);
+            background: rgba(26, 26, 46, 0.95);
         }
 
         .user-info {
@@ -203,6 +214,12 @@
             background: transparent;
         }
 
+        @media (max-width: 992px) {
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -235,6 +252,14 @@
             border-radius: 50%;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
+        }
+
+        @media (max-width: 992px) {
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
         }
 
         /* Stats Cards */
@@ -351,6 +376,12 @@
             margin-bottom: 15px;
         }
 
+        @media (max-width: 768px) {
+            .link-container {
+                flex-direction: column;
+            }
+        }
+
         .link-input {
             flex: 1;
             padding: 15px;
@@ -377,6 +408,7 @@
             cursor: pointer;
             border: none;
             font-size: 14px;
+            white-space: nowrap;
         }
 
         .btn-primary {
@@ -431,6 +463,12 @@
             gap: 15px;
             margin-top: 20px;
             flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .share-buttons {
+                flex-direction: column;
+            }
         }
 
         .share-btn {
@@ -489,6 +527,14 @@
             margin-bottom: 10px;
         }
 
+        @media (max-width: 768px) {
+            .referrals-header,
+            .referral-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
         .referral-item {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr;
@@ -545,6 +591,12 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 25px;
             margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .steps {
+                grid-template-columns: 1fr;
+            }
         }
 
         .step {
@@ -638,58 +690,6 @@
             border-left: 4px solid var(--danger-color);
         }
 
-        /* Responsive */
-        @media (max-width: 992px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .main-content {
-                margin-left: 0;
-                padding: 20px;
-            }
-
-            .mobile-menu-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-
-            .referrals-header,
-            .referral-item {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .share-buttons {
-                flex-direction: column;
-            }
-
-            .steps {
-                grid-template-columns: 1fr;
-            }
-
-            .link-container {
-                flex-direction: column;
-            }
-        }
-
         /* Loading */
         .loading {
             text-align: center;
@@ -716,10 +716,11 @@
             border-radius: 10px;
         }
 
-        #qrCode {
+        .qr-code-canvas {
             max-width: 200px;
             margin: 0 auto;
             display: block;
+            border-radius: 10px;
         }
 
         .qr-note {
@@ -727,9 +728,31 @@
             color: var(--text-muted);
             margin-top: 10px;
         }
+
+        /* Overlay pour mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 999;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar-overlay.active {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Overlay pour mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <div class="dashboard-container">
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
@@ -802,7 +825,7 @@
         <div class="main-content">
             <!-- Header -->
             <div class="header">
-                <div>
+                <div style="display: flex; align-items: center; gap: 15px;">
                     <button class="mobile-menu-btn" id="mobileMenuBtn">
                         <i class="fas fa-bars"></i>
                     </button>
@@ -840,7 +863,7 @@
                     <div class="stat-icon">
                         <i class="fas fa-trophy"></i>
                     </div>
-                    <div class="stat-value" id="rank">#0</div>
+                    <div class="stat-value" id="rank">#1</div>
                     <div class="stat-label">CLASSEMENT</div>
                 </div>
             </div>
@@ -891,7 +914,7 @@
                     <!-- QR Code -->
                     <div class="qr-container">
                         <div class="link-label">QR Code pour partager facilement :</div>
-                        <div id="qrCode"></div>
+                        <canvas id="qrCodeCanvas" class="qr-code-canvas"></canvas>
                         <div class="qr-note">
                             Scannez ce code avec votre téléphone pour inviter des amis
                         </div>
@@ -1007,20 +1030,25 @@
     <!-- Notification Container -->
     <div id="notificationContainer"></div>
 
-    <!-- QR Code Library -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-
     <script>
         // Variables
-        let referralData = null;
         let userData = null;
+        let referralData = null;
+
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
 
         // Gestion du menu mobile
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const sidebar = document.getElementById('sidebar');
-
         mobileMenuBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
+            sidebar.classList.add('active');
+            sidebarOverlay.classList.add('active');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
         });
 
         // Fonction de notification
@@ -1051,8 +1079,8 @@
             }, 4000);
         }
 
-        // Charger les données de parrainage
-        async function loadReferralData() {
+        // Fonction pour charger les données utilisateur
+        async function loadUserData() {
             try {
                 const token = localStorage.getItem('token');
                 if (!token) {
@@ -1060,91 +1088,59 @@
                     return;
                 }
 
-                // 1. Charger les données utilisateur
-                let userResponse;
-                try {
-                    userResponse = await fetch('/api/auth/profile', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                } catch (error) {
-                    // Fallback sur /api/user/profile
-                    userResponse = await fetch('/api/user/profile', {
+                // Essayer /api/auth/profile d'abord
+                let response = await fetch('/api/auth/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                // Si échec, essayer /api/user/profile
+                if (!response.ok) {
+                    response = await fetch('/api/user/profile', {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
                     });
                 }
 
-                if (userResponse.status === 401) {
+                if (response.status === 401) {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                     window.location.href = '/login';
                     return;
                 }
 
-                const userResult = await userResponse.json();
-                userData = userResult.user || userResult;
-
+                const result = await response.json();
+                userData = result.user || result;
+                
                 // Mettre à jour les infos utilisateur
                 if (userData) {
                     document.getElementById('userEmail').textContent = userData.email || 'Email non disponible';
                     document.getElementById('userName').textContent = userData.username || userData.email?.split('@')[0] || 'Utilisateur';
-                    document.getElementById('userAvatar').textContent = (userData.username?.charAt(0) || userData.email?.charAt(0) || 'U').toUpperCase();
-                }
-
-                // 2. Charger les données de parrainage avec fallback
-                try {
-                    // Essayer d'abord /api/coin/referral-data (nouvelle route à créer)
-                    const referralResponse = await fetch('/api/coin/referral-stats', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-
-                    if (referralResponse.ok) {
-                        referralData = await referralResponse.json();
-                    } else {
-                        // Fallback: utiliser les données existantes
-                        referralData = await loadFallbackReferralData(token);
-                    }
-                } catch (error) {
-                    console.warn('Route referral-data non disponible, utilisation du fallback:', error);
-                    referralData = await loadFallbackReferralData(token);
-                }
-
-                // 3. Mettre à jour l'interface
-                updateReferralUI();
-                
-            } catch (error) {
-                console.error('Erreur chargement données parrainage:', error);
-                
-                // Fallback: utiliser les données utilisateur si la route API échoue
-                showNotification('Chargement des données limitées', 'error');
-                
-                // Utiliser les données de base de l'utilisateur
-                const token = localStorage.getItem('token');
-                if (token && userData) {
-                    const appUrl = window.location.origin;
-                    const referralLink = `${appUrl}/signup?ref=${userData.referral_code || 'NONE'}`;
-                    document.getElementById('referralLink').value = referralLink;
-                    document.getElementById('referralCode').textContent = userData.referral_code || 'N/A';
+                    const initial = (userData.username?.charAt(0) || userData.email?.charAt(0) || 'U').toUpperCase();
+                    document.getElementById('userAvatar').textContent = initial;
                     
-                    // Afficher un message pour les statistiques
-                    document.getElementById('totalReferrals').textContent = '--';
-                    document.getElementById('referralCoins').textContent = '--';
-                    document.getElementById('pendingRewards').textContent = '--';
-                    document.getElementById('rank').textContent = '#--';
+                    // Générer le lien de parrainage
+                    updateReferralLink();
                 }
+
+                return userData;
+            } catch (error) {
+                console.error('Erreur chargement données utilisateur:', error);
+                showNotification('Erreur de chargement des données utilisateur', 'error');
+                return null;
             }
         }
 
-        // Fallback pour les données de parrainage
-        async function loadFallbackReferralData(token) {
+        // Fonction pour charger les données de parrainage
+        async function loadReferralStats() {
             try {
-                // Charger les données de base depuis /api/coin/referral-stats
-                const response = await fetch('/api/coin/referral-stats', {
+                const token = localStorage.getItem('token');
+                if (!token) return null;
+
+                // Essayer la route /api/coin/referral-stats
+                let response = await fetch('/api/coin/referral-stats', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -1152,97 +1148,86 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    
-                    // Formater les données pour correspondre à l'interface attendue
-                    return {
-                        totalReferrals: data.stats?.total_referrals || 0,
-                        totalCoinsEarned: data.stats?.total_coins_earned || 0,
-                        pendingRewards: data.stats?.pending_referrals || 0,
-                        rank: 1, // Par défaut
-                        conversionRate: 0,
-                        avgPerDay: 0,
-                        referrals: data.referrals?.map(r => ({
-                            id: r.id,
-                            referred_email: r.referred_user?.email,
-                            created_at: r.created_at,
-                            reward_given: r.reward_given
-                        })) || []
-                    };
+                    return data;
                 }
-            } catch (error) {
-                console.error('Erreur fallback:', error);
-            }
 
-            // Retourner des données par défaut
-            return {
-                totalReferrals: 0,
-                totalCoinsEarned: 0,
-                pendingRewards: 0,
-                rank: 1,
-                conversionRate: 0,
-                avgPerDay: 0,
-                referrals: []
-            };
+                // Si échec, créer des données par défaut
+                return {
+                    stats: {
+                        total_referrals: 0,
+                        total_coins_earned: 0,
+                        pending_referrals: 0,
+                        referral_reward: 10
+                    },
+                    referrals: []
+                };
+            } catch (error) {
+                console.error('Erreur chargement stats parrainage:', error);
+                return null;
+            }
         }
 
-        // Mettre à jour l'interface utilisateur
-        function updateReferralUI() {
+        // Fonction pour mettre à jour le lien de parrainage
+        function updateReferralLink() {
             if (!userData) return;
-
-            // Mettre à jour le lien de parrainage
+            
             const appUrl = window.location.origin;
             const referralLink = `${appUrl}/signup?ref=${userData.referral_code || 'NONE'}`;
+            const referralCode = userData.referral_code || 'N/A';
+            
             document.getElementById('referralLink').value = referralLink;
-            document.getElementById('referralCode').textContent = userData.referral_code || 'N/A';
-
-            // Mettre à jour les statistiques si disponibles
-            if (referralData) {
-                document.getElementById('totalReferrals').textContent = referralData.totalReferrals || 0;
-                document.getElementById('referralCoins').textContent = referralData.totalCoinsEarned || 0;
-                document.getElementById('pendingRewards').textContent = referralData.pendingRewards || 0;
-                document.getElementById('rank').textContent = `#${referralData.rank || '0'}`;
-                
-                // Mettre à jour les statistiques avancées
-                document.getElementById('conversionRate').textContent = 
-                    referralData.conversionRate ? `${referralData.conversionRate}%` : '0%';
-                document.getElementById('avgPerDay').textContent = referralData.avgPerDay || 0;
-            } else {
-                document.getElementById('totalReferrals').textContent = '0';
-                document.getElementById('referralCoins').textContent = '0';
-                document.getElementById('pendingRewards').textContent = '0';
-                document.getElementById('rank').textContent = '#0';
-            }
-
+            document.getElementById('referralCode').textContent = referralCode;
+            
             // Générer le QR Code
-            const qrContainer = document.getElementById('qrCode');
-            qrContainer.innerHTML = ''; // Vider le conteneur
+            generateQRCode(referralLink);
+            
+            return referralLink;
+        }
 
+        // Fonction pour générer le QR Code
+        function generateQRCode(text) {
             try {
-                QRCode.toCanvas(qrContainer, referralLink, {
+                const canvas = document.getElementById('qrCodeCanvas');
+                const qrCode = QRCode.toCanvas(canvas, text, {
                     width: 200,
                     height: 200,
+                    margin: 2,
                     color: {
                         dark: '#00d4ff',
                         light: '#1a1a2e'
-                    },
-                    margin: 2
+                    }
+                }, function(error) {
+                    if (error) {
+                        console.error('Erreur génération QR Code:', error);
+                        canvas.innerHTML = `
+                            <div style="color: var(--danger-color); text-align: center; padding: 20px;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p>Erreur génération QR code</p>
+                            </div>
+                        `;
+                    }
                 });
             } catch (error) {
-                console.error('Erreur génération QR code:', error);
-                qrContainer.innerHTML = `
-                    <div style="color: var(--danger-color); text-align: center; padding: 20px;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Impossible de générer le QR code</p>
-                        <p style="font-size: 12px;">${referralLink}</p>
-                    </div>
-                `;
+                console.error('Erreur QR Code:', error);
             }
+        }
 
+        // Fonction pour mettre à jour l'interface avec les données
+        function updateUIWithData() {
+            if (!userData) return;
+            
+            // Mettre à jour les statistiques si disponibles
+            if (referralData?.stats) {
+                document.getElementById('totalReferrals').textContent = referralData.stats.total_referrals || 0;
+                document.getElementById('referralCoins').textContent = referralData.stats.total_coins_earned || 0;
+                document.getElementById('pendingRewards').textContent = referralData.stats.pending_referrals || 0;
+            }
+            
             // Mettre à jour la liste des parrainages
             updateReferralsList();
         }
 
-        // Mettre à jour la liste des parrainages
+        // Fonction pour mettre à jour la liste des parrainages
         function updateReferralsList() {
             const referralsList = document.getElementById('referralsList');
             
@@ -1252,7 +1237,7 @@
                         <i class="fas fa-users-slash"></i>
                         <h3>Aucun parrainage pour l'instant</h3>
                         <p>Commencez à partager votre lien pour inviter vos premiers amis !</p>
-                        <button class="btn btn-primary" onclick="shareReferralLink()">
+                        <button class="btn btn-primary" onclick="shareReferralLink()" style="margin-top: 20px;">
                             <i class="fas fa-share-alt"></i> Partager maintenant
                         </button>
                     </div>
@@ -1269,22 +1254,27 @@
             `;
 
             referralData.referrals.forEach(referral => {
-                const registrationDate = new Date(referral.created_at).toLocaleDateString('fr-FR');
-                const rewardStatus = referral.reward_given ? 
-                    `<span style="color: var(--success-color);"><i class="fas fa-check"></i> 10 coins</span>` :
+                const referredUser = referral.referred_user || referral.referredUser;
+                const email = referredUser?.email || 'Utilisateur';
+                const date = new Date(referral.created_at).toLocaleDateString('fr-FR');
+                const rewardGiven = referral.reward_given || false;
+                
+                const rewardStatus = rewardGiven ? 
+                    `<span style="color: var(--success-color);"><i class="fas fa-check-circle"></i> 10 coins</span>` :
                     `<span style="color: var(--warning-color);"><i class="fas fa-clock"></i> En attente</span>`;
                 
                 html += `
                     <div class="referral-item">
                         <div class="user-cell">
                             <div class="user-avatar-small">
-                                ${(referral.referred_email?.charAt(0) || 'U').toUpperCase()}
+                                ${email.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <div class="user-email">${referral.referred_email || 'Utilisateur'}</div>
+                                <div class="user-email">${email}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">${date}</div>
                             </div>
                         </div>
-                        <div>${registrationDate}</div>
+                        <div>${date}</div>
                         <div class="coins-cell">
                             ${rewardStatus}
                         </div>
@@ -1312,7 +1302,6 @@
                 await navigator.clipboard.writeText(linkInput.value);
                 showNotification('Lien copié dans le presse-papier !', 'success');
             } catch (err) {
-                // Fallback pour anciens navigateurs
                 document.execCommand('copy');
                 showNotification('Lien copié !', 'success');
             }
@@ -1326,7 +1315,6 @@
                 await navigator.clipboard.writeText(code);
                 showNotification('Code copié dans le presse-papier !', 'success');
             } catch (err) {
-                // Fallback pour anciens navigateurs
                 const textArea = document.createElement('textarea');
                 textArea.value = code;
                 document.body.appendChild(textArea);
@@ -1378,7 +1366,7 @@
         });
 
         // Initialisation
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             // Vérifier l'authentification
             const token = localStorage.getItem('token');
             if (!token) {
@@ -1387,25 +1375,39 @@
             }
 
             // Charger les données
-            loadReferralData();
+            userData = await loadUserData();
+            referralData = await loadReferralStats();
+            
+            // Mettre à jour l'interface
+            updateUIWithData();
 
             // Raccourcis clavier
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                if (e.key === 'Escape') {
                     sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
                 }
-                if (e.key === 'c' && e.ctrlKey) {
-                    document.getElementById('copyLinkBtn').click();
+                if (e.key === 'c' && (e.ctrlKey || e.metaKey)) {
                     e.preventDefault();
+                    document.getElementById('copyLinkBtn').click();
                 }
             });
 
-            // Rafraîchissement automatique toutes les minutes
-            setInterval(() => {
-                if (!document.hidden) {
-                    loadReferralData();
+            // Fermer le sidebar en cliquant en dehors
+            document.addEventListener('click', (e) => {
+                if (!sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
                 }
-            }, 60000);
+            });
+
+            // Rafraîchissement automatique
+            setInterval(async () => {
+                if (!document.hidden) {
+                    referralData = await loadReferralStats();
+                    updateUIWithData();
+                }
+            }, 30000); // 30 secondes
         });
     </script>
 </body>
