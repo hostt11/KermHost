@@ -1156,7 +1156,8 @@
             }
             
             // Valider le format GitHub
-            if (!githubRepo.includes('/') || githubRepo.split('/').length !== 2) {
+            const repoRegex = /^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/;
+            if (!repoRegex.test(githubRepo)) {
                 showNotification('Format GitHub invalide. Utilisez: username/repository', 'error');
                 return false;
             }
@@ -1172,7 +1173,7 @@
             document.getElementById('reviewDescription').textContent = document.getElementById('botDescription').value;
         }
 
-        // Valider le fichier kerm.json
+        // Valider le fichier kerm.json - CORRECTION ICI
         async function validateKermJson() {
             const githubRepo = document.getElementById('githubRepo').value.trim();
             
@@ -1187,7 +1188,9 @@
                 validationStatus.style.color = 'var(--warning-color)';
                 
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/bot/validate-kerm-json', {
+                
+                // CORRECTION : Utiliser la route existante /api/bot/check-repo
+                const response = await fetch('/api/bot/check-repo', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -1198,7 +1201,7 @@
                 
                 const data = await response.json();
                 
-                if (response.ok) {
+                if (response.ok && data.valid) {
                     validationAttempted = true;
                     kermJsonData = data.kerm_json;
                     
@@ -1219,7 +1222,7 @@
                 }
             } catch (error) {
                 console.error('Erreur validation kerm.json:', error);
-                showNotification(error.message, 'error');
+                showNotification(error.message || 'Erreur lors de la vérification', 'error');
             }
         }
 
@@ -1311,7 +1314,7 @@
             document.getElementById('submitBtn').disabled = !this.checked;
         });
 
-        // Soumission du formulaire
+        // Soumission du formulaire - CORRECTION ICI
         document.getElementById('botRequestForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1321,18 +1324,18 @@
             }
             
             const botData = {
-                name: document.getElementById('botName').value,
-                description: document.getElementById('botDescription').value,
                 github_repo: document.getElementById('githubRepo').value,
-                cost: parseInt(document.getElementById('botCost').value),
-                logo_url: document.getElementById('botLogo').value || null,
-                documentation_url: document.getElementById('documentationLink').value || null,
-                kerm_json: kermJsonData
+                cost: parseInt(document.getElementById('botCost').value)
             };
+            
+            // Note: Le nom, description, etc. sont automatiquement extraits du kerm.json
+            // par l'API /api/bot/submit-request
             
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/bot/submit', {
+                
+                // CORRECTION : Utiliser la route existante /api/bot/submit-request
+                const response = await fetch('/api/bot/submit-request', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
