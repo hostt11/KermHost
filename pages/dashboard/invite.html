@@ -1140,7 +1140,7 @@
                 if (!token) return null;
 
                 // Essayer la route /api/coin/referral-stats
-                let response = await fetch('/api/coin/referral-stats', {
+                let response = await fetch('/api/auth/referral-full-data', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
