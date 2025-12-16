@@ -577,4 +577,101 @@ router.get('/referral-data', authMiddleware, async (req, res) => {
   }
 });
 
+// Route pour les données de parrainage complètes (utilisée par invite.html)
+router.get('/referral-full-data', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Récupérer l'utilisateur
+    const { data: user } = await supabase
+      .from('users')
+      .select('referral_code, coins')
+      .eq('id', userId)
+      .single();
+
+    // Compter les parrainages
+    const { count: totalReferrals } = await supabase
+      .from('referrals')
+      .select('*', { count: 'exact', head: true })
+      .eq('referrer_id', userId);
+
+    // Récupérer les transactions de parrainage
+    const { data: referralTransactions } = await supabase
+      .from('coin_transactions')
+      .select('amount, created_at')
+      .eq('receiver_id', userId)
+      .eq('type', 'referral');
+
+    const totalCoinsEarned = referralTransactions?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
+
+    // Récupérer les parrainages avec détails
+    const { data: referrals } = await supabase
+      .from('referrals')
+      .select(`
+        *,
+        referred_user:users!referred_id(email, created_at, is_verified)
+      `)
+      .eq('referrer_id', userId)
+      .order('created_at', { ascending: false });
+
+    // Calculer les récompenses en attente
+    const pendingRewards = referrals?.filter(r => !r.reward_given).length || 0;
+
+    // Statistiques avancées
+    const conversionRate = totalReferrals > 0 ? Math.round((referrals?.length || 0) / totalReferrals * 100) : 0;
+    
+    // Moyenne par jour (30 derniers jours)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const { data: recentReferrals } = await supabase
+      .from('referrals')
+      .select('created_at')
+      .eq('referrer_id', userId)
+      .gte('created_at', thirtyDaysAgo.toISOString());
+
+    const avgPerDay = recentReferrals?.length ? (recentReferrals.length / 30).toFixed(1) : 0;
+
+    res.json({
+      success: true,
+      user: {
+        referral_code: user?.referral_code || 'N/A',
+        total_coins: user?.coins || 0
+      },
+      stats: {
+        total_referrals: totalReferrals || 0,
+        total_coins_earned: totalCoinsEarned,
+        pending_rewards: pendingRewards,
+        conversion_rate: conversionRate,
+        avg_per_day: avgPerDay,
+        rank: 1 // Par défaut
+      },
+      referrals: referrals?.map(r => ({
+        id: r.id,
+        referred_email: r.referred_user?.email || 'Email non disponible',
+        created_at: r.created_at,
+        is_verified: r.referred_user?.is_verified || false,
+        reward_given: r.reward_given || false,
+        status: r.reward_given ? 'rewarded' : 'pending'
+      })) || []
+    });
+
+  } catch (error) {
+    console.error('Erreur récupération données parrainage:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Erreur serveur',
+      stats: {
+        total_referrals: 0,
+        total_coins_earned: 0,
+        pending_rewards: 0,
+        conversion_rate: 0,
+        avg_per_day: 0,
+        rank: 1
+      },
+      referrals: []
+    });
+  }
+});
+
 module.exports = router;
