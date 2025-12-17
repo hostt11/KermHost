@@ -36,8 +36,27 @@
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: var(--dark-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(74, 0, 224, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.1) 0%, transparent 20%);
             min-height: 100vh;
             color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 4px;
         }
 
         .dashboard-container {
@@ -47,16 +66,21 @@
 
         .sidebar {
             width: var(--sidebar-width);
-            background: var(--light-color);
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(20px);
             border-right: 1px solid var(--glass-border);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
+            transition: var(--transition);
+            z-index: 1000;
+            box-shadow: var(--box-shadow);
         }
 
         .sidebar-header {
             padding: 25px 20px;
             border-bottom: 1px solid var(--glass-border);
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
         }
 
         .sidebar-header .logo {
@@ -71,12 +95,16 @@
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
         }
 
         .sidebar-header span {
             font-weight: 700;
             font-size: 22px;
-            color: var(--accent-color);
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
         }
 
         .sidebar-menu {
@@ -99,24 +127,80 @@
             padding: 16px 20px;
             color: var(--text-muted);
             text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
             border-radius: var(--border-radius);
         }
 
         .sidebar-menu a.active {
-            background: rgba(138, 43, 226, 0.2);
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
             color: var(--text-color);
             border-left: 4px solid var(--accent-color);
+            box-shadow: var(--glow-shadow);
         }
 
         .sidebar-menu a:hover {
             color: var(--text-color);
             background: var(--glass-bg);
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu i {
+            width: 24px;
+            text-align: center;
+            font-size: 18px;
+            color: var(--accent-color);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(26, 26, 46, 0.9);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            box-shadow: var(--glow-shadow);
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-muted);
         }
 
         .main-content {
             flex: 1;
             margin-left: var(--sidebar-width);
             padding: 30px;
+            background: transparent;
         }
 
         .header {
@@ -131,60 +215,115 @@
         .header h1 {
             font-size: 32px;
             font-weight: 700;
-            color: var(--accent-color);
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             display: inline-flex;
             align-items: center;
             gap: 15px;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
         .btn {
             padding: 12px 24px;
             border-radius: 12px;
-            border: none;
+            text-decoration: none;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
-            cursor: pointer;
-            font-size: 14px;
             transition: var(--transition);
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #7a1bd2;
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: var(--success-color);
-            color: white;
-        }
-
-        .btn-danger {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        .btn-warning {
-            background: var(--warning-color);
-            color: var(--dark-color);
-        }
-
-        .btn-secondary {
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
             background: var(--glass-bg);
             color: var(--text-color);
             border: 1px solid var(--glass-border);
         }
 
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(138, 43, 226, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #00b894);
+            color: white;
+            border: none;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 184, 148, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color), #ff6b6b);
+            color: white;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning-color), #ff9f43);
+            color: var(--dark-color);
+            border: none;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 159, 67, 0.4);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--accent-color);
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Tabs */
         .tabs {
             display: flex;
             gap: 10px;
             margin-bottom: 30px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 15px;
+            position: relative;
         }
 
         .tab {
@@ -193,13 +332,32 @@
             border: none;
             color: var(--text-muted);
             font-weight: 600;
+            font-size: 15px;
             cursor: pointer;
+            transition: var(--transition);
             border-radius: 8px;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: var(--text-color);
+            background: var(--glass-bg);
         }
 
         .tab.active {
             color: var(--accent-color);
             background: rgba(0, 212, 255, 0.1);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -16px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--accent-color);
+            border-radius: 3px;
         }
 
         .badge {
@@ -220,6 +378,7 @@
             color: var(--dark-color);
         }
 
+        /* Bot Cards */
         .bots-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
@@ -229,14 +388,33 @@
 
         .bot-card {
             background: var(--glass-bg);
+            backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             border-radius: var(--border-radius);
             overflow: hidden;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .bot-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
+        }
+
+        .bot-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-color);
+            box-shadow: var(--glow-shadow);
         }
 
         .bot-header {
             padding: 25px;
-            background: rgba(138, 43, 226, 0.1);
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(74, 0, 224, 0.1));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -251,20 +429,26 @@
             gap: 10px;
         }
 
+        .bot-name i {
+            color: var(--accent-color);
+        }
+
         .bot-status {
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
         .status-pending {
-            background: var(--warning-color);
+            background: linear-gradient(135deg, var(--warning-color), #ff9f43);
             color: var(--dark-color);
         }
 
         .status-approved {
-            background: var(--success-color);
+            background: linear-gradient(135deg, var(--success-color), #00b894);
             color: var(--dark-color);
         }
 
@@ -283,18 +467,32 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
             padding: 15px;
+            border: 1px solid var(--glass-border);
         }
 
         .bot-info-label {
             font-size: 12px;
             color: var(--text-muted);
             margin-bottom: 8px;
+            font-weight: 500;
         }
 
         .bot-info-value {
             font-weight: 600;
             font-size: 16px;
             color: white;
+            word-break: break-all;
+        }
+
+        .bot-description {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
         }
 
         .bot-actions {
@@ -305,13 +503,16 @@
 
         .bot-actions .btn {
             flex: 1;
+            text-align: center;
             padding: 12px;
         }
 
+        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 80px 40px;
             background: var(--glass-bg);
+            backdrop-filter: blur(20px);
             border: 2px dashed var(--glass-border);
             border-radius: var(--border-radius);
         }
@@ -323,6 +524,23 @@
             opacity: 0.5;
         }
 
+        .empty-state h3 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: white;
+            font-weight: 700;
+        }
+
+        .empty-state p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin: 0 auto 30px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -331,6 +549,7 @@
             width: 100%;
             height: 100%;
             background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(10px);
             z-index: 2000;
             align-items: center;
             justify-content: center;
@@ -345,6 +564,7 @@
             max-width: 800px;
             max-height: 90vh;
             overflow-y: auto;
+            box-shadow: var(--glow-shadow), 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
         .modal-header {
@@ -353,6 +573,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(74, 0, 224, 0.2));
         }
 
         .modal-header h3 {
@@ -360,6 +581,9 @@
             font-size: 22px;
             font-weight: 700;
             color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .modal-close {
@@ -368,12 +592,24 @@
             font-size: 24px;
             color: var(--text-muted);
             cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .modal-body {
             padding: 30px;
         }
 
+        /* Notification */
         .notification {
             position: fixed;
             top: 30px;
@@ -382,10 +618,12 @@
             border-radius: var(--border-radius);
             background: var(--light-color);
             color: white;
+            box-shadow: var(--box-shadow), var(--glow-shadow);
             transform: translateX(150%);
             transition: transform 0.4s;
             z-index: 2100;
             max-width: 400px;
+            backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
         }
 
@@ -401,6 +639,11 @@
             border-left: 4px solid var(--danger-color);
         }
 
+        .notification.warning {
+            border-left: 4px solid var(--warning-color);
+        }
+
+        /* Loading */
         .loading {
             text-align: center;
             padding: 60px 20px;
@@ -417,6 +660,68 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+        }
+
+        .page-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Search */
+        .search-container {
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 15px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-color);
+            font-size: 16px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
         @media (max-width: 992px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -428,12 +733,22 @@
                 margin-left: 0;
                 padding: 20px;
             }
-        }
-
-        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
             .bots-grid {
                 grid-template-columns: 1fr;
             }
+        }
+
+        @media (max-width: 768px) {
             .bot-info {
                 grid-template-columns: 1fr;
             }
@@ -446,7 +761,7 @@
 <body>
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
                     <img src="https://files.catbox.moe/uqw1b5.jpeg" alt="KermHost Logo">
@@ -465,16 +780,33 @@
                     <li><a href="/dashboard"><i class="fas fa-arrow-left"></i><span>Retour Dashboard</span></a></li>
                 </ul>
             </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Admin</div>
+                        <div class="user-email" id="userEmail">admin@kermhost.com</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
             <!-- Header -->
             <div class="header">
-                <h1><i class="fas fa-robot"></i> Demandes de Bots</h1>
-                <button class="btn btn-primary" id="refreshBtn">
-                    <i class="fas fa-sync-alt"></i> Actualiser
-                </button>
+                <div>
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1><i class="fas fa-robot"></i> Demandes de Bots</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i> Actualiser
+                    </button>
+                </div>
             </div>
 
             <!-- Tabs -->
@@ -489,6 +821,17 @@
                 </button>
             </div>
 
+            <!-- Search -->
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" 
+                           placeholder="Rechercher un bot par nom, dépôt GitHub ou propriétaire...">
+                    <button class="btn btn-primary" id="searchBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+
             <!-- Bot Requests List -->
             <div id="botRequestsList">
                 <div class="loading">
@@ -496,10 +839,21 @@
                     <p style="margin-top: 20px; color: var(--text-muted);">Chargement...</p>
                 </div>
             </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination" style="display: none;">
+                <button class="page-btn" id="prevPage">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="page-info">Page <span id="currentPage">1</span> sur <span id="totalPages">1</span></span>
+                <button class="page-btn" id="nextPage">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- Approve/Reject Modal -->
     <div class="modal" id="actionModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -511,14 +865,14 @@
                     <input type="hidden" id="actionBotId">
                     <input type="hidden" id="actionType">
                     
-                    <div id="rejectReasonGroup" style="margin-bottom: 20px; display: none;">
+                    <div class="form-group" id="rejectReasonGroup" style="display: none;">
                         <label style="display: block; margin-bottom: 10px; color: var(--text-color);">
                             <i class="fas fa-exclamation-triangle"></i> Raison du rejet (optionnel)
                         </label>
-                        <textarea id="rejectReason" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-color);" rows="4" placeholder="Expliquez pourquoi..."></textarea>
+                        <textarea id="rejectReason" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-color);" rows="4" placeholder="Expliquez pourquoi..."></textarea>
                     </div>
 
-                    <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <div style="margin-top: 30px; display: flex; gap: 15px;">
                         <button type="button" class="btn btn-secondary" id="cancelActionBtn" style="flex: 1;">
                             <i class="fas fa-times"></i> Annuler
                         </button>
@@ -535,105 +889,373 @@
     <div id="notificationContainer"></div>
 
     <script>
-        // Variables globales
+        // ==================== VARIABLES GLOBALES ====================
         let currentTab = 'pending';
-        let currentBotId = null;
+        let currentPage = 1;
+        let currentSearch = '';
+        let selectedBotId = null;
+        let selectedBotName = '';
 
-        // ============ FONCTIONS UTILITAIRES ============
+        // ==================== INITIALISATION ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initialisation de la page...');
+            
+            // Vérifier l'authentification immédiatement
+            checkAuthAndInit();
+            
+            // Initialiser les événements
+            initEventListeners();
+            
+            // Charger les demandes
+            loadBotRequests();
+        });
 
-        // Afficher une notification
-        function showNotification(message, type = 'success') {
-            const container = document.getElementById('notificationContainer');
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div>${message}</div>
-                </div>
-            `;
-            container.appendChild(notification);
-            
-            setTimeout(() => notification.classList.add('show'), 10);
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 400);
-            }, 4000);
-        }
-
-        // Vérifier l'authentification
-        function checkAuth() {
-            const token = localStorage.getItem('token');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            
-            if (!token) {
-                window.location.href = '/login';
-                return false;
-            }
-            
-            if (user.role !== 'admin') {
-                showNotification('Accès administrateur requis', 'error');
-                setTimeout(() => window.location.href = '/dashboard', 2000);
-                return false;
-            }
-            
-            return true;
-        }
-
-        // Charger les demandes de bots
-        async function loadBotRequests() {
-            if (!checkAuth()) return;
-            
+        // ==================== FONCTIONS D'AUTHENTIFICATION ====================
+        async function checkAuthAndInit() {
             try {
                 const token = localStorage.getItem('token');
-                const params = new URLSearchParams({
-                    status: currentTab,
-                    page: 1,
-                    limit: 50
-                });
+                if (!token) {
+                    console.log('❌ Pas de token trouvé');
+                    showNotification('Veuillez vous connecter', 'error');
+                    setTimeout(() => window.location.href = '/login', 1000);
+                    return false;
+                }
 
-                const response = await fetch(`/api/admin/bot-requests?${params}`, {
+                console.log('🔐 Token trouvé, vérification...');
+                
+                // Vérifier le token
+                const response = await fetch('/api/auth/check', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
+                console.log('🔐 Réponse auth:', response.status);
+                
                 if (response.status === 401) {
+                    console.log('❌ Token invalide');
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
-                    window.location.href = '/login';
+                    showNotification('Session expirée', 'error');
+                    setTimeout(() => window.location.href = '/login', 1000);
+                    return false;
+                }
+
+                const data = await response.json();
+                console.log('🔐 Données utilisateur:', data);
+                
+                if (!data.valid || !data.user) {
+                    console.log('❌ Données utilisateur invalides');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    showNotification('Session invalide', 'error');
+                    setTimeout(() => window.location.href = '/login', 1000);
+                    return false;
+                }
+
+                // Vérifier le rôle admin
+                if (data.user.role !== 'admin') {
+                    console.log('❌ Rôle non admin:', data.user.role);
+                    showNotification('Accès administrateur requis', 'error');
+                    setTimeout(() => window.location.href = '/dashboard', 2000);
+                    return false;
+                }
+
+                console.log('✅ Authentification réussie, utilisateur:', data.user.email);
+                
+                // Mettre à jour l'interface utilisateur
+                updateUserInfo(data.user);
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Erreur auth:', error);
+                showNotification('Erreur d\'authentification', 'error');
+                return false;
+            }
+        }
+
+        function updateUserInfo(user) {
+            if (user.email) {
+                document.getElementById('userEmail').textContent = user.email;
+                document.getElementById('userName').textContent = user.username || 'Admin';
+                document.getElementById('userAvatar').textContent = (user.username || user.email.charAt(0)).toUpperCase();
+            }
+        }
+
+        // ==================== FONCTIONS UTILITAIRES ====================
+        function showNotification(message, type = 'success') {
+            console.log('📢 Notification:', type, message);
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? '✓' : 
+                        type === 'error' ? '✗' : 
+                        type === 'warning' ? '⚠' : 'ℹ';
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 24px; font-weight: bold;">${icon}</div>
+                    <div style="flex: 1;">${message}</div>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        container.removeChild(notification);
+                    }
+                }, 400);
+            }, 4000);
+        }
+
+        // ==================== INITIALISATION DES ÉVÉNEMENTS ====================
+        function initEventListeners() {
+            console.log('🎯 Initialisation des événements...');
+            
+            // Menu mobile
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
+            
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    console.log('📱 Bouton menu mobile cliqué');
+                    sidebar.classList.toggle('active');
+                });
+            }
+
+            // Bouton d'actualisation
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    console.log('🔄 Actualisation demandée');
+                    loadBotRequests();
+                    showNotification('Liste actualisée', 'success');
+                });
+            }
+
+            // Recherche
+            const searchBtn = document.getElementById('searchBtn');
+            const searchInput = document.getElementById('searchInput');
+            
+            if (searchBtn) {
+                searchBtn.addEventListener('click', function() {
+                    console.log('🔍 Recherche:', searchInput.value);
+                    currentSearch = searchInput.value.trim();
+                    currentPage = 1;
+                    loadBotRequests();
+                });
+            }
+            
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        console.log('🔍 Recherche avec Entrée:', searchInput.value);
+                        currentSearch = searchInput.value.trim();
+                        currentPage = 1;
+                        loadBotRequests();
+                    }
+                });
+            }
+
+            // Tabs
+            const pendingTab = document.getElementById('pendingTab');
+            const approvedTab = document.getElementById('approvedTab');
+            
+            if (pendingTab) {
+                pendingTab.addEventListener('click', function() {
+                    console.log('📌 Onglet: pending');
+                    changeTab('pending');
+                });
+            }
+            
+            if (approvedTab) {
+                approvedTab.addEventListener('click', function() {
+                    console.log('📌 Onglet: approved');
+                    changeTab('approved');
+                });
+            }
+
+            // Modal actions
+            const closeActionModal = document.getElementById('closeActionModal');
+            const cancelActionBtn = document.getElementById('cancelActionBtn');
+            
+            if (closeActionModal) {
+                closeActionModal.addEventListener('click', closeActionModalFunc);
+            }
+            
+            if (cancelActionBtn) {
+                cancelActionBtn.addEventListener('click', closeActionModalFunc);
+            }
+
+            // Form action
+            const actionForm = document.getElementById('actionForm');
+            if (actionForm) {
+                actionForm.addEventListener('submit', handleActionSubmit);
+            }
+
+            // Pagination
+            const prevPage = document.getElementById('prevPage');
+            const nextPage = document.getElementById('nextPage');
+            
+            if (prevPage) {
+                prevPage.addEventListener('click', function() {
+                    console.log('⬅️ Page précédente');
+                    changePage(currentPage - 1);
+                });
+            }
+            
+            if (nextPage) {
+                nextPage.addEventListener('click', function() {
+                    console.log('➡️ Page suivante');
+                    changePage(currentPage + 1);
+                });
+            }
+
+            console.log('✅ Événements initialisés');
+        }
+
+        // ==================== FONCTIONS DE GESTION DES DONNÉES ====================
+        function changeTab(status) {
+            console.log('🔄 Changement d\'onglet vers:', status);
+            currentTab = status;
+            currentPage = 1;
+            
+            // Mettre à jour l'interface
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                if (tab.dataset.status === status) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // Charger les données
+            loadBotRequests();
+        }
+
+        function changePage(page) {
+            if (page < 1 || page > totalPages) return;
+            console.log('📄 Changement de page:', page);
+            currentPage = page;
+            loadBotRequests();
+        }
+
+        async function loadBotRequests() {
+            console.log('📥 Chargement des demandes...');
+            
+            // Afficher le loading
+            const botRequestsList = document.getElementById('botRequestsList');
+            botRequestsList.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p style="margin-top: 20px; color: var(--text-muted);">Chargement des demandes...</p>
+                </div>
+            `;
+            
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    console.error('❌ Pas de token pour la requête');
+                    return;
+                }
+
+                // Construire l'URL avec les paramètres
+                const params = new URLSearchParams({
+                    status: currentTab,
+                    page: currentPage,
+                    limit: 12,
+                    search: currentSearch || ''
+                });
+
+                console.log('🔗 URL appelée:', `/api/admin/bot-requests?${params}`);
+                
+                const response = await fetch(`/api/admin/bot-requests?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('📡 Réponse API:', response.status);
+                
+                if (response.status === 401) {
+                    console.error('❌ Token expiré');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    showNotification('Session expirée', 'error');
+                    setTimeout(() => window.location.href = '/login', 1000);
+                    return;
+                }
+
+                if (response.status === 403) {
+                    console.error('❌ Accès non autorisé');
+                    showNotification('Accès administrateur requis', 'error');
+                    setTimeout(() => window.location.href = '/dashboard', 2000);
                     return;
                 }
 
                 const data = await response.json();
+                console.log('📊 Données reçues:', data);
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erreur de chargement');
+                }
+
+                // Afficher les demandes
                 displayBotRequests(data.requests || []);
                 
-                // Mettre à jour les compteurs
-                updateCounters();
+                // Mettre à jour la pagination
+                if (data.pagination && data.pagination.pages > 1) {
+                    updatePagination(data.pagination);
+                } else {
+                    document.getElementById('pagination').style.display = 'none';
+                }
+                
+                // Charger les compteurs
+                loadBotCounts();
                 
             } catch (error) {
-                console.error('Erreur:', error);
-                showNotification('Erreur de chargement', 'error');
-                document.getElementById('botRequestsList').innerHTML = `
+                console.error('❌ Erreur lors du chargement:', error);
+                
+                botRequestsList.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <h3>Erreur de connexion</h3>
-                        <p>Impossible de charger les demandes</p>
+                        <h3>Erreur de chargement</h3>
+                        <p>${error.message}</p>
                         <button class="btn btn-primary" onclick="loadBotRequests()" style="margin-top: 20px;">
                             <i class="fas fa-redo"></i> Réessayer
                         </button>
                     </div>
                 `;
+                
+                showNotification('Erreur lors du chargement: ' + error.message, 'error');
             }
         }
 
-        // Afficher les demandes
         function displayBotRequests(requests) {
+            console.log('🎨 Affichage de', requests.length, 'demandes');
+            
             const container = document.getElementById('botRequestsList');
             
             if (!requests || requests.length === 0) {
+                const emptyMessage = currentTab === 'pending' 
+                    ? 'Aucune demande de bot en attente' 
+                    : 'Aucun bot approuvé';
+                
                 container.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-robot"></i>
-                        <h3>Aucune demande</h3>
-                        <p>${currentTab === 'pending' ? 'Aucun bot en attente' : 'Aucun bot approuvé'}</p>
+                        <h3>${emptyMessage}</h3>
+                        <p>${currentTab === 'pending' 
+                            ? 'Toutes les demandes ont été traitées' 
+                            : 'Les bots approuvés apparaîtront ici'}</p>
                     </div>
                 `;
                 return;
@@ -642,12 +1264,15 @@
             let html = '<div class="bots-grid">';
             
             requests.forEach(bot => {
+                console.log('🤖 Bot:', bot.name, 'ID:', bot.id);
+                
                 const isApproved = bot.is_approved;
                 const envCount = bot.kerm_json?.env ? Object.keys(bot.kerm_json.env).length : 0;
                 const ownerEmail = bot.user?.email || bot.owner_email || 'N/A';
+                const ownerVerification = bot.kerm_json?.['owner-verification'] || 'N/A';
                 
                 html += `
-                    <div class="bot-card">
+                    <div class="bot-card" data-id="${bot.id}">
                         <div class="bot-header">
                             <div class="bot-name">
                                 <i class="fas fa-robot"></i>
@@ -658,7 +1283,11 @@
                             </div>
                         </div>
                         <div class="bot-body">
-                            ${bot.description ? `<p style="color: var(--text-muted); margin-bottom: 20px;">${bot.description}</p>` : ''}
+                            ${bot.description ? `
+                                <div class="bot-description">
+                                    ${bot.description}
+                                </div>
+                            ` : ''}
                             
                             <div class="bot-info">
                                 <div class="bot-info-item">
@@ -667,7 +1296,11 @@
                                 </div>
                                 <div class="bot-info-item">
                                     <div class="bot-info-label">GITHUB</div>
-                                    <div class="bot-info-value">${bot.github_repo}</div>
+                                    <div class="bot-info-value">
+                                        <a href="https://github.com/${bot.github_repo}" target="_blank" style="color: var(--accent-color); text-decoration: none;">
+                                            ${bot.github_repo}
+                                        </a>
+                                    </div>
                                 </div>
                                 <div class="bot-info-item">
                                     <div class="bot-info-label">COÛT</div>
@@ -677,22 +1310,26 @@
                                     <div class="bot-info-label">ENVIRONNEMENTS</div>
                                     <div class="bot-info-value">${envCount}</div>
                                 </div>
+                                <div class="bot-info-item">
+                                    <div class="bot-info-label">EMAIL VÉRIFICATION</div>
+                                    <div class="bot-info-value">${ownerVerification}</div>
+                                </div>
                             </div>
                             
                             <div class="bot-actions">
                                 ${!isApproved ? `
-                                    <button class="btn btn-success" onclick="showApproveModal('${bot.id}', '${bot.name}')">
+                                    <button class="btn btn-success" onclick="showApproveModal('${bot.id}', '${bot.name.replace(/'/g, "\\'")}')">
                                         <i class="fas fa-check"></i> Approuver
                                     </button>
-                                    <button class="btn btn-danger" onclick="showRejectModal('${bot.id}', '${bot.name}')">
+                                    <button class="btn btn-danger" onclick="showRejectModal('${bot.id}', '${bot.name.replace(/'/g, "\\'")}')">
                                         <i class="fas fa-times"></i> Rejeter
                                     </button>
                                 ` : `
-                                    <button class="btn btn-warning" onclick="showRejectModal('${bot.id}', '${bot.name}')">
+                                    <button class="btn btn-warning" onclick="showRejectModal('${bot.id}', '${bot.name.replace(/'/g, "\\'")}')">
                                         <i class="fas fa-ban"></i> Désapprouver
                                     </button>
                                 `}
-                                <button class="btn btn-secondary" onclick="deleteBot('${bot.id}', '${bot.name}')">
+                                <button class="btn btn-secondary" onclick="deleteBotRequest('${bot.id}', '${bot.name.replace(/'/g, "\\'")}')">
                                     <i class="fas fa-trash"></i> Supprimer
                                 </button>
                             </div>
@@ -703,12 +1340,10 @@
             
             html += '</div>';
             container.innerHTML = html;
+            console.log('✅ Affichage terminé');
         }
 
-        // Mettre à jour les compteurs
-        async function updateCounters() {
-            if (!checkAuth()) return;
-            
+        async function loadBotCounts() {
             try {
                 const token = localStorage.getItem('token');
                 
@@ -716,51 +1351,153 @@
                 const pendingResponse = await fetch('/api/admin/bot-requests?status=pending&limit=1', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const pendingData = await pendingResponse.json();
-                document.getElementById('pendingCount').textContent = pendingData.pagination?.total || 0;
+                
+                if (pendingResponse.ok) {
+                    const pendingData = await pendingResponse.json();
+                    document.getElementById('pendingCount').textContent = pendingData.pagination?.total || 0;
+                }
                 
                 // Compter les bots approuvés
                 const approvedResponse = await fetch('/api/admin/bot-requests?status=approved&limit=1', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const approvedData = await approvedResponse.json();
-                document.getElementById('approvedCount').textContent = approvedData.pagination?.total || 0;
+                
+                if (approvedResponse.ok) {
+                    const approvedData = await approvedResponse.json();
+                    document.getElementById('approvedCount').textContent = approvedData.pagination?.total || 0;
+                }
                 
             } catch (error) {
-                console.error('Erreur compteurs:', error);
+                console.error('❌ Erreur compteurs:', error);
             }
         }
 
-        // ============ FONCTIONS D'ACTIONS ============
+        function updatePagination(pagination) {
+            console.log('📊 Mise à jour pagination:', pagination);
+            
+            const paginationDiv = document.getElementById('pagination');
+            const currentPageSpan = document.getElementById('currentPage');
+            const totalPagesSpan = document.getElementById('totalPages');
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+            
+            paginationDiv.style.display = 'flex';
+            currentPageSpan.textContent = pagination.page;
+            totalPagesSpan.textContent = pagination.pages;
+            totalPages = pagination.pages;
+            
+            prevBtn.disabled = pagination.page <= 1;
+            nextBtn.disabled = pagination.page >= pagination.pages;
+            
+            prevBtn.style.opacity = prevBtn.disabled ? '0.5' : '1';
+            nextBtn.style.opacity = nextBtn.disabled ? '0.5' : '1';
+        }
 
-        // Afficher le modal d'approbation
+        // ==================== FONCTIONS D'ACTIONS ====================
         function showApproveModal(botId, botName) {
-            currentBotId = botId;
-            document.getElementById('actionTitle').textContent = `Approuver "${botName}"`;
+            console.log('✅ Approuver bot:', botId, botName);
+            
+            selectedBotId = botId;
+            selectedBotName = botName;
+            
+            document.getElementById('actionBotId').value = botId;
             document.getElementById('actionType').value = 'approve';
-            document.getElementById('rejectReasonGroup').style.display = 'none';
+            document.getElementById('actionTitle').textContent = `Approuver "${botName}"`;
             document.getElementById('actionSubmitBtn').className = 'btn btn-success';
             document.getElementById('actionSubmitBtn').innerHTML = '<i class="fas fa-check"></i> Approuver';
+            document.getElementById('rejectReasonGroup').style.display = 'none';
+            
             document.getElementById('actionModal').style.display = 'flex';
         }
 
-        // Afficher le modal de rejet
         function showRejectModal(botId, botName) {
-            currentBotId = botId;
+            console.log('❌ Rejeter bot:', botId, botName);
+            
+            selectedBotId = botId;
+            selectedBotName = botName;
             const isApproved = currentTab === 'approved';
             const actionText = isApproved ? 'Désapprouver' : 'Rejeter';
             
-            document.getElementById('actionTitle').textContent = `${actionText} "${botName}"`;
+            document.getElementById('actionBotId').value = botId;
             document.getElementById('actionType').value = 'reject';
-            document.getElementById('rejectReasonGroup').style.display = 'block';
+            document.getElementById('actionTitle').textContent = `${actionText} "${botName}"`;
             document.getElementById('actionSubmitBtn').className = isApproved ? 'btn btn-warning' : 'btn btn-danger';
             document.getElementById('actionSubmitBtn').innerHTML = `<i class="fas fa-times"></i> ${actionText}`;
+            document.getElementById('rejectReasonGroup').style.display = 'block';
+            document.getElementById('rejectReason').value = '';
+            
             document.getElementById('actionModal').style.display = 'flex';
         }
 
-        // Supprimer un bot
-        async function deleteBot(botId, botName) {
-            if (!confirm(`Supprimer "${botName}" ?`)) return;
+        function closeActionModalFunc() {
+            console.log('🚪 Fermeture modal');
+            document.getElementById('actionModal').style.display = 'none';
+            document.getElementById('actionForm').reset();
+            selectedBotId = null;
+            selectedBotName = '';
+        }
+
+        async function handleActionSubmit(e) {
+            e.preventDefault();
+            console.log('📨 Soumission action pour bot:', selectedBotId);
+            
+            const actionType = document.getElementById('actionType').value;
+            const rejectReason = document.getElementById('rejectReason').value;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/admin/bot-requests/${selectedBotId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        approve: actionType === 'approve',
+                        reason: rejectReason || null
+                    })
+                });
+
+                console.log('📡 Réponse action:', response.status);
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    showNotification('Session expirée', 'error');
+                    setTimeout(() => window.location.href = '/login', 1000);
+                    return;
+                }
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erreur lors de l\'action');
+                }
+
+                const message = actionType === 'approve' 
+                    ? `Bot "${selectedBotName}" approuvé avec succès` 
+                    : `Bot "${selectedBotName}" rejeté avec succès`;
+                
+                showNotification(message, 'success');
+                closeActionModalFunc();
+                
+                // Recharger après un délai
+                setTimeout(() => {
+                    loadBotRequests();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('❌ Erreur action:', error);
+                showNotification('Erreur: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteBotRequest(botId, botName) {
+            console.log('🗑️ Suppression bot:', botId, botName);
+            
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer le bot "${botName}" ?\n\nCette action est irréversible.`)) {
+                return;
+            }
             
             try {
                 const token = localStorage.getItem('token');
@@ -769,93 +1506,77 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
+                console.log('📡 Réponse suppression:', response.status);
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    showNotification('Session expirée', 'error');
+                    setTimeout(() => window.location.href = '/login', 1000);
+                    return;
+                }
+
                 const data = await response.json();
                 
-                if (response.ok) {
-                    showNotification('Bot supprimé', 'success');
-                    loadBotRequests();
-                } else {
-                    throw new Error(data.error || 'Erreur');
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erreur lors de la suppression');
                 }
+
+                showNotification(`Bot "${botName}" supprimé avec succès`, 'success');
+                
+                // Recharger après un délai
+                setTimeout(() => {
+                    loadBotRequests();
+                }, 1000);
+                
             } catch (error) {
-                showNotification(error.message, 'error');
+                console.error('❌ Erreur suppression:', error);
+                showNotification('Erreur: ' + error.message, 'error');
             }
         }
 
-        // ============ GESTION DES ÉVÉNEMENTS ============
-
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!checkAuth()) return;
-            
-            // Charger les demandes
-            loadBotRequests();
-            
-            // Événements des tabs
-            document.getElementById('pendingTab').addEventListener('click', () => {
-                currentTab = 'pending';
-                document.getElementById('pendingTab').classList.add('active');
-                document.getElementById('approvedTab').classList.remove('active');
-                loadBotRequests();
-            });
-            
-            document.getElementById('approvedTab').addEventListener('click', () => {
-                currentTab = 'approved';
-                document.getElementById('approvedTab').classList.add('active');
-                document.getElementById('pendingTab').classList.remove('active');
-                loadBotRequests();
-            });
-            
-            // Bouton d'actualisation
-            document.getElementById('refreshBtn').addEventListener('click', loadBotRequests);
-            
-            // Modal actions
-            document.getElementById('closeActionModal').addEventListener('click', () => {
-                document.getElementById('actionModal').style.display = 'none';
-            });
-            
-            document.getElementById('cancelActionBtn').addEventListener('click', () => {
-                document.getElementById('actionModal').style.display = 'none';
-            });
-            
-            // Soumission d'action
-            document.getElementById('actionForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const actionType = document.getElementById('actionType').value;
-                const rejectReason = document.getElementById('rejectReason').value;
-                
-                try {
-                    const token = localStorage.getItem('token');
-                    const response = await fetch(`/api/admin/bot-requests/${currentBotId}/approve`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            approve: actionType === 'approve',
-                            reason: rejectReason
-                        })
-                    });
-
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        const message = actionType === 'approve' 
-                            ? 'Bot approuvé' 
-                            : 'Bot rejeté';
-                        showNotification(message, 'success');
-                        document.getElementById('actionModal').style.display = 'none';
-                        loadBotRequests();
-                    } else {
-                        throw new Error(data.error || 'Erreur');
-                    }
-                } catch (error) {
-                    showNotification(error.message, 'error');
+        // ==================== RACCOURCIS CLAVIER ====================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('actionModal').style.display === 'flex') {
+                    closeActionModalFunc();
                 }
-            });
+                if (document.getElementById('sidebar').classList.contains('active')) {
+                    document.getElementById('sidebar').classList.remove('active');
+                }
+            }
+            
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                loadBotRequests();
+                showNotification('Liste actualisée', 'success');
+            }
         });
+
+        // Fermer le menu mobile en cliquant en dehors
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            
+            if (sidebar.classList.contains('active') && 
+                !sidebar.contains(e.target) && 
+                !mobileMenuBtn.contains(e.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Rafraîchissement automatique toutes les 30 secondes
+        setInterval(() => {
+            if (!document.hidden && document.hasFocus()) {
+                console.log('🔄 Rafraîchissement automatique');
+                loadBotRequests();
+            }
+        }, 30000);
     </script>
 </body>
 </html>
